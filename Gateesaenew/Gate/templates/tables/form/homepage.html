@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-color);
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        /* ===== BANNER & TITLE ANIMATION ===== */
+        .banner {
+            width: 100%;
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 24px 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .banner h1 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 32px;
+            letter-spacing: 2px;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+        }
+
+        .banner h1 span {
+            display: inline-block;
+            opacity: 0;
+            animation: letterMerge 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Split logic: Odd from left, Even from right */
+        .banner h1 span:nth-child(odd) {
+            transform: translateX(-40px);
+        }
+
+        .banner h1 span:nth-child(even) {
+            transform: translateX(40px);
+        }
+
+        .banner h1 span:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .banner h1 span:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .banner h1 span:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .banner h1 span:nth-child(4) {
+            animation-delay: 0.25s;
+        }
+
+        .banner h1 span:nth-child(5) {
+            animation-delay: 0.3s;
+        }
+
+        .banner h1 span:nth-child(6) {
+            animation-delay: 0.35s;
+        }
+
+        .banner h1 span:nth-child(7) {
+            animation-delay: 0.4s;
+        }
+
+        .banner h1 span:nth-child(8) {
+            animation-delay: 0.45s;
+        }
+
+        @keyframes letterMerge {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== DASHBOARD ===== */
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 28px;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 0.5s forwards;
+        }
+
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            text-decoration: none;
+            color: #374151;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            opacity: 0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+            animation: flyIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            border: 1px solid transparent;
+        }
+
+        .menu a:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Staggered delays */
+        .menu a:nth-child(1) {
+            animation-delay: 0.2s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(2) {
+            animation-delay: 0.25s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(3) {
+            animation-delay: 0.3s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(4) {
+            animation-delay: 0.35s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(5) {
+            animation-delay: 0.4s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(6) {
+            animation-delay: 0.45s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(7) {
+            animation-delay: 0.5s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(8) {
+            animation-delay: 0.55s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(9) {
+            animation-delay: 0.6s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(10) {
+            animation-delay: 0.65s;
+            transform: translateY(20px);
+        }
+
+        .menu a:nth-child(11) {
+            animation-delay: 0.7s;
+            transform: translateY(20px);
+        }
+
+        @keyframes flyIn {
+            to {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="banner">
+        <h1>
+            <span>G</span><span>a</span><span>t</span><span>e</span>
+            <span>E</span><span>a</span><span>s</span><span>e</span>
+        </h1>
+    </div>
+
+    <div class="container">
+        <h2>Admin Dashboard</h2>
+        <div class="menu">
+            <a href="/VerifyStudent">Verify Students</a>
+            <a href="/ManageMentor">Mentors</a>
+            <a href="/ManageDepartment">Departments</a>
+            <a href="/Pass">Exit Pass</a>
+            <a href="/ComplaintManage">Complaints</a>
+            <a href="/ManageSecurity">Security</a>
+            <a href="/ManageClass">Class</a>
+            <a href="/AssignClass">Assign Class</a>
+            <a href="/AssignDepartment">Assign Department</a>
+        </div>
+    </div>
+
+</body>
+
+</html>

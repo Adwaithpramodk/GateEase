@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial;
+            font-size: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 6px;
+        }
+        th {
+            background: #eee;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Exit Pass Report</h2>
+
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Department</th>
+        <th>Time</th>
+        <th>Date</th>
+        <th>Mentor Status</th>
+        <th>Security Status</th>
+    </tr>
+
+    {% for i in exitpasses %}
+    <tr>
+        <td>{{ i.student_id.name }}</td>
+        <td>{{ i.student_id.classs.department_id.name }}</td>
+        <td>{{ i.time }}</td>
+        <td>{{ i.created_at|date:"d-m-Y" }}</td>
+        <td>{{ i.mentor_status }}</td>
+        <td>{{ i.security_status }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>

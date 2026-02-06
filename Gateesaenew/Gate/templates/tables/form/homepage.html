@@ -231,11 +231,27 @@
 
 <body>
 
-    <div class="banner">
+    <div class="banner" style="position: relative;">
         <h1>
             <span>G</span><span>a</span><span>t</span><span>e</span>
             <span>E</span><span>a</span><span>s</span><span>e</span>
         </h1>
+        <a href="/Logout" style="
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            transition: all 0.2s;
+        " onmouseover="this.style.background='rgba(220, 38, 38, 0.8)'; this.style.borderColor='rgba(220, 38, 38, 0.8)'"
+            onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.borderColor='rgba(255, 255, 255, 0.2)'">
+            Logout
+        </a>
     </div>
 
     <div class="container">

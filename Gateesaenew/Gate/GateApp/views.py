@@ -26,6 +26,17 @@ class AdminRequiredMixin:
              return HttpResponse('<script>alert("Unauthorized Access: Admins Only");window.location="/"</script>')
         
         return super().dispatch(request, *args, **kwargs)
+#login required for all pages
+class LoginRequiredMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not request.session.get('user_id'):
+            return HttpResponse('<script>alert("Login Required");window.location="/"</script>')
+        return super().dispatch(request, *args, **kwargs)
+
+class Logout(View):
+    def get(self, request):
+        request.session.flush()
+        return HttpResponse('<script>alert("Logged out successfully");window.location="/"</script>')
 
 #login page for admin
 class LoginPage(View):
@@ -277,8 +288,8 @@ class DeleteAssignDept(View):
         s=dept_assigntable.objects.get(id=id)
         s.delete()
         return HttpResponse('''<script>alert("Deleted succesfull");window.location='/AssignDepartment'</script>''') 
-#homepage with admin role checking
-class HomePage(AdminRequiredMixin, View):
+#homepage login required
+class HomePage(LoginRequiredMixin, View):
     def get(self,request):
         return render(request,'tables/form/homepage.html')
 
@@ -324,6 +335,11 @@ class EditMentor(View):
         mt=AddMentorForm(request.POST, request.FILES, instance=m)
         if mt.is_valid():
             mt.save()
+            password = request.POST.get('password')
+            if password:
+                if m.LOGINID:
+                    m.LOGINID.password = make_password(password)
+                    m.LOGINID.save()
             return HttpResponse('''<script>alert("Mentor Updated succesfull");window.location='/ManageMentor'</script>''')
 
 class DeleteMentor(View):
@@ -394,6 +410,11 @@ class EditSecurity(View):
         st=AddSecurityForm(request.POST, request.FILES, instance=sr)
         if st.is_valid():
             st.save()
+            password = request.POST.get('password')
+            if password:
+                if sr.LOGINID:
+                    sr.LOGINID.password = make_password(password)
+                    sr.LOGINID.save()
             return HttpResponse('''<script>alert("Security Updated succesfull");window.location='/ManageSecurity'</script>''')
   
 #delete security
@@ -927,71 +948,113 @@ class MentorPassAnalytics(APIView):
 #mentor exit report api
 class MentorExitReportAPI(APIView):
     def get(self, request, lid):
-        mentor = mentortable.objects.get(LOGINID_id=lid)
-        
-        # Get query parameters for filtering
-        search_name = request.GET.get('search', '')
-        class_filter = request.GET.get('class', '')
-        date_filter = request.GET.get('date', '')  # Expected format: YYYY-MM-DD
-        
-        # Get assigned classes
-        assigned_classes = class_assigntable.objects.filter(mentor_id=mentor).values_list('class_id', flat=True)
-        
-        # Base query: only scanned passes from assigned classes
-        passes = exitpasstable.objects.filter(
-            student_id__classs__id__in=assigned_classes,
-            security_status='scanned'
-        ).select_related('student_id', 'student_id__classs', 'student_id__classs__department_id')
-        
-        # Apply search filter
-        if search_name:
-            passes = passes.filter(student_id__name__icontains=search_name)
-        
-        # Apply class filter
-        if class_filter:
-            passes = passes.filter(student_id__classs__class_name=class_filter)
-        
-        # Apply date filter
-        if date_filter:
+        try:
+            # Verify mentor exists
             try:
-                from datetime import datetime
-                filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
-                passes = passes.filter(scanned_at__date=filter_date)
-            except ValueError:
-                pass  # Invalid date format, skip filter
-        
-        # Order by scanned_at descending (most recent first)
-        passes = passes.order_by('-scanned_at')
-        
-        data = []
-        for p in passes:
-            scanned_time = p.scanned_at.strftime('%I:%M %p') if p.scanned_at else '-'
-            scanned_date = p.scanned_at.strftime('%b %d, %Y') if p.scanned_at else '-'
+                mentor = mentortable.objects.get(LOGINID_id=lid)
+            except mentortable.DoesNotExist:
+                return Response({'error': 'Mentor not found'}, status=404)
             
-            data.append({
-                'id': p.id,
-                'student_name': p.student_id.name,
-                'department': p.student_id.classs.department_id.name if p.student_id.classs and p.student_id.classs.department_id else '-',
-                'class': p.student_id.classs.class_name if p.student_id.classs else '-',
-                'date': scanned_date,
-                'time': scanned_time,
-                'status': 'Exited',
-                'reason': p.reason
+            # Get query parameters for filtering
+            search_name = request.GET.get('search', '').strip()
+            class_filter = request.GET.get('class', '').strip()
+            date_filter = request.GET.get('date', '').strip()  # Expected format: YYYY-MM-DD
+            
+            # --- 1. Get assigned classes for this mentor ---
+            assigned_classes_ids = class_assigntable.objects.filter(mentor_id=mentor).values_list('class_id', flat=True)
+            
+            # If no classes assigned, return empty results immediately
+            if not assigned_classes_ids:
+                 return Response({
+                    'passes': [],
+                    'classes': []
+                })
+
+            # Base query: only PROCESSED passes from assigned classes
+            # Include BOTH 'scanned' (group passes) AND 'approved' (individual passes)
+            # Group passes use 'scanned', individual passes use 'approved'
+            passes = exitpasstable.objects.filter(
+                student_id__classs__id__in=assigned_classes_ids,
+                security_status__in=['scanned', 'approved']
+            ).select_related(
+                'student_id', 
+                'student_id__classs', 
+                'student_id__classs__department_id'
+            )
+            
+            # --- 3. Apply Filters ---
+            
+            # Search by Student Name
+            if search_name:
+                passes = passes.filter(student_id__name__icontains=search_name)
+            
+            # Filter by Class Name
+            if class_filter and class_filter != 'All Classes':
+                 passes = passes.filter(student_id__classs__class_name__iexact=class_filter)
+            
+            # Filter by Date (scanned_at)
+            if date_filter:
+                try:
+                    from datetime import datetime
+                    # Parse YYYY-MM-DD
+                    filter_date_obj = datetime.strptime(date_filter, '%Y-%m-%d').date()
+                    # Filter matching date part of scanned_at datetime
+                    passes = passes.filter(scanned_at__date=filter_date_obj)
+                except ValueError:
+                    print(f"Invalid date format received: {date_filter}")
+                    # Optionally handle error or just ignore invalid date
+            
+            # Order by most recent
+            passes = passes.order_by('-scanned_at')
+            
+            # --- 4. Serialize Data ---
+            data = []
+            for p in passes:
+                # Safety checks for related objects
+                curr_student = p.student_id
+                curr_class = curr_student.classs if curr_student else None
+                curr_dept = curr_class.department_id if curr_class else None
+                
+                # CRITICAL: Convert to local timezone before formatting
+                # This ensures the date matches what the user sees in their timezone
+                # Otherwise UTC dates can be off by a day, breaking PDF export filters
+                local_scanned = timezone.localtime(p.scanned_at) if p.scanned_at else None
+                
+                scanned_time = local_scanned.strftime('%I:%M %p') if local_scanned else '-'
+                scanned_date = local_scanned.strftime('%d-%m-%Y') if local_scanned else '-'
+                
+                data.append({
+                    'id': p.id,
+                    'student_name': curr_student.name if curr_student else 'Unknown',
+                    'department': curr_dept.name if curr_dept else '-',
+                    'class': curr_class.class_name if curr_class else '-',
+                    'date': scanned_date,
+                    'time': scanned_time,
+                    'status': 'Exited',
+                    'reason': p.reason or '-',
+                    'mentor_status': p.mentor_status or '-',
+                    'security_status': p.security_status or '-'
+                })
+            
+            # --- 5. Get Filter Options (Classes) ---
+            # Get distinct class names assigned to this mentor
+            class_options = classstable.objects.filter(
+                id__in=assigned_classes_ids
+            ).values_list('class_name', flat=True).distinct()
+            
+            # Filter out None/Empty and sort
+            class_options_list = sorted([str(c).strip() for c in class_options if c])
+            
+            return Response({
+                'passes': data,
+                'classes': class_options_list
             })
-        
-        # Get list of unique classes for filter dropdown
-        classes = set()
-        for class_id in assigned_classes:
-            try:
-                cls = classstable.objects.get(id=class_id)
-                classes.add(cls.class_name)
-            except:
-                pass
-        
-        return Response({
-            'passes': data,
-            'classes': sorted(list(classes))
-        })
+
+        except Exception as e:
+            print(f"Error in MentorExitReportAPI: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=500)
 
 #generate qr code for exit pass 15mins delayed
 class GenerateQRCodeAPI(APIView):
@@ -1113,7 +1176,13 @@ class Securityinfo_api(APIView):
 #get all passes for menntor analytics api
 class getallpasses(APIView):
     def get(self, request, lid):
-        security_obj = exitpasstable.objects.filter(mentor_id__LOGINID_id=lid)
+        # Filter passes for the last 24 hours
+        threshold = timezone.now() - datetime.timedelta(hours=24)
+        security_obj = exitpasstable.objects.filter(
+            mentor_id__LOGINID_id=lid,
+            created_at__gte=threshold
+        ).order_by('-created_at')
+        
         serializer = ExitpassSerializer1(security_obj,many=True)
         print("-----hhhhhh----", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -1150,8 +1219,7 @@ class ForgetPassword(APIView):
         try:
             send_mail(
                 'GateEase Password Reset',
-                f'Your OTP for password reset is: {otp}\nValid for 10 minutes.',
-                'Any queries contact: [gateeaseapp@gmail.com]',
+                f'Your OTP for password reset is: {otp}\nValid for 10 minutes.\nAny queries contact: gateeaseapp@gmail.com',
                 'gateeaseapp@gmail.com',
                 [email],
                 fail_silently=False,

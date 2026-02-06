@@ -20,6 +20,7 @@ from .views import *
 urlpatterns = [
     path('',LoginPage.as_view(),name='LoginPage'),
    path('VerifyStudent',VerifyStudent.as_view(),name='verify_student'),
+   path('Logout',Logout.as_view(),name='logout'),
    path('EditStudent/<int:id>',EditStudent.as_view(),name='edit_student'),
    path('AcceptStudent/<int:lid>',AcceptStudent.as_view(),name='AcceptStudent'),
    path('RejectStudent/<int:lid>',RejectStudent.as_view(),name='RejectStudent'),
@@ -80,8 +81,6 @@ urlpatterns = [
     path('GenerateQRCode', GenerateQRCodeAPI.as_view()),
     path('SecurityGroupPassListAPI', SecurityGroupPassListAPI.as_view()),
     path('ProceedGroupPassAPI', ProceedGroupPassAPI.as_view()),
-    
-    # Push Notification APIs
     path('register_device_token/', RegisterDeviceTokenAPI.as_view()),
     path('update_device_token/', UpdateDeviceTokenAPI.as_view()),
     path('delete_device_token/', DeleteDeviceTokenAPI.as_view()),

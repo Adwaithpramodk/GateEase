@@ -12,9 +12,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -34,7 +36,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dummy-key-for-local-develo
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 
-ALLOWED_HOSTS = ['*'] # For production, you might want to restrict this to ['.onrender.com']
+ALLOWED_HOSTS = ['*'] 
 
 
 # Application definition

@@ -60,7 +60,7 @@ class LoginPage(View):
                 request.session['usertype']=obj.usertype #storing usertype
                 
                 if obj.usertype=='admin':
-                    return HttpResponse('''<script>alert("Login Successful");window.location='HomePage'</script>''')
+                    return HttpResponse('''<script>alert("Login Successful");window.location='/HomePage'</script>''')
                 else:
                      return HttpResponse('''<script>alert("Login UnSuccessful");window.location='/'</script>''')
             
@@ -74,7 +74,7 @@ class LoginPage(View):
                 request.session['usertype']=obj.usertype
                 
                 if obj.usertype=='admin':
-                    return HttpResponse('''<script>alert("Login Successful (Security Updated)");window.location='HomePage'</script>''')
+                    return HttpResponse('''<script>alert("Login Successful (Security Updated)");window.location='/HomePage'</script>''')
                 else:
                      return HttpResponse('''<script>alert("Login UnSuccessful");window.location='/'</script>''')
                      

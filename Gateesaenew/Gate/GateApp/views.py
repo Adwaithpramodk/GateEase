@@ -302,6 +302,8 @@ class AddMentor(View):
     def get(self,request):
         dept = departmenttable.objects.all()
         return render(request,'tables/form/add_mntr.html',{'depts':dept})
+from django.db import transaction
+
 class AddMentor(View):
     def get(self,request):
         dept = departmenttable.objects.all()
@@ -320,12 +322,15 @@ class AddMentor(View):
                 if not password:
                      return HttpResponse('''<script>alert("Error: Password is required");window.location='/AddMentor'</script>''')
 
-                m=mntr.save(commit=False)
-                # SECURE: Hash password before saving
-                hashed_pwd = make_password(password)
-                l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='mentor')
-                m.LOGINID=l
-                m.save()
+                with transaction.atomic():
+                    m=mntr.save(commit=False)
+                    # SECURE: Hash password before saving
+                    hashed_pwd = make_password(password)
+                    l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='mentor')
+                    m.LOGINID=l
+                    m.save()
+                    print(f"DEBUG: Saved Mentor {m.id} linked to Login {l.id}")
+
                 return HttpResponse('''<script>alert("Mentor registraion succesfull");window.location='/ManageMentor'</script>''')
             else:
                  # Clean up error message for alert
@@ -410,12 +415,15 @@ class AddSecurity(View):
                 if not password:
                      return HttpResponse('''<script>alert("Error: Password is required");window.location='/AddSecurity'</script>''')
 
-                m=scr.save(commit=False)
-                # SECURE: Hash password before saving
-                hashed_pwd = make_password(password)
-                l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='security')
-                m.LOGINID=l
-                m.save()
+                with transaction.atomic():
+                    m=scr.save(commit=False)
+                    # SECURE: Hash password before saving
+                    hashed_pwd = make_password(password)
+                    l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='security')
+                    m.LOGINID=l
+                    m.save()
+                    print(f"DEBUG: Saved Security {m.id} linked to Login {l.id}")
+
                 return HttpResponse('''<script>alert("Security registraion succesfull");window.location='/ManageSecurity'</script>''')
             else:
                  # Clean up error message for alert

@@ -14,6 +14,12 @@ from .models import exitpasstable
 from django.contrib.auth.hashers import make_password, check_password
 
 # Create your views here.
+
+# Landing page view - Entry point for the application
+class LandingPage(View):
+    def get(self, request):
+        return render(request, 'index.html')
+
 #admin role checking
 class AdminRequiredMixin:
     def dispatch(self, request, *args, **kwargs):

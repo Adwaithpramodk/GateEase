@@ -18,7 +18,8 @@ from django.contrib import admin
 from django.urls import path,include
 from .views import *
 urlpatterns = [
-    path('',LoginPage.as_view(),name='LoginPage'),
+    path('', LandingPage.as_view(), name='landing'),
+    path('login/', LoginPage.as_view(), name='LoginPage'),
    path('VerifyStudent',VerifyStudent.as_view(),name='verify_student'),
    path('Logout',Logout.as_view(),name='logout'),
    path('EditStudent/<int:id>',EditStudent.as_view(),name='edit_student'),

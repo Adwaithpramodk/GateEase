@@ -324,8 +324,9 @@ class AddMentor(View):
                 m.save()
                 return HttpResponse('''<script>alert("Mentor registraion succesfull");window.location='ManageMentor'</script>''')
             else:
-                 print(mntr.errors)
-                 return HttpResponse('''<script>alert("Form Invalid");window.location='AddMentor'</script>''')
+                 # Clean up error message for alert
+                 errors = mntr.errors.as_text().replace('\n', '\\n').replace('"', "'")
+                 return HttpResponse(f'''<script>alert("Form Invalid: {errors}");window.location='AddMentor'</script>''')
         except Exception as e:
             print(f"Error in AddMentor: {e}")
             return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='AddMentor'</script>''')
@@ -413,7 +414,9 @@ class AddSecurity(View):
                 m.save()
                 return HttpResponse('''<script>alert("Security registraion succesfull");window.location='ManageSecurity'</script>''')
             else:
-                 return HttpResponse('''<script>alert("Form Invalid");window.location='AddSecurity'</script>''')
+                 # Clean up error message for alert
+                 errors = scr.errors.as_text().replace('\n', '\\n').replace('"', "'")
+                 return HttpResponse(f'''<script>alert("Form Invalid: {errors}");window.location='AddSecurity'</script>''')
         except Exception as e:
             print(f"Error in AddSecurity: {e}")
             return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='AddSecurity'</script>''')

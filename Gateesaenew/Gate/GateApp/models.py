@@ -29,7 +29,7 @@ class studenttable(models.Model):
 class mentortable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
     email=models.CharField(max_length=100,null=True,blank=True)
-    phone=models.IntegerField(null=True,blank=True)
+    phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     department=models.ForeignKey(departmenttable,on_delete=models.CASCADE,null=True,blank=True)
     image = models.FileField(upload_to='profile_photos/mentors/', null=True, blank=True)
@@ -58,7 +58,7 @@ class complainttable(models.Model):
 class securitytable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
     email=models.CharField(max_length=100,null=True,blank=True)
-    phone=models.IntegerField(null=True,blank=True)
+    phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     Photo = models.FileField(upload_to='profile_photos/security/', null=True, blank=True)
 

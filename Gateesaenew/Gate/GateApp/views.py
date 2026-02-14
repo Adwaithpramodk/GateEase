@@ -303,15 +303,32 @@ class AddMentor(View):
         dept = departmenttable.objects.all()
         return render(request,'tables/form/add_mntr.html',{'depts':dept})
     def post(self,request):
-        mntr=AddMentorForm(request.POST, request.FILES)
-        if mntr.is_valid():
-            m=mntr.save(commit=False)
-            # SECURE: Hash password before saving
-            hashed_pwd = make_password(request.POST.get('Password'))
-            l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='mentor')
-            m.LOGINID=l
-            m.save()
-            return HttpResponse('''<script>alert("Mentor registraion succesfull");window.location='ManageMentor'</script>''')
+        try:
+            mntr=AddMentorForm(request.POST, request.FILES)
+            if mntr.is_valid():
+                email = request.POST.get('email')
+                password = request.POST.get('Password')
+                
+                # Validation checks
+                if Logintable.objects.filter(username=email).exists():
+                     return HttpResponse('''<script>alert("Error: Email already registered");window.location='AddMentor'</script>''')
+                
+                if not password:
+                     return HttpResponse('''<script>alert("Error: Password is required");window.location='AddMentor'</script>''')
+
+                m=mntr.save(commit=False)
+                # SECURE: Hash password before saving
+                hashed_pwd = make_password(password)
+                l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='mentor')
+                m.LOGINID=l
+                m.save()
+                return HttpResponse('''<script>alert("Mentor registraion succesfull");window.location='ManageMentor'</script>''')
+            else:
+                 print(mntr.errors)
+                 return HttpResponse('''<script>alert("Form Invalid");window.location='AddMentor'</script>''')
+        except Exception as e:
+            print(f"Error in AddMentor: {e}")
+            return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='AddMentor'</script>''')
 
 class EditMentor(View):
     def get(self,request,id):
@@ -375,16 +392,32 @@ class AddSecurity(View):
     def get(self,request):
         return render(request,'tables/form/add_security.html')
     def post(self,request):
-        scr=AddSecurityForm(request.POST, request.FILES)
-        if scr.is_valid():
-            m=scr.save(commit=False)
-            # SECURE: Hash password before saving
-            hashed_pwd = make_password(request.POST.get('Password'))
-            l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='security')
-            m.LOGINID=l
-            m.save()
-            return HttpResponse('''<script>alert("Security registraion succesfull");window.location='ManageSecurity'</script>''')
-    
+        try:
+            scr=AddSecurityForm(request.POST, request.FILES)
+            if scr.is_valid():
+                email = request.POST.get('email')
+                password = request.POST.get('Password')
+                
+                # Validation checks
+                if Logintable.objects.filter(username=email).exists():
+                     return HttpResponse('''<script>alert("Error: Email already registered");window.location='AddSecurity'</script>''')
+                
+                if not password:
+                     return HttpResponse('''<script>alert("Error: Password is required");window.location='AddSecurity'</script>''')
+
+                m=scr.save(commit=False)
+                # SECURE: Hash password before saving
+                hashed_pwd = make_password(password)
+                l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='security')
+                m.LOGINID=l
+                m.save()
+                return HttpResponse('''<script>alert("Security registraion succesfull");window.location='ManageSecurity'</script>''')
+            else:
+                 return HttpResponse('''<script>alert("Form Invalid");window.location='AddSecurity'</script>''')
+        except Exception as e:
+            print(f"Error in AddSecurity: {e}")
+            return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='AddSecurity'</script>''')
+
 class AddClass(View):
     def get(self,request):
         obj = departmenttable.objects.all()

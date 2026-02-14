@@ -302,6 +302,10 @@ class AddMentor(View):
     def get(self,request):
         dept = departmenttable.objects.all()
         return render(request,'tables/form/add_mntr.html',{'depts':dept})
+class AddMentor(View):
+    def get(self,request):
+        dept = departmenttable.objects.all()
+        return render(request,'tables/form/add_mntr.html',{'depts':dept})
     def post(self,request):
         try:
             mntr=AddMentorForm(request.POST, request.FILES)
@@ -311,10 +315,10 @@ class AddMentor(View):
                 
                 # Validation checks
                 if Logintable.objects.filter(username=email).exists():
-                     return HttpResponse('''<script>alert("Error: Email already registered");window.location='AddMentor'</script>''')
+                     return HttpResponse('''<script>alert("Error: Email already registered");window.location='/AddMentor'</script>''')
                 
                 if not password:
-                     return HttpResponse('''<script>alert("Error: Password is required");window.location='AddMentor'</script>''')
+                     return HttpResponse('''<script>alert("Error: Password is required");window.location='/AddMentor'</script>''')
 
                 m=mntr.save(commit=False)
                 # SECURE: Hash password before saving
@@ -322,14 +326,14 @@ class AddMentor(View):
                 l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='mentor')
                 m.LOGINID=l
                 m.save()
-                return HttpResponse('''<script>alert("Mentor registraion succesfull");window.location='ManageMentor'</script>''')
+                return HttpResponse('''<script>alert("Mentor registraion succesfull");window.location='/ManageMentor'</script>''')
             else:
                  # Clean up error message for alert
                  errors = mntr.errors.as_text().replace('\n', '\\n').replace('"', "'")
-                 return HttpResponse(f'''<script>alert("Form Invalid: {errors}");window.location='AddMentor'</script>''')
+                 return HttpResponse(f'''<script>alert("Form Invalid: {errors}");window.location='/AddMentor'</script>''')
         except Exception as e:
             print(f"Error in AddMentor: {e}")
-            return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='AddMentor'</script>''')
+            return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='/AddMentor'</script>''')
 
 class EditMentor(View):
     def get(self,request,id):
@@ -376,7 +380,7 @@ class AddDepartment(View):
         deprt=AddDepartmentForm(request.POST)
         if deprt.is_valid():
             m=deprt.save()
-            return HttpResponse('''<script>alert("Department Added succesfull");window.location='ManageDepartment'</script>''')
+            return HttpResponse('''<script>alert("Department Added succesfull");window.location='/ManageDepartment'</script>''')
         
 class DeleteDepartment(View):
     def get(self,request,id):
@@ -401,10 +405,10 @@ class AddSecurity(View):
                 
                 # Validation checks
                 if Logintable.objects.filter(username=email).exists():
-                     return HttpResponse('''<script>alert("Error: Email already registered");window.location='AddSecurity'</script>''')
+                     return HttpResponse('''<script>alert("Error: Email already registered");window.location='/AddSecurity'</script>''')
                 
                 if not password:
-                     return HttpResponse('''<script>alert("Error: Password is required");window.location='AddSecurity'</script>''')
+                     return HttpResponse('''<script>alert("Error: Password is required");window.location='/AddSecurity'</script>''')
 
                 m=scr.save(commit=False)
                 # SECURE: Hash password before saving
@@ -412,14 +416,14 @@ class AddSecurity(View):
                 l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='security')
                 m.LOGINID=l
                 m.save()
-                return HttpResponse('''<script>alert("Security registraion succesfull");window.location='ManageSecurity'</script>''')
+                return HttpResponse('''<script>alert("Security registraion succesfull");window.location='/ManageSecurity'</script>''')
             else:
                  # Clean up error message for alert
                  errors = scr.errors.as_text().replace('\n', '\\n').replace('"', "'")
-                 return HttpResponse(f'''<script>alert("Form Invalid: {errors}");window.location='AddSecurity'</script>''')
+                 return HttpResponse(f'''<script>alert("Form Invalid: {errors}");window.location='/AddSecurity'</script>''')
         except Exception as e:
             print(f"Error in AddSecurity: {e}")
-            return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='AddSecurity'</script>''')
+            return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='/AddSecurity'</script>''')
 
 class AddClass(View):
     def get(self,request):
@@ -429,7 +433,7 @@ class AddClass(View):
         cls=AddClassForm(request.POST)
         if cls.is_valid():
             m=cls.save()
-            return HttpResponse('''<script>alert("Class Added succesfull");window.location='ManageClass'</script>''')
+            return HttpResponse('''<script>alert("Class Added succesfull");window.location='/ManageClass'</script>''')
         
 class DeleteClass(View):
     def get(self,request,id):

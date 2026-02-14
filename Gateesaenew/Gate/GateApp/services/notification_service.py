@@ -15,16 +15,26 @@ def initialize_firebase():
     try:
         # Check if Firebase is already initialized
         if not firebase_admin._apps:
-            # Path to your Firebase service account JSON file
-            cred_path = os.path.join(settings.BASE_DIR, 'firebase-service-account.json')
+            # Check for generic environment variable for the whole JSON content
+            service_account_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON')
             
-            if os.path.exists(cred_path):
-                cred = credentials.Certificate(cred_path)
+            if service_account_json:
+                import json
+                cred_dict = json.loads(service_account_json)
+                cred = credentials.Certificate(cred_dict)
                 firebase_admin.initialize_app(cred)
-                print("Firebase Admin SDK initialized successfully")
+                print("Firebase Admin SDK initialized from environment variable")
             else:
-                print(f"Firebase service account file not found at: {cred_path}")
-                print("Push notifications will not work until you add the file")
+                # Path to your Firebase service account JSON file
+                cred_path = os.path.join(settings.BASE_DIR, 'firebase-service-account.json')
+                
+                if os.path.exists(cred_path):
+                    cred = credentials.Certificate(cred_path)
+                    firebase_admin.initialize_app(cred)
+                    print("Firebase Admin SDK initialized successfully from file")
+                else:
+                    print(f"Firebase service account file not found at: {cred_path}")
+                    print("Push notifications will not work until you add the file or set FIREBASE_SERVICE_ACCOUNT_JSON env var")
     except Exception as e:
         print(f"Firebase initialization error: {e}")
 

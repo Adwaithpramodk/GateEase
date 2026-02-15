@@ -91,21 +91,17 @@ from .models import studenttable
 
 class VerifyStudent(AdminRequiredMixin, View):
     def get(self, request):
-        try:
-            students_list = studenttable.objects.all().order_by('-id')
+        students_list = studenttable.objects.all().order_by('-id')
 
-            paginator = Paginator(students_list, 15)
-            page_number = request.GET.get('page')
-            students = paginator.get_page(page_number)
+        paginator = Paginator(students_list, 15)
+        page_number = request.GET.get('page')
+        students = paginator.get_page(page_number)
 
-            return render(
-                request,
-                'tables/form/verify_student.html',
-                {'students': students}
-            )
-        except Exception as e:
-            import traceback
-            return HttpResponse(f"<h3>Error in VerifyStudent</h3><pre>{traceback.format_exc()}</pre>")
+        return render(
+            request,
+            'tables/form/verify_student.html',
+            {'students': students}
+        )
 
 class EditStudent(View):
     def get(self, request, id):
@@ -241,27 +237,19 @@ class DeleteClass(View):
 
 class ManageClass(AdminRequiredMixin, View):
     def get(self,request):
-        try:
-            classs_name=classstable.objects.all().order_by('-id')
-            return render(request, 'tables/form/mng_class.html',{'classes':classs_name})
-        except Exception as e:
-            import traceback
-            return HttpResponse(f"<h3>Error in ManageClass</h3><pre>{traceback.format_exc()}</pre>")
+        classs_name=classstable.objects.all().order_by('-id')
+        return render(request, 'tables/form/mng_class.html',{'classes':classs_name})
     
 class AssignClass(View):
     def get(self, request):
-        try:
-            classs_name = classstable.objects.all().order_by('-id')
-            mentor = mentortable.objects.all()
-            obj=class_assigntable.objects.all()
-            return render(
-                request,
-                'tables/form/assn_class.html',
-                {'cls': classs_name, 'mt': mentor,'assign':obj}
-            )
-        except Exception as e:
-            import traceback
-            return HttpResponse(f"<h3>Error in AssignClass</h3><pre>{traceback.format_exc()}</pre>")
+        classs_name = classstable.objects.all().order_by('-id')
+        mentor = mentortable.objects.all()
+        obj=class_assigntable.objects.all()
+        return render(
+            request,
+            'tables/form/assn_class.html',
+            {'cls': classs_name, 'mt': mentor,'assign':obj}
+        )
 
     def post(self, request):
         mentor_id = request.POST.get('mentor')

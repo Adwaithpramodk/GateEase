@@ -161,7 +161,7 @@
                 <thead>
                     <tr>
                         <th>Class Name</th>
-                        <th>Year</th>
+                        <th>Admission Year</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -169,7 +169,7 @@
                     {% for i in classes %}
                     <tr>
                         <td>{{ i.class_name }}</td>
-                        <td>{{ i.year }}</td>
+                        <td>{{ i.admission_year }}</td>
                         <td>
                             <a href="/DeleteClass/{{ i.id }}">
                                 <button class="btn-delete" type="button">Delete</button>

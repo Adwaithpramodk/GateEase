@@ -26,7 +26,7 @@ class AddSecurityForm(ModelForm):
 class AddClassForm(ModelForm):
     class Meta:
         model=classstable
-        fields=['class_name','year', 'department_id']
+        fields=['class_name','admission_year', 'department_id']
 
 # class EditStudentForm(ModelForm):
 #     class Meta:

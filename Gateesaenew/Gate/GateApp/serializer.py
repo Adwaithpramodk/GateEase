@@ -14,10 +14,11 @@ class DepartmentSerializer(ModelSerializer):
 
 
 class ClassSerializer(ModelSerializer):
+
     class Meta:
         model=classstable
-        fields=['id','class_name', 'year']
-    
+        fields=['id','class_name', 'admission_year', 'department_id']
+
 
 class StudentSerializer(ModelSerializer):
     class Meta:

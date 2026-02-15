@@ -951,7 +951,8 @@ class GroupPassAPI(APIView):
                         time=current_time,
                         mentor_status='approved',
                         security_status='pending',
-                        approved_at=now
+                        approved_at=now,
+                        is_group_pass=True
                     )
                     count += 1
                 except Exception as inner_e:
@@ -1121,6 +1122,13 @@ class GenerateQRCodeAPI(APIView):
             ).get(id=pass_id)
         except exitpasstable.DoesNotExist:
             return Response({"error": "Pass not found"}, status=404)
+        
+        # Group passes don't need QR codes
+        if exit_pass.is_group_pass:
+            return Response({
+                "error": "QR code not required",
+                "message": "This is a group pass. No QR code needed - security will approve directly."
+            }, status=400)
         
         # Check if pass is approved
         if exit_pass.mentor_status != "approved":

@@ -106,14 +106,14 @@
 <body>
 
     <div class="container">
-        <h2>Add Class</h2>
+        <h2>Add Batch/Class</h2>
 
         <form method="post">
             {% csrf_token %}
 
             <div class="form-group">
                 <label>Department Name</label>
-                <select name="department_id" required>
+                <select name="department_id" id="department" required>
                     <option value="">Select Department</option>
                     {% for i in dept %}
                     <option value="{{ i.id }}">{{ i.name }}</option>
@@ -122,19 +122,41 @@
             </div>
 
             <div class="form-group">
-                <label>Class Name</label>
-                <input type="text" name="class_name" placeholder="Enter class name" required>
+                <label>Admission Year</label>
+                <input type="number" name="admission_year" id="admission_year" placeholder="Year" min="2020" max="2030"
+                    pattern="[0-9]{4}" title="Please enter a valid 4-digit year" required>
+                <small style="color: #6b7280; font-size: 12px; display: block; margin-top: 5px;"></small>
             </div>
-
             <div class="form-group">
-                <label>Year</label>
-                <input type="text" name="year" placeholder="Enter year (YYYY)" pattern="[0-9]{4}"
-                    title="Please enter a valid 4-digit year" required>
+                <label>Batch Name</label>
+                <input type="text" name="class_name" id="class_name" placeholder="Batch" required>
+                <small style="color: #6b7280; font-size: 12px; display: block; margin-top: 5px;">
+                </small>
             </div>
 
-            <button type="submit">Add Class</button>
+            <button type="submit">Add Batch</button>
         </form>
     </div>
+
+    <script>
+        // AUTO-GENERATE BATCH NAME
+        // Automatically suggest batch name when department and year are selected
+        const deptSelect = document.getElementById('department');
+        const yearInput = document.getElementById('admission_year');
+        const classNameInput = document.getElementById('class_name');
+
+        function updateBatchName() {
+            const deptName = deptSelect.options[deptSelect.selectedIndex]?.text;
+            const year = yearInput.value;
+
+            if (deptName && deptName !== 'Select Department' && year && year.length === 4) {
+                classNameInput.value = `${deptName} Batch ${year}`;
+            }
+        }
+
+        deptSelect.addEventListener('change', updateBatchName);
+        yearInput.addEventListener('input', updateBatchName);
+    </script>
 
 </body>
 

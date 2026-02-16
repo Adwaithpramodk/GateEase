@@ -1,7 +1,7 @@
 from django.db import models
 
 class Logintable(models.Model):
-    username=models.CharField(max_length=100,null=True,blank=True)
+    username=models.CharField(max_length=100, null=True, blank=True, db_index=True) 
     password=models.CharField(max_length=100,null=True,blank=True)
     usertype=models.CharField(max_length=100,null=True,blank=True)
 
@@ -116,7 +116,7 @@ class exitpasstable(models.Model):
     mentor_id=models.ForeignKey(mentortable,on_delete=models.CASCADE,null=True,blank=True)
     reason=models.TextField(max_length=100,null=True,blank=True)
     time=models.TimeField(null=True,blank=True)
-    mentor_status=models.CharField(max_length=100,null=True,blank=True)
+    mentor_status=models.CharField(max_length=100, null=True, blank=True, db_index=True)
     security_status=models.CharField(max_length=100,null=True,blank=True)
     created_at=models.DateTimeField(auto_now_add=True)
     approved_at=models.DateTimeField(null=True,blank=True)

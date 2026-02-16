@@ -63,6 +63,7 @@ urlpatterns = [
     
 ################################################################################
     path('Mentorinfo_api/<int:lid>',Mentorinfo_api.as_view()),
+    path('MentorDashboardStatsAPI/<int:lid>', MentorDashboardStatsAPI.as_view()),
     path('Pendingpass_api/<int:lid>',Pendingpass_api.as_view()),
     path('approve',ApproveExitPassAPI.as_view()),
     path("reject", RejectExitPassAPI.as_view()),
@@ -85,6 +86,7 @@ urlpatterns = [
     path('register_device_token/', RegisterDeviceTokenAPI.as_view()),
     path('update_device_token/', UpdateDeviceTokenAPI.as_view()),
     path('delete_device_token/', DeleteDeviceTokenAPI.as_view()),
+
 
 
 

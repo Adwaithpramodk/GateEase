@@ -577,41 +577,28 @@ class LoginpageAPI(APIView):
 
         username = request.data.get("username")
         password = request.data.get("password")
-        #checking empty or not
+        
+        # Validate input
         if not username or not password:
             return Response(
                 {"message": "Username and Password required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        # Get user by username first
-        t_user = Logintable.objects.filter(username=username).first()
+        
+        # Optimized: Use only() to fetch only required fields
+        t_user = Logintable.objects.only('id', 'username', 'password', 'usertype').filter(username=username).first()
+        
         # Verify password hash
         if not t_user or not check_password(password, t_user.password):
             return Response(
                 {"message": "Invalid Username or Password"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+        
+        # Build response with essential login data only
         response_dict["message"] = "success"
         response_dict["login_id"] = t_user.id
         response_dict["usertype"] = t_user.usertype
-        # Default counts
-        response_dict["count"] = 0
-        response_dict["pending_count"] = 0
-
-        if t_user.usertype == 'mentor':
-            # get mentor object
-            mentor = mentortable.objects.filter(LOGINID=t_user).first()
-            
-            if mentor:
-                # 1. Passes already processed/assigned to this mentor
-                processed_passes = exitpasstable.objects.filter(mentor_id=mentor)
-                
-                # 2. Pending passes from assigned classes
-                assigned_classes = class_assigntable.objects.filter(mentor_id=mentor).values_list('class_id', flat=True)
-                pending_requests = exitpasstable.objects.filter(mentor_status='pending', student_id__classs__id__in=assigned_classes)
-
-                response_dict["count"] = processed_passes.count() + pending_requests.count()
-                response_dict["pending_count"] = pending_requests.count()
 
         print("-----login details--------->", response_dict)
         return Response(response_dict, status=status.HTTP_200_OK)
@@ -770,6 +757,51 @@ class Mentorinfo_api(APIView):
         serializer = MentorSerializer(mentor_obj)
         print("---------", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+#mentor dashboard statistics api (optimized for performance)
+class MentorDashboardStatsAPI(APIView):
+    def get(self, request, lid):
+        """
+        Optimized API to fetch mentor dashboard statistics.
+        Returns count of processed passes and pending passes.
+        This replaces the heavy counting logic that was previously in LoginpageAPI.
+        """
+        from django.db.models import Count, Q
+        
+        try:
+            # Get mentor object with optimized select_related
+            mentor = mentortable.objects.select_related('LOGINID').get(LOGINID_id=lid)
+            
+            # Get assigned classes (optimized with values_list)
+            assigned_classes = class_assigntable.objects.filter(
+                mentor_id=mentor
+            ).values_list('class_id', flat=True)
+            
+            # Optimized count query using aggregation
+            stats = exitpasstable.objects.filter(
+                Q(mentor_id=mentor) |  # Passes assigned to this mentor
+                Q(mentor_status='pending', student_id__classs__id__in=assigned_classes)  # Pending from assigned classes
+            ).aggregate(
+                total_count=Count('id'),
+                pending_count=Count('id', filter=Q(mentor_status='pending'))
+            )
+            
+            return Response({
+                "count": stats['total_count'] or 0,
+                "pending_count": stats['pending_count'] or 0
+            }, status=status.HTTP_200_OK)
+            
+        except mentortable.DoesNotExist:
+            return Response(
+                {"error": "Mentor not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            print(f"Error in MentorDashboardStatsAPI: {e}")
+            return Response(
+                {"error": "Failed to fetch statistics"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 #pending pass list for mentor
 class Pendingpass_api(APIView):

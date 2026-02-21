@@ -16,7 +16,6 @@ admin.site.register(class_assigntable)
 admin.site.register(dept_assigntable)
 admin.site.register(alerttable)
 
-
 # Custom admin for MentorDeviceToken
 @admin.register(MentorDeviceToken)
 class MentorDeviceTokenAdmin(admin.ModelAdmin):

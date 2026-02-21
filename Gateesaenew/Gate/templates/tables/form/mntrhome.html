@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentor Dashboard | GateEase</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-color);
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+        }
+
+        /* ================= TOP BANNER ================= */
+        .banner {
+            width: 100%;
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 24px 0;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .banner h1 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 32px;
+            letter-spacing: 2px;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+        }
+
+        .banner h1 span {
+            display: inline-block;
+            opacity: 0;
+            animation: letterMerge 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .banner h1 span:nth-child(odd) {
+            transform: translateX(-40px);
+        }
+
+        .banner h1 span:nth-child(even) {
+            transform: translateX(40px);
+        }
+
+        .banner h1 span:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .banner h1 span:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .banner h1 span:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .banner h1 span:nth-child(4) {
+            animation-delay: 0.25s;
+        }
+
+        .banner h1 span:nth-child(5) {
+            animation-delay: 0.3s;
+        }
+
+        .banner h1 span:nth-child(6) {
+            animation-delay: 0.35s;
+        }
+
+        .banner h1 span:nth-child(7) {
+            animation-delay: 0.4s;
+        }
+
+        .banner h1 span:nth-child(8) {
+            animation-delay: 0.45s;
+        }
+
+        @keyframes letterMerge {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+        }
+
+        .logout:hover {
+            background: rgba(220, 38, 38, 0.85);
+            border-color: rgba(220, 38, 38, 0.85);
+        }
+
+        /* ================= MAIN ================= */
+        .container {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        /* ================= ACTION GRID ================= */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        /* ================= ACTION CARD ================= */
+        .action-card {
+            background: linear-gradient(135deg, #ffffff, #f9fafb);
+            border-radius: 18px;
+            padding: 48px 44px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+            transition: box-shadow 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .action-card:hover {
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
+        }
+
+        .action-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .action-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+
+        /* ================= BUTTON ================= */
+        .primary-btn {
+            align-self: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 36px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            border-radius: 12px;
+            text-decoration: none;
+            box-shadow: 0 8px 18px rgba(79, 70, 229, 0.28);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .primary-btn:hover,
+        .primary-btn:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(79, 70, 229, 0.32);
+            outline: none;
+        }
+
+        @media (max-width: 600px) {
+            .action-card {
+                padding: 40px 30px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP BANNER -->
+    <div class="banner">
+        <h1>
+            <span>G</span><span>a</span><span>t</span><span>e</span>
+            <span>E</span><span>a</span><span>s</span><span>e</span>
+        </h1>
+        <a href="/Logout" class="logout">Logout</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+        <h2>Mentor Dashboard</h2>
+
+        <!-- ACTION GRID -->
+        <div class="action-grid">
+
+            <!-- ACTION CARD 1 -->
+            <div class="action-card">
+                <div>
+                    <div class="action-title">Student Verification</div>
+                    <div class="action-subtitle">
+                        Review and approve students assigned to you
+                    </div>
+                </div>
+                <a href="/VerifyStudentMentor" class="primary-btn">
+                    Verify Students
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

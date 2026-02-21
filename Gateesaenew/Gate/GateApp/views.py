@@ -12,6 +12,7 @@ from django.template.loader import get_template
 from xhtml2pdf import pisa
 from .models import exitpasstable
 from django.contrib.auth.hashers import make_password, check_password
+from django.db import transaction
 
 # Create your views here.
 
@@ -61,6 +62,8 @@ class LoginPage(View):
                 
                 if obj.usertype=='admin':
                     return HttpResponse('''<script>alert("Login Successful");window.location='/HomePage'</script>''')
+                elif obj.usertype=='mentor':
+                    return HttpResponse('''<script>alert("Login Successful");window.location='/MntrHome'</script>''')
                 else:
                      return HttpResponse('''<script>alert("Login UnSuccessful");window.location='/'</script>''')
             
@@ -75,6 +78,8 @@ class LoginPage(View):
                 
                 if obj.usertype=='admin':
                     return HttpResponse('''<script>alert("Login Successful (Security Updated)");window.location='/HomePage'</script>''')
+                elif obj.usertype=='mentor':
+                    return HttpResponse('''<script>alert("Login Successful (Security Updated)");window.location='/MntrHome'</script>''')
                 else:
                      return HttpResponse('''<script>alert("Login UnSuccessful");window.location='/'</script>''')
                      
@@ -88,15 +93,13 @@ from django.views import View
 from django.shortcuts import render
 from django.core.paginator import Paginator
 from .models import studenttable
-
-class VerifyStudent(AdminRequiredMixin, View):
+class VerifyStudent(LoginRequiredMixin, View):
     def get(self, request):
         students_list = studenttable.objects.all().order_by('-id')
 
         paginator = Paginator(students_list, 15)
         page_number = request.GET.get('page')
         students = paginator.get_page(page_number)
-
         return render(
             request,
             'tables/form/verify_student.html',
@@ -122,23 +125,30 @@ class AcceptStudent(View):
         login_obj=Logintable.objects.get(id=lid)
         login_obj.usertype='Student'
         login_obj.save()
-        return redirect('verify_student')
+        return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
 
 class RejectStudent(View):
     def get(self,request, lid):
         login_obj=Logintable.objects.get(id=lid)
         login_obj.usertype='Rejected'
         login_obj.save()
-        return redirect('verify_student')   
+        return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
     
 class DeleteStudent(View):
     def get(self,request,id):
-        s=studenttable.objects.get(id=id)
-        if s.LOGINID:
-            s.LOGINID.delete()
-        else:
-            s.delete()
-        return HttpResponse('''<script>alert("Student Deleted succesfull");window.location='/VerifyStudent'</script>''')
+        try:
+            s=studenttable.objects.get(id=id)
+            if s.LOGINID:
+                s.LOGINID.delete()
+            else:
+                s.delete()
+            
+            # Use javascript to alert and redirect back to referer
+            referer = request.META.get('HTTP_REFERER', '/VerifyStudent')
+            return HttpResponse(f'''<script>alert("Student Deleted successfully");window.location='{referer}'</script>''')
+        except Exception:
+             referer = request.META.get('HTTP_REFERER', '/VerifyStudent')
+             return HttpResponse(f'''<script>alert("Error Deleting Student");window.location='{referer}'</script>''')
 
 class UploadImage(View):
     def post(self, request, s_id):
@@ -151,7 +161,7 @@ class UploadImage(View):
             student_obj.Photo = Photo
             student_obj.save()
 
-        return redirect('verify_student')
+        return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
 
 class AddDepartment(View):
     def get(self,request):
@@ -295,28 +305,27 @@ class DeleteAssignDept(View):
         s.delete()
         return HttpResponse('''<script>alert("Deleted succesfull");window.location='/AssignDepartment'</script>''') 
 #homepage login required
-class HomePage(LoginRequiredMixin, View):
+class HomePage(LoginRequiredMixin,AdminRequiredMixin,View):
     def get(self,request):
         return render(request,'tables/form/homepage.html')
+
+class MntrHome(LoginRequiredMixin, View):
+    def get(self,request):
+        return render(request,'tables/form/mntrhome.html')
 
 class ManageMentor(AdminRequiredMixin, View):
     def get(self,request):
         mentor=mentortable.objects.all().order_by('-id')
         return render(request, 'tables/form/mng_mntr.html',{'mentors':mentor})
 
-class AddMentor(View):
-    def get(self,request):
+class AddMentor(AdminRequiredMixin, View):
+    def get(self, request):
         dept = departmenttable.objects.all()
-        return render(request,'tables/form/add_mntr.html',{'depts':dept})
-from django.db import transaction
+        return render(request, 'tables/form/add_mntr.html', {'depts': dept})
 
-class AddMentor(View):
-    def get(self,request):
-        dept = departmenttable.objects.all()
-        return render(request,'tables/form/add_mntr.html',{'depts':dept})
-    def post(self,request):
+    def post(self, request):
         try:
-            mntr=AddMentorForm(request.POST, request.FILES)
+            mntr = AddMentorForm(request.POST, request.FILES)
             if mntr.is_valid():
                 email = request.POST.get('email')
                 password = request.POST.get('Password')
@@ -329,13 +338,12 @@ class AddMentor(View):
                      return HttpResponse('''<script>alert("Error: Password is required");window.location='/AddMentor'</script>''')
 
                 with transaction.atomic():
-                    m=mntr.save(commit=False)
+                    m = mntr.save(commit=False)
                     # SECURE: Hash password before saving
                     hashed_pwd = make_password(password)
-                    l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='mentor')
-                    m.LOGINID=l
+                    l = Logintable.objects.create(username=m.email, password=hashed_pwd, usertype='mentor')
+                    m.LOGINID = l
                     m.save()
-                    print(f"DEBUG: Saved Mentor {m.id} linked to Login {l.id}")
 
                 return HttpResponse('''<script>alert("Mentor registraion succesfull");window.location='/ManageMentor'</script>''')
             else:
@@ -1170,27 +1178,18 @@ class GenerateQRCodeAPI(APIView):
         if exit_pass.security_status in ["scanned", "rejected"]:
             return Response({"error": "Pass already processed"}, status=400)
         
-        # Get current time and requested exit time
-        # Use localtime() to get time in server's configured timezone (not UTC)
         now = timezone.localtime()
         
-        # Combine TODAY's date with the exit time (not created_at date)
-        # This ensures we check if it's 15 minutes before exit TODAY
         exit_datetime = datetime.datetime.combine(
-            now.date(),  # Use today's date, not created_at
+            now.date(),  
             exit_pass.time
         )
-        # Make timezone aware using current timezone (not default UTC)
         exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
         
-        # Check if we're within 15 minutes before the exit time
         time_until_exit = (exit_datetime - now).total_seconds() / 60
 
-        # If exit time has passed or we're past the 15-min window, allow QR generation
-        # Only block if we're MORE than 15 minutes away from exit time
         if time_until_exit > 15:
             minutes_remaining = int(time_until_exit)
-            # Calculate when QR will be available (15 min before exit)
             minutes_until_available = minutes_remaining - 15
             return Response({
                 "error": "QR code not yet available",
@@ -1616,3 +1615,43 @@ class DeleteDeviceTokenAPI(APIView):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+# HOD role checking
+class MentorRequiredMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not request.session.get('user_id'):
+            return HttpResponse('<script>alert("Login Required");window.location="/"</script>')
+        if request.session.get('usertype') != 'mentor':
+             return HttpResponse('<script>alert("Unauthorized Access: Mentor Only");window.location="/"</script>')
+        return super().dispatch(request, *args, **kwargs)
+
+class VerifyStudentMentor(MentorRequiredMixin, View):
+    def get(self, request):
+        mentor_dept_id = request.session.get('user_id')
+        # Use LOGINID_id or connect via LOGINID object
+        mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
+        
+        if not mentor_obj:
+            return HttpResponse('<script>alert("Mentor Profile Not Found");window.location="/"</script>')
+
+        # Get assigned classes for this mentor
+        assigned_classes_objs = class_assigntable.objects.filter(mentor_id=mentor_obj).select_related('class_id')
+        assigned_classes_ids = [obj.class_id.id for obj in assigned_classes_objs]
+        class_names = ", ".join([obj.class_id.class_name for obj in assigned_classes_objs])
+        
+        # Filter students strictly by the mentor's assigned classes
+        students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids).order_by('-id')
+
+        paginator = Paginator(students_list, 15)
+        page_number = request.GET.get('page')
+        students = paginator.get_page(page_number)
+        
+        return render(
+            request,
+            'tables/form/verify_student_mentor.html',
+            {
+                'students': students,
+                'mentor_name': mentor_obj.name,
+                'class_names': class_names
+            }
+        )

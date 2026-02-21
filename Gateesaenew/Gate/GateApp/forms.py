@@ -7,7 +7,6 @@ class AddMentorForm(ModelForm):
     class Meta:
         model=mentortable
         fields=['name','email','phone','department','image']
-
 class AddDepartmentForm(ModelForm):
     class Meta:
         model=departmenttable

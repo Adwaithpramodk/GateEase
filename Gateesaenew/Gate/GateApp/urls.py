@@ -50,6 +50,8 @@ urlpatterns = [
     path('DeleteSecurity/<int:id>',DeleteSecurity.as_view(),name='edit_security'),
     path('AddClass',AddClass.as_view(),name='add_class'),
     path('UploadImage/<int:s_id>',UploadImage.as_view(),name='UploadImage'),
+    path('MntrHome',MntrHome.as_view(),name='MntrHome'),
+    path('VerifyStudentMentor',VerifyStudentMentor.as_view(),name='verify_student_mentor'),
 
 
 ########################API#############################

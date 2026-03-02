@@ -43,7 +43,7 @@ class LoginRequiredMixin:
 class Logout(View):
     def get(self, request):
         request.session.flush()
-        return HttpResponse('<script>alert("Logged out successfully");window.location="/"</script>')
+        return HttpResponse('<script>alert("Logged out successfully");window.location="login/"</script>')
 
 #login page for admin
 class LoginPage(View):

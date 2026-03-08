@@ -627,11 +627,33 @@ class ApplypassAPI(APIView):
     
     def post(self, request, lid):
         try:
-            reason = request.data.get('reason')
-            time_str = request.data.get('time')
-            time_obj = datetime.datetime.strptime(time_str, '%I:%M %p').time()
+            reason = request.data.get('reason', '').strip()
+            time_str = request.data.get('time', '').strip()
+
+            # ── Server-side validation ──
+            if not reason:
+                return Response({"error": "Reason is required"}, status=status.HTTP_400_BAD_REQUEST)
+            if len(reason) < 5:
+                return Response({"error": "Reason must be at least 5 characters"}, status=status.HTTP_400_BAD_REQUEST)
+            if len(reason) > 500:
+                return Response({"error": "Reason must be under 500 characters"}, status=status.HTTP_400_BAD_REQUEST)
+            if not time_str:
+                return Response({"error": "Exit time is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                time_obj = datetime.datetime.strptime(time_str, '%I:%M %p').time()
+            except ValueError:
+                return Response({"error": "Invalid time format. Expected HH:MM AM/PM"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ── Ensure exit time is in the future ──
+            now_local = timezone.localtime()
+            exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
+            exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
+            if exit_datetime <= now_local:
+                return Response({"error": "Exit time must be in the future"}, status=status.HTTP_400_BAD_REQUEST)
+
             student_obj = studenttable.objects.get(LOGINID_id=lid)
-            
+
             # Create exit pass
             exit_pass = exitpasstable.objects.create(
                 student_id=student_obj,

@@ -164,11 +164,7 @@ class dept_assigntable(models.Model):
     mentor_id=models.ForeignKey(mentortable,on_delete=models.CASCADE,null=True,blank=True)
     status=models.CharField(max_length=100,null=True,blank=True)
     date=models.DateField(null=True,blank=True)
-
-class alerttable(models.Model):
-    image_url=models.CharField(max_length=200,null=True,blank=True)
-    status=models.CharField(max_length=100,null=True,blank=True)
-
+    
 class MentorDeviceToken(models.Model):
     mentor = models.ForeignKey(mentortable, on_delete=models.CASCADE, related_name='device_tokens')
     device_token = models.CharField(max_length=255, unique=True)

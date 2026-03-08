@@ -86,7 +86,3 @@ class DepartmentassignSerializer(ModelSerializer):
         model=dept_assigntable
         fields='__all__'
 
-class AlertSerializer(ModelSerializer):
-    class Meta:
-        model=alerttable
-        fields='__all__'

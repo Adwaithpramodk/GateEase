@@ -49,6 +49,7 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.13.4
   shimmer: ^3.0.0
+  numberpicker: ^2.1.2
   
 
 dev_dependencies:

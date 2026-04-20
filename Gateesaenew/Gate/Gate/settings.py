@@ -36,8 +36,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dummy-key-for-local-develo
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 
-ALLOWED_HOSTS = ['187.77.186.29', 'localhost', '127.0.0.1'] 
-
+# ALLOWED_HOSTS should be a list of strings. We read a comma-separated string from .env
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # Application definition
 

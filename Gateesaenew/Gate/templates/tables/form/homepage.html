@@ -2,228 +2,311 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GateEase | Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
+            --blue: #2563eb;
+            --blue-hover: #1d4ed8;
+            --blue-light: #eff6ff;
+            --blue-mid: #dbeafe;
+            --dark: #0f172a;
+            --ink: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --radius: 12px;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background: var(--bg-color);
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-color);
-            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
         }
 
-        /* ===== BANNER & TITLE ANIMATION ===== */
-        .banner {
+        /* ── HEADER — matches index exactly ── */
+        header {
+            position: fixed;
+            top: 0;
             width: 100%;
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-            padding: 24px 0;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            animation: slideDown 0.5s ease-out;
+            background: rgba(255, 255, 255, 0.98);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            backdrop-filter: blur(8px);
         }
 
-        .banner h1 {
-            margin: 0;
-            color: #ffffff;
-            font-size: 32px;
-            letter-spacing: 2px;
-            font-weight: 600;
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
             display: flex;
-            justify-content: center;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .banner h1 span {
-            display: inline-block;
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--blue);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--blue);
+            background: var(--blue-light);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--blue-mid);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.625rem 1.25rem;
+            background: var(--white);
+            color: var(--muted);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            transition: color 0.18s, border-color 0.18s;
+        }
+
+        .logout-btn:hover {
+            color: var(--ink);
+            border-color: #cbd5e1;
+        }
+
+        /* ── MAIN ── */
+        main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 7rem 2rem 5rem;
+        }
+
+        /* ── PAGE HEAD ── */
+        .page-head {
+            margin-bottom: 2.5rem;
             opacity: 0;
-            animation: letterMerge 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation: fadeUp 0.5s ease 0.1s forwards;
         }
 
-        /* Split logic: Odd from left, Even from right */
-        .banner h1 span:nth-child(odd) {
-            transform: translateX(-40px);
+        .section-label {
+            color: var(--blue);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
         }
 
-        .banner h1 span:nth-child(even) {
-            transform: translateX(40px);
+        .page-head h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -0.5px;
+            margin-bottom: 0.5rem;
         }
 
-        .banner h1 span:nth-child(1) {
-            animation-delay: 0.1s;
+        .page-head p {
+            font-size: 1.05rem;
+            color: var(--muted);
+            line-height: 1.6;
         }
 
-        .banner h1 span:nth-child(2) {
-            animation-delay: 0.15s;
+        /* ── GRID ── */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.25rem;
         }
 
-        .banner h1 span:nth-child(3) {
-            animation-delay: 0.2s;
+        /* ── CARD ── */
+        .card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-decoration: none;
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+            opacity: 0;
+            transform: translateY(14px);
+            animation: fadeUp 0.45s ease forwards;
         }
 
-        .banner h1 span:nth-child(4) {
-            animation-delay: 0.25s;
+        .card:hover {
+            border-color: var(--blue);
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
+            transform: translateY(-2px);
         }
 
-        .banner h1 span:nth-child(5) {
-            animation-delay: 0.3s;
+        .card:hover .icon-wrap {
+            background: var(--blue);
         }
 
-        .banner h1 span:nth-child(6) {
-            animation-delay: 0.35s;
+        .card:hover .icon-wrap svg {
+            color: var(--white);
         }
 
-        .banner h1 span:nth-child(7) {
-            animation-delay: 0.4s;
+        .card:hover .card-arrow {
+            color: var(--blue);
+            transform: translateX(3px);
         }
 
-        .banner h1 span:nth-child(8) {
-            animation-delay: 0.45s;
+        .icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--blue-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s;
         }
 
-        @keyframes letterMerge {
+        .icon-wrap svg {
+            color: var(--blue);
+            transition: color 0.2s;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .card-desc {
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        .card-link {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--blue);
+        }
+
+        .card-arrow {
+            color: #cbd5e1;
+            transition: color 0.2s, transform 0.2s;
+            font-size: 1rem;
+        }
+
+        /* stagger */
+        .card:nth-child(1) {
+            animation-delay: 0.12s
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.17s
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 0.22s
+        }
+
+        .card:nth-child(4) {
+            animation-delay: 0.27s
+        }
+
+        .card:nth-child(5) {
+            animation-delay: 0.32s
+        }
+
+        .card:nth-child(6) {
+            animation-delay: 0.37s
+        }
+
+        .card:nth-child(7) {
+            animation-delay: 0.42s
+        }
+
+        .card:nth-child(8) {
+            animation-delay: 0.47s
+        }
+
+        .card:nth-child(9) {
+            animation-delay: 0.52s
+        }
+
+        @keyframes fadeUp {
             to {
-                transform: translateX(0);
                 opacity: 1;
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-            }
-
-            to {
                 transform: translateY(0);
             }
         }
 
-        /* ===== DASHBOARD ===== */
-        .container {
-            max-width: 1200px;
-            margin: 50px auto;
-            padding: 0 20px;
-        }
-
-        h2 {
+        /* ── FOOTER ── */
+        footer {
+            background: var(--dark);
+            padding: 1.75rem 2rem;
             text-align: center;
-            margin-bottom: 40px;
-            font-weight: 600;
-            color: var(--text-color);
-            font-size: 28px;
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out 0.5s forwards;
+            color: #64748b;
+            font-size: 0.875rem;
+            border-top: 1px solid #1e293b;
         }
 
-        .menu {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-        }
-
-        .menu a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            background: var(--card-bg);
-            border-radius: 12px;
-            text-decoration: none;
-            color: #374151;
-            font-size: 16px;
-            font-weight: 500;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            opacity: 0;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
-            animation: flyIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-            border: 1px solid transparent;
-        }
-
-        .menu a:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            background: #ffffff;
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        /* Staggered delays */
-        .menu a:nth-child(1) {
-            animation-delay: 0.2s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(2) {
-            animation-delay: 0.25s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(3) {
-            animation-delay: 0.3s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(4) {
-            animation-delay: 0.35s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(5) {
-            animation-delay: 0.4s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(6) {
-            animation-delay: 0.45s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(7) {
-            animation-delay: 0.5s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(8) {
-            animation-delay: 0.55s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(9) {
-            animation-delay: 0.6s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(10) {
-            animation-delay: 0.65s;
-            transform: translateY(20px);
-        }
-
-        .menu a:nth-child(11) {
-            animation-delay: 0.7s;
-            transform: translateY(20px);
-        }
-
-        @keyframes flyIn {
-            to {
-                transform: translate(0, 0);
-                opacity: 1;
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 1rem;
             }
-        }
 
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
+            main {
+                padding: 5.5rem 1rem 4rem;
+            }
+
+            .page-head h1 {
+                font-size: 1.75rem;
+            }
+
+            .admin-badge {
+                display: none;
             }
         }
     </style>
@@ -231,44 +314,209 @@
 
 <body>
 
-    <div class="banner" style="position: relative;">
-        <h1>
-            <span>G</span><span>a</span><span>t</span><span>e</span>
-            <span>E</span><span>a</span><span>s</span><span>e</span>
-        </h1>
-        <a href="/Logout" style="
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            text-decoration: none;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 14px;
-            transition: all 0.2s;
-        " onmouseover="this.style.background='rgba(220, 38, 38, 0.8)'; this.style.borderColor='rgba(220, 38, 38, 0.8)'"
-            onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.borderColor='rgba(255, 255, 255, 0.2)'">
-            Logout
-        </a>
-    </div>
+    <header>
+        <nav class="nav-container">
+            <a href="/" class="logo">Gate<span>Ease</span></a>
+            <div class="nav-right">
+                <span class="admin-badge">Admin Portal</span>
+                <a href="/Logout" class="logout-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Logout
+                </a>
+            </div>
+        </nav>
+    </header>
 
-    <div class="container">
-        <h2>Admin Dashboard</h2>
-        <div class="menu">
-            <a href="/VerifyStudent">Verify Students</a>
-            <a href="/ManageMentor">Mentors</a>
-            <a href="/ManageDepartment">Departments</a>
-            <a href="/Pass">Exit Pass</a>
-            <a href="/ComplaintManage">Complaints</a>
-            <a href="/ManageSecurity">Security</a>
-            <a href="/ManageClass">Class</a>
-            <a href="/AssignClass">Assign Class</a>
-            <a href="/AssignDepartment">Assign Department</a>
-            <!-- <a href="/ManageHod">Create HOD</a> -->
+    <main>
+        <div class="page-head">
+            <p class="section-label">Admin</p>
+            <h1>Dashboard</h1>
+            <p>Manage all campus operations from one place.</p>
         </div>
-    </div>
+
+        <div class="grid">
+
+            <a href="/VerifyStudent" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                        <polyline points="16 11 18 13 22 9" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Verify Students</div>
+                    <div class="card-desc">Review and approve pending student account registrations.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/ManageMentor" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Mentors</div>
+                    <div class="card-desc">Add, edit, and manage mentor accounts and their assignments.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/ManageDepartment" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="14" rx="2" />
+                        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                        <line x1="12" y1="12" x2="12" y2="16" />
+                        <line x1="10" y1="14" x2="14" y2="14" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Departments</div>
+                    <div class="card-desc">Create and configure academic departments across the institution.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/Pass" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                        <line x1="7" y1="15" x2="7.01" y2="15" />
+                        <line x1="11" y1="15" x2="13" y2="15" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Exit Pass</div>
+                    <div class="card-desc">Monitor and manage all active and historical exit pass requests.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/ComplaintManage" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Complaints</div>
+                    <div class="card-desc">Review and resolve submitted complaints from students and staff.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/ManageSecurity" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Security</div>
+                    <div class="card-desc">Manage security personnel and gate access control settings.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/ManageClass" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Class</div>
+                    <div class="card-desc">Create and organise class groups within each department.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/AssignClass" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 11 12 14 22 4" />
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Assign Class</div>
+                    <div class="card-desc">Assign mentors to specific classes for approval responsibility.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/AssignDepartment" class="card">
+                <div class="icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Assign Department</div>
+                    <div class="card-desc">Link mentors to departments for structured oversight.</div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-link">Open</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2026 GateEase. Smart Exit Pass Management System.
+    </footer>
 
 </body>
 

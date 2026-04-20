@@ -32,11 +32,11 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dummy-key-for-local-develo
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+# Defaults to False for security. Set DEBUG=True in your local .env
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 
-ALLOWED_HOSTS = ['*'] 
+ALLOWED_HOSTS = ['187.77.186.29', 'localhost', '127.0.0.1'] 
 
 
 # Application definition
@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'GateApp',
-    'rest_framework'
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -62,6 +63,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# ── HTTPS & PRODUCTION SECURITY SETTINGS ──────────────────────────────────────
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 ROOT_URLCONF = 'Gate.urls'
 
@@ -147,6 +157,40 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ── Django REST Framework ──────────────────────────────────────────────────────
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # Public endpoints can be accessed without authentication by overriding
+    # permission_classes on the view itself.
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+    # ── Rate Limiting (Throttling) ──────────────────────────────────────────
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon':              '60/min',     # General unauthenticated requests
+        'login':             '15/min',     # Brute-force protection on login
+        'signup':            '15/min',     # Prevent spam registrations
+        'password_reset':    '15/min',     # OTP spam prevention
+        'authenticated_api': '100/min',    # Per-user limit on protected APIs
+    },
+}
+
+# ── Simple JWT configuration ───────────────────────────────────────────────────
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS': True,         # Issue a new refresh token on every refresh
+    'BLACKLIST_AFTER_ROTATION': False,     # Keep it simple — no blacklist app needed
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'UPDATE_LAST_LOGIN': False,
+}
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Use your email provider's SMTP server
 EMAIL_PORT = 587  # Typically 587 for TLS, or 465 for SSL

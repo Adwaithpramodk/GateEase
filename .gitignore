@@ -1,60 +1,61 @@
-# General
-.DS_Store
-.idea/
-*.swp
-*.log
+# Root-level gitignore for the GateEase monorepo
 
-# Python / Django
+# ── Python / Django ──────────────────────────────────
+*.pyc
+*.pyo
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+*.log
+*.pot
+*.sqlite3
+*.sqlite3-journal
+.env
+local_settings.py
+
+# Virtual environments (NEVER commit these - thousands of files)
+envv/
 env/
 venv/
 .venv/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-.pytest_cache/
-.coverage
-htmlcov/
-db.sqlite3
-media/
+ENV/
+env.bak/
+venv.bak/
 
-# Flutter / Dart
-.dart_tool/
-.packages
-.pub/
-build/
-ios/Flutter/App.framework
-ios/Flutter/Flutter.framework
-ios/Flutter/Generated.xcconfig
-ios/Flutter/app.flx
-ios/Flutter/app.zip
-ios/Flutter/db/
-ios/Flutter/flutter_assets/
-ios/ServiceDefinitions.json
-ios/Runner/GeneratedPluginRegistrant.*
-**/local.properties
-.env
+# Django collected static & media uploads
+Gateesaenew/Gate/staticfiles/
+Gateesaenew/Gate/media/
 
-
-
-Gateesaenew/Gate/firebase-service-account.json
-
-google-services.json
-**/google-services.json
+# Secrets (NEVER commit these)
 firebase-service-account.json
+google-services.json
+secrets.json
+
+# ── Flutter / Dart ────────────────────────────────────
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+gateeaseapp/build/
+gateeaseapp/.dart_tool/
+/coverage/
+
+# Build artifacts
+app.*.symbols
+app.*.map.json
+gateeaseapp/android/app/debug/
+gateeaseapp/android/app/profile/
+gateeaseapp/android/app/release/
+
+# ── IDE ───────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

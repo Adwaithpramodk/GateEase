@@ -19,11 +19,14 @@ from django.urls import include, path, re_path
 from django.conf.urls.static import static
 from django.conf import settings
 from django.views.static import serve
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('GateApp.urls')),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    # JWT token refresh endpoint (used by mobile app to silently renew access tokens)
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 
 if settings.DEBUG:

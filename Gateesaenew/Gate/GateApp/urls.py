@@ -52,6 +52,7 @@ urlpatterns = [
     path('UploadImage/<int:s_id>',UploadImage.as_view(),name='UploadImage'),
     path('MntrHome',MntrHome.as_view(),name='MntrHome'),
     path('VerifyStudentMentor',VerifyStudentMentor.as_view(),name='verify_student_mentor'),
+    path('MentorProfileUpdate',MentorProfileUpdate.as_view(),name='mentor_profile_update'),
 
 
 ########################API#############################

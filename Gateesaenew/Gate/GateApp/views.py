@@ -369,8 +369,8 @@ class AddMentor(AdminRequiredMixin, View):
                 if Logintable.objects.filter(username=email).exists():
                      return HttpResponse('''<script>alert("Error: Email already registered");window.location='/AddMentor'</script>''')
                 
-                if not password:
-                     return HttpResponse('''<script>alert("Error: Password is required");window.location='/AddMentor'</script>''')
+                if not password or len(password) < 8:
+                     return HttpResponse('''<script>alert("Error: Password must be at least 8 characters long");window.location='/AddMentor'</script>''')
 
                 with transaction.atomic():
                     m = mntr.save(commit=False)
@@ -461,8 +461,8 @@ class AddSecurity(AdminRequiredMixin, View):
                 if Logintable.objects.filter(username=email).exists():
                      return HttpResponse('''<script>alert("Error: Email already registered");window.location='/AddSecurity'</script>''')
                 
-                if not password:
-                     return HttpResponse('''<script>alert("Error: Password is required");window.location='/AddSecurity'</script>''')
+                if not password or len(password) < 8:
+                     return HttpResponse('''<script>alert("Error: Password must be at least 8 characters long");window.location='/AddSecurity'</script>''')
 
                 with transaction.atomic():
                     m=scr.save(commit=False)
@@ -612,6 +612,8 @@ class UserReg_api(APIView):
                 return Response({"message": "Admission Number already registered"}, status=status.HTTP_400_BAD_REQUEST)
 
             password = request.data.get('password')
+            if not password or len(password) < 8:
+                return Response({"message": "Password must be at least 8 characters long"}, status=status.HTTP_400_BAD_REQUEST)
             hashed_pw = make_password(password)
 
             login_profile = login_serial.save(
@@ -1432,6 +1434,9 @@ class ResetPasswordAPI(APIView):
         
         if not all([email, otp, new_password]):
              return Response({"error": "All fields required"}, status=400)
+             
+        if len(new_password) < 8:
+             return Response({"error": "New password must be at least 8 characters long"}, status=400)
              
         #first Verify OTP
         # Get latest OTP for this email

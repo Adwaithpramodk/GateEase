@@ -50,13 +50,22 @@ class LoginPage(View):
     def get(self,request):
         return render(request, 'tables/form/login.html')
     def post(self,request):
-        username = request.POST.get('username')
+        username = request.POST.get('email')
         password = request.POST.get('password')
+        
+        # Server-side Validation
+        if not username or not password:
+            return HttpResponse('''<script>alert("Login Failed: Email and Password are required!");window.location='/login/'</script>''')
+            
+        import re
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", username):
+            return HttpResponse('''<script>alert("Login Failed: Please provide a valid email address!");window.location='/login/'</script>''')
         try:
             #searching username
             obj = Logintable.objects.filter(username=username).first()
             #checking password
             if obj and check_password(password, obj.password):
+                request.session.cycle_key() # Prevent session fixation
                 request.session['user_id']=obj.id
                 request.session['usertype']=obj.usertype #storing usertype
                 
@@ -73,6 +82,7 @@ class LoginPage(View):
                 obj.password = make_password(password)
                 obj.save()
                 
+                request.session.cycle_key() # Prevent session fixation
                 request.session['user_id']=obj.id
                 request.session['usertype']=obj.usertype
                 
@@ -106,7 +116,7 @@ class VerifyStudent(LoginRequiredMixin, View):
             {'students': students}
         )
 
-class EditStudent(View):
+class EditStudent(AdminRequiredMixin, View):
     def get(self, request, id):
         student = get_object_or_404(studenttable, id=id)
         form = EditStudentForm(instance=student)
@@ -120,21 +130,21 @@ class EditStudent(View):
             return HttpResponse('<script>alert("Student Updated Successfully");window.location="/VerifyStudent"</script>')
         return render(request, 'tables/form/edit_student.html', {'form': form, 'student': student})
     
-class AcceptStudent(View):
+class AcceptStudent(AdminRequiredMixin, View):
     def get(self,request, lid):
         login_obj=Logintable.objects.get(id=lid)
         login_obj.usertype='Student'
         login_obj.save()
         return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
 
-class RejectStudent(View):
+class RejectStudent(AdminRequiredMixin, View):
     def get(self,request, lid):
         login_obj=Logintable.objects.get(id=lid)
         login_obj.usertype='Rejected'
         login_obj.save()
         return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
     
-class DeleteStudent(View):
+class DeleteStudent(AdminRequiredMixin, View):
     def get(self,request,id):
         try:
             s=studenttable.objects.get(id=id)
@@ -150,7 +160,7 @@ class DeleteStudent(View):
              referer = request.META.get('HTTP_REFERER', '/VerifyStudent')
              return HttpResponse(f'''<script>alert("Error Deleting Student");window.location='{referer}'</script>''')
 
-class UploadImage(View):
+class UploadImage(AdminRequiredMixin, View):
     def post(self, request, s_id):
         Photo = request.FILES.get('image')
         student_obj = studenttable.objects.get(id=s_id)
@@ -163,7 +173,7 @@ class UploadImage(View):
 
         return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
 
-class AddDepartment(View):
+class AddDepartment(AdminRequiredMixin, View):
     def get(self,request):
         return render(request,'tables/form/add_dep.html')
     def post(self,request):
@@ -172,12 +182,12 @@ class AddDepartment(View):
             m=deprt.save()
             return HttpResponse('''<script>alert("Department Added succesfull");window.location='ManageDepartment'</script>''')
 
-class ManageDepartment(View):
+class ManageDepartment(AdminRequiredMixin, View):
     def get(self,request):
         department=departmenttable.objects.all()
         return render(request, 'tables/form/mng_dep.html',{'departments':department})
     
-class AssignDepartment(View):
+class AssignDepartment(AdminRequiredMixin, View):
     def get(self,request):
         return render(request, 'tables/form/assn_dep.html')
 
@@ -203,7 +213,7 @@ class Pass(AdminRequiredMixin, View):
             'selected_month': int(month) if month else None
         })
     
-class ExportPassPDF(View):
+class ExportPassPDF(AdminRequiredMixin, View):
     def get(self, request):
         exitpasses = exitpasstable.objects.all()
 
@@ -216,12 +226,12 @@ class ExportPassPDF(View):
         pisa.CreatePDF(html, dest=response)
         return response    
     
-class ComplaintManage(View):
+class ComplaintManage(AdminRequiredMixin, View):
     def get(self,request):
         complaint=complainttable.objects.all().order_by('-id')
         return render(request, 'tables/form/complaint_mng.html',{'complaints':complaint})
     
-class SendReply(View):
+class SendReply(AdminRequiredMixin, View):
     def post(self,request,id):
         complaint=complainttable.objects.get(id=id)
         reply_text=request.POST.get('reply')
@@ -229,7 +239,7 @@ class SendReply(View):
         complaint.save()
         return HttpResponse('''<script>alert("Reply succesfull");window.location='/ComplaintManage'</script>''')
 
-class AddClass(View):
+class AddClass(AdminRequiredMixin, View):
     def get(self,request):
         obj = departmenttable.objects.all()
         return render(request,'tables/form/add_class.html', {'dept': obj})
@@ -239,7 +249,7 @@ class AddClass(View):
             m=cls.save()
             return HttpResponse('''<script>alert("Class Added succesfull");window.location='ManageClass'</script>''')
         
-class DeleteClass(View):
+class DeleteClass(AdminRequiredMixin, View):
     def get(self,request,id):
         s=classstable.objects.get(id=id)
         s.delete()
@@ -250,7 +260,7 @@ class ManageClass(AdminRequiredMixin, View):
         classs_name=classstable.objects.all().order_by('-id')
         return render(request, 'tables/form/mng_class.html',{'classes':classs_name})
     
-class AssignClass(View):
+class AssignClass(AdminRequiredMixin, View):
     def get(self, request):
         classs_name = classstable.objects.all().order_by('-id')
         mentor = mentortable.objects.all()
@@ -271,13 +281,13 @@ class AssignClass(View):
         )
         return HttpResponse('''<script>alert("Assigned succesfully");window.location='/AssignClass'</script>''')
 
-class DeleteAssignClass(View):
+class DeleteAssignClass(AdminRequiredMixin, View):
     def get(self,request,id):
         s=class_assigntable.objects.get(id=id)
         s.delete()
         return HttpResponse('''<script>alert("Deleted succesfull");window.location='/AssignClass'</script>''')
 
-class AssignDepartment(View):
+class AssignDepartment(AdminRequiredMixin, View):
     def get(self, request):
         dept = departmenttable.objects.all().order_by('-id')
         mentor = mentortable.objects.all()
@@ -299,7 +309,7 @@ class AssignDepartment(View):
             '''<script>alert("Assigned succesfully");window.location='/AssignDepartment'</script>'''
         )
 
-class DeleteAssignDept(View):
+class DeleteAssignDept(AdminRequiredMixin, View):
     def get(self,request,id):
         s=dept_assigntable.objects.get(id=id)
         s.delete()
@@ -312,6 +322,31 @@ class HomePage(LoginRequiredMixin,AdminRequiredMixin,View):
 class MntrHome(LoginRequiredMixin, View):
     def get(self,request):
         return render(request,'tables/form/mntrhome.html')
+
+class MentorProfileUpdate(LoginRequiredMixin, View):
+    def get(self, request):
+        l_id = request.session.get('user_id')
+        mentor = mentortable.objects.get(LOGINID_id=l_id)
+        return render(request, 'tables/form/mentor_profile.html', {'mentor': mentor})
+        
+    def post(self, request):
+        l_id = request.session.get('user_id')
+        mentor = mentortable.objects.get(LOGINID_id=l_id)
+        
+        name = request.POST.get('name')
+        phone = request.POST.get('phone')
+        image = request.FILES.get('image')
+        
+        if name:
+            mentor.name = name
+        if phone:
+            mentor.phone = phone
+        if image:
+            mentor.image = image
+            
+        mentor.save()
+        
+        return HttpResponse('''<script>alert("Profile Updated successfully");window.location='/MntrHome'</script>''')
 
 class ManageMentor(AdminRequiredMixin, View):
     def get(self,request):
@@ -354,7 +389,7 @@ class AddMentor(AdminRequiredMixin, View):
             print(f"Error in AddMentor: {e}")
             return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='/AddMentor'</script>''')
 
-class EditMentor(View):
+class EditMentor(AdminRequiredMixin, View):
     def get(self,request,id):
         m=mentortable.objects.get(id=id)
         d_qs=departmenttable.objects.all()
@@ -383,7 +418,7 @@ class EditMentor(View):
                     m.LOGINID.save()
             return HttpResponse('''<script>alert("Mentor Updated succesfull");window.location='/ManageMentor'</script>''')
 
-class DeleteMentor(View):
+class DeleteMentor(AdminRequiredMixin, View):
     def get(self,request,id):
         s=mentortable.objects.get(id=id)
         if s.LOGINID:
@@ -392,7 +427,7 @@ class DeleteMentor(View):
             s.delete()
         return HttpResponse('''<script>alert("Mentor Deleted succesfull");window.location='/ManageMentor'</script>''')
 
-class AddDepartment(View):
+class AddDepartment(AdminRequiredMixin, View):
     def get(self,request):
         return render(request,'tables/form/add_dep.html')
     def post(self,request):
@@ -401,7 +436,7 @@ class AddDepartment(View):
             m=deprt.save()
             return HttpResponse('''<script>alert("Department Added succesfull");window.location='/ManageDepartment'</script>''')
         
-class DeleteDepartment(View):
+class DeleteDepartment(AdminRequiredMixin, View):
     def get(self,request,id):
         s=departmenttable.objects.get(id=id)
         s.delete()
@@ -412,7 +447,7 @@ class ManageSecurity(AdminRequiredMixin, View):
         security=securitytable.objects.all().order_by('-id')
         return render(request, 'tables/form/mng_security.html',{'securities':security})
 
-class AddSecurity(View):
+class AddSecurity(AdminRequiredMixin, View):
     def get(self,request):
         return render(request,'tables/form/add_security.html')
     def post(self,request):
@@ -447,7 +482,7 @@ class AddSecurity(View):
             print(f"Error in AddSecurity: {e}")
             return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='/AddSecurity'</script>''')
 
-class AddClass(View):
+class AddClass(AdminRequiredMixin, View):
     def get(self,request):
         obj = departmenttable.objects.all()
         return render(request,'tables/form/add_class.html', {'dept': obj})
@@ -457,13 +492,13 @@ class AddClass(View):
             m=cls.save()
             return HttpResponse('''<script>alert("Class Added succesfull");window.location='/ManageClass'</script>''')
         
-class DeleteClass(View):
+class DeleteClass(AdminRequiredMixin, View):
     def get(self,request,id):
         s=classstable.objects.get(id=id)
         s.delete()
         return HttpResponse('''<script>alert("Class Deleted succesfull");window.location='/ManageClass'</script>''')
 #edit security
-class EditSecurity(View):
+class EditSecurity(AdminRequiredMixin, View):
     def get(self,request,id):
         s=securitytable.objects.get(id=id)
         return render(request,'tables/form/edit_security.html',{'data':s})
@@ -480,7 +515,7 @@ class EditSecurity(View):
             return HttpResponse('''<script>alert("Security Updated succesfull");window.location='/ManageSecurity'</script>''')
   
 #delete security
-class DeleteSecurity(View):
+class DeleteSecurity(AdminRequiredMixin, View):
     def get(self,request,id):
         s=securitytable.objects.get(id=id)
         if s.LOGINID:
@@ -490,7 +525,7 @@ class DeleteSecurity(View):
         return HttpResponse('''<script>alert("Security Deleted succesfull");window.location='/ManageSecurity'</script>''')
 
 #admin approve pass
-class Approvepassadmin(View):
+class Approvepassadmin(AdminRequiredMixin, View):
     def get(self, request, id):
         exit_pass = exitpasstable.objects.get(id=id)
         exit_pass.mentor_status = "approved"
@@ -502,14 +537,14 @@ class Approvepassadmin(View):
         )
 
 #admin reject pass
-class Rejectpassadmin(View):
+class Rejectpassadmin(AdminRequiredMixin, View):
     def get(self,request,id):
         obj = exitpasstable.objects.get(id=id)
         obj.mentor_status = "rejected"
         obj.save()
         return HttpResponse('<script>alert("pass Rejected");window.location="/Pass"</script>')
 
-#/////////////////////////////////////////////////////API///////////////////////////////////////////// 
+#/////////////////////////////////////////////////////API/////////////////////////////////////////////
 from django.conf import settings
 from django.http import JsonResponse
 from django.views import View
@@ -518,103 +553,135 @@ from django.utils import timezone
 from django.core.files import File
 from io import BytesIO
 import json
-import qrcode 
+import qrcode
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework  import status
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from GateApp.throttles import (
+    LoginRateThrottle,
+    SignupRateThrottle,
+    PasswordResetThrottle,
+    AuthenticatedAPIThrottle,
+)
 from django.core.mail import send_mail
 from django.shortcuts import redirect
 from django.contrib import messages
 
-#user registration api for student
+# -- JWT Auth Mixin --------------------------------------------------------------
+# Inherit from this mixin in any API view that requires a valid JWT Bearer token.
+# Also enforces per-user rate limiting (100 req/min) via AuthenticatedAPIThrottle.
+class JWTAuthMixin:
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [AuthenticatedAPIThrottle]
+
+
+#user registration api for student (public -- no token required, rate limited)
 class UserReg_api(APIView):
+    throttle_classes = [SignupRateThrottle]
     def get(self, request):
         classes = classstable.objects.all()
-        class_serializer = ClassSerializer(classes, many=True)#change to json
+        class_serializer = ClassSerializer(classes, many=True)
         print("---------", class_serializer.data)
         return Response(class_serializer.data, status=status.HTTP_200_OK)
-    
-    def post(self,request):
-        print('####################################################',request.data)
 
-        user_serial= StudentSerializer(data=request.data)
-        login_serial=LoginSerializer(data=request.data)
+    def post(self, request):
+        print('####################################################', request.data)
 
-        data_valid= user_serial.is_valid()
-        login_valid=login_serial.is_valid()
+        user_serial = StudentSerializer(data=request.data)
+        login_serial = LoginSerializer(data=request.data)
+
+        data_valid = user_serial.is_valid()
+        login_valid = login_serial.is_valid()
         print(data_valid, login_valid)
 
         if data_valid and login_valid:
-            #checking for duplicates
             email = request.data.get('email')
             admn_no = request.data.get('admn_no')
-            
+
             if Logintable.objects.filter(username=email).exists():
-                 return Response({"message": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({"message": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
+
             if studenttable.objects.filter(email=email).exists():
-                 return Response({"message": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
 
             if studenttable.objects.filter(admn_no=admn_no).exists():
-                 return Response({"message": "Admission Number already registered"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "Admission Number already registered"}, status=status.HTTP_400_BAD_REQUEST)
 
-            #Hash password
             password = request.data.get('password')
             hashed_pw = make_password(password)
-            
-            login_profile=login_serial.save(
-                usertype='pending', 
+
+            login_profile = login_serial.save(
+                usertype='pending',
                 username=email,
                 password=hashed_pw
             )
 
             user_serial.save(LOGINID=login_profile)
 
-            return Response(user_serial.data,status.HTTP_201_CREATED)
+            return Response(user_serial.data, status.HTTP_201_CREATED)
         return Response({
-            'login_error':login_serial.errors if not login_valid else None,
-            'user.error':user_serial.errors if not data_valid else None
+            'login_error': login_serial.errors if not login_valid else None,
+            'user.error': user_serial.errors if not data_valid else None,
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-        },status=status.HTTP_400_BAD_REQUEST)
 
-#login api for student,mentor,security
+#login api for student, mentor, security (public -- issues JWT tokens, rate limited)
 class LoginpageAPI(APIView):
+    throttle_classes = [LoginRateThrottle]
     def post(self, request):
         print("-------------------", request.data)
-        response_dict = {}
 
         username = request.data.get("username")
         password = request.data.get("password")
-        
-        # Validate input
+
         if not username or not password:
             return Response(
                 {"message": "Username and Password required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Optimized: Use only() to fetch only required fields
+
         t_user = Logintable.objects.only('id', 'username', 'password', 'usertype').filter(username=username).first()
-        
-        # Verify password hash
+
         if not t_user or not check_password(password, t_user.password):
             return Response(
                 {"message": "Invalid Username or Password"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        
-        # Build response with essential login data only
-        response_dict["message"] = "success"
-        response_dict["login_id"] = t_user.id
-        response_dict["usertype"] = t_user.usertype
 
-        print("-----login details--------->", response_dict)
+        # Reject non-verified accounts before issuing any token
+        if t_user.usertype in ('pending', 'Rejected'):
+            return Response(
+                {"message": "Account not verified. Contact admin.", "usertype": t_user.usertype},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Generate JWT tokens. We embed login_id and usertype as custom claims
+        # since Logintable is NOT Django's built-in User model.
+        refresh = RefreshToken()
+        refresh['login_id'] = t_user.id
+        refresh['usertype'] = t_user.usertype
+
+        response_dict = {
+            "message": "success",
+            "login_id": t_user.id,
+            "usertype": t_user.usertype,
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        }
+
+        print("-----login details--------->", {"login_id": t_user.id, "usertype": t_user.usertype})
         return Response(response_dict, status=status.HTTP_200_OK)
 
 
 #apply pass api for student
-class ApplypassAPI(APIView):
+class ApplypassAPI(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         # Cleanup expired passes
         threshold = timezone.now() - datetime.timedelta(hours=24)
         exitpasstable.objects.filter(mentor_status='pending', created_at__lt=threshold).delete()
@@ -626,6 +693,8 @@ class ApplypassAPI(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         try:
             reason = request.data.get('reason', '').strip()
             time_str = request.data.get('time', '').strip()
@@ -652,7 +721,29 @@ class ApplypassAPI(APIView):
             if exit_datetime <= now_local:
                 return Response({"error": "Exit time must be in the future"}, status=status.HTTP_400_BAD_REQUEST)
 
+            # ── Enforce application time window: 10:00 AM – 3:40 PM (IST) ──
+            window_open  = datetime.time(10, 0)   # 10:00 AM
+            window_close = datetime.time(15, 40)  # 3:40 PM
+            current_time = now_local.time()
+            if not (window_open <= current_time <= window_close):
+                return Response(
+                    {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             student_obj = studenttable.objects.get(LOGINID_id=lid)
+
+            # ── Enforce daily pass limit: max 3 per student per day ──
+            today_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+            passes_today = exitpasstable.objects.filter(
+                student_id=student_obj,
+                created_at__gte=today_start
+            ).count()
+            if passes_today >= 3:
+                return Response(
+                    {"error": "You have reached the maximum of 3 pass applications for today"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Create exit pass
             exit_pass = exitpasstable.objects.create(
@@ -724,8 +815,10 @@ class ApplypassAPI(APIView):
             )      
 
 #student info api
-class StudentInfo_api(APIView):
+class StudentInfo_api(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         student_obj = studenttable.objects.get(LOGINID_id=lid)
         print(student_obj)
         
@@ -735,7 +828,7 @@ class StudentInfo_api(APIView):
     
 
 #view complaint and view reply api for student
-class ViewcomplaintAPI(APIView):
+class ViewcomplaintAPI(JWTAuthMixin, APIView):
     def get(self,request,lid):
         complaint = complainttable.objects.filter(student_id__LOGINID__id=lid).order_by('-id')
         complaint_serial = ComplaintSerializer(complaint,many=True)
@@ -752,8 +845,10 @@ class ViewcomplaintAPI(APIView):
             return Response({'status':'Complaint sending Failed','errors': complaint_serial.errors},status=status.HTTP_400_BAD_REQUEST)
 
 #exit pass timeline api for student
-class ExitPassTimelineAPI(APIView):
+class ExitPassTimelineAPI(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         try:
             # Cleanup expired passes
             threshold = timezone.now() - datetime.timedelta(hours=24)
@@ -781,16 +876,20 @@ class ExitPassTimelineAPI(APIView):
             )
 
 #mentor info api
-class Mentorinfo_api(APIView):
+class Mentorinfo_api(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         mentor_obj = mentortable.objects.get(LOGINID_id=lid)
         serializer = MentorSerializer(mentor_obj)
         print("---------", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 #mentor dashboard statistics api (optimized for performance)
-class MentorDashboardStatsAPI(APIView):
+class MentorDashboardStatsAPI(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         """
         Optimized API to fetch mentor dashboard statistics.
         Returns count of processed passes and pending passes.
@@ -834,7 +933,7 @@ class MentorDashboardStatsAPI(APIView):
             )
     
 #pending pass list for mentor
-class Pendingpass_api(APIView):
+class Pendingpass_api(JWTAuthMixin, APIView):
     def get(self,request,lid):
         # Cleanup expired passes
         threshold = timezone.now() - datetime.timedelta(hours=24)
@@ -846,19 +945,16 @@ class Pendingpass_api(APIView):
         pending_serial = ExitpassSerializer(pending,many=True)
         print("---------", pending_serial.data)
         return Response(pending_serial.data,status=status.HTTP_200_OK)
-    
-import qrcode
-import json
-from io import BytesIO
-from django.core.files import File
-from django.utils import timezone
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
+
 
 #approve pass api for mentor
-class ApproveExitPassAPI(APIView):
+class ApproveExitPassAPI(JWTAuthMixin, APIView):
     def post(self, request):
+        # SECURITY PATCH: Verify token claims match request
+        token_user = request.auth.get('login_id')
+        token_role = request.auth.get('usertype')
+        if str(request.data.get('loginid')) != str(token_user) or request.data.get('role') != token_role:
+            return Response({'error': 'Unauthorized'}, status=403)
         pass_id = request.data.get("pass_id")
         role = request.data.get("role")
         mentor_id=request.data.get('loginid')
@@ -899,8 +995,13 @@ class ApproveExitPassAPI(APIView):
         return Response({"message": "Pass approved successfully"}, status=200)
     
 #reject pass api for mentor
-class RejectExitPassAPI(APIView):
+class RejectExitPassAPI(JWTAuthMixin, APIView):
     def post(self, request):
+        # SECURITY PATCH: Verify token claims match request
+        token_user = request.auth.get('login_id')
+        token_role = request.auth.get('usertype')
+        if str(request.data.get('loginid')) != str(token_user) or request.data.get('role') != token_role:
+            return Response({'error': 'Unauthorized'}, status=403)
         pass_id = request.data.get("pass_id")
         role = request.data.get("role")
         reason = request.data.get("reason")
@@ -943,7 +1044,7 @@ class RejectExitPassAPI(APIView):
             status=status.HTTP_200_OK
         )
 #checking pass is already scanned or not for security
-class CheckPassStatus(APIView):
+class CheckPassStatus(JWTAuthMixin, APIView):
     def post(self, request):
         pass_id = request.data.get("pass_id")
         
@@ -957,8 +1058,10 @@ class CheckPassStatus(APIView):
             return Response({"error": "Pass not found"}, status=404)
 
 #student list api for mentor class wise display
-class StudentListAPI(APIView):
+class StudentListAPI(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         mentor_obj = mentortable.objects.get(LOGINID_id=lid)
         assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
         students = studenttable.objects.filter(classs__id__in=assigned_classes).select_related('classs', 'classs__department_id')
@@ -988,8 +1091,10 @@ class StudentListAPI(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 #group pass api for mentor
-class GroupPassAPI(APIView):
+class GroupPassAPI(JWTAuthMixin, APIView):
     def post(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         try:
             student_ids = request.data.get('student_ids', [])
             reason = request.data.get('reason', 'Group Pass')
@@ -1025,46 +1130,12 @@ class GroupPassAPI(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=400)
 
-#mentor pass analytics api
-class MentorPassAnalytics(APIView):
-    def get(self, request, lid):
-        from datetime import date
-        
-        mentor = mentortable.objects.get(LOGINID_id=lid)
-
-        # Get assigned classes
-        assigned_classes = class_assigntable.objects.filter(mentor_id=mentor).values_list('class_id', flat=True)
-
-        # Get today's date
-        today = date.today()
-
-        # Filter passes for today only
-        passes = exitpasstable.objects.filter(
-            student_id__classs__id__in=assigned_classes,
-            created_at__date=today  # Only today's passes
-        ).values(
-            'id', 'reason', 'time',
-            'mentor_status', 'security_status',
-            'student_id__name',
-            'student_id__classs__class_name'
-        )
-
-        data = []
-        for p in passes:
-            data.append({
-                'id': p['id'],
-                'reason': p['reason'],
-                'time': p['time'].strftime("%I:%M %p") if hasattr(p['time'], 'strftime') else p['time'],
-                'mentor_status': p['mentor_status'],
-                'security_status': p['security_status'],
-                'name': p['student_id__name'],
-            })
-
-        return Response(data)
 
 #mentor exit report api
-class MentorExitReportAPI(APIView):
+class MentorExitReportAPI(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         try:
             # Verify mentor exists
             try:
@@ -1174,7 +1245,7 @@ class MentorExitReportAPI(APIView):
             return Response({'error': str(e)}, status=500)
 
 #generate qr code for exit pass 15mins delayed
-class GenerateQRCodeAPI(APIView):
+class GenerateQRCodeAPI(JWTAuthMixin, APIView):
     def post(self, request):
         pass_id = request.data.get("pass_id")
         
@@ -1261,8 +1332,10 @@ class GenerateQRCodeAPI(APIView):
         }, status=200)
 
 #list passes for security,mentor approved
-class SecurityApprovedPassAPI(APIView):
+class SecurityApprovedPassAPI(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         passes = exitpasstable.objects.filter(
             mentor_status='approved',  # not scanned yet
         ).select_related('student_id')
@@ -1281,16 +1354,20 @@ class SecurityApprovedPassAPI(APIView):
         return Response(data)
 
 #security info api
-class Securityinfo_api(APIView):
+class Securityinfo_api(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         security_obj = securitytable.objects.get(LOGINID_id=lid)
         serializer = SecuritySerializer(security_obj)
         print("---------", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-#get all passes for menntor analytics api
-class getallpasses(APIView):
+#get all passes for mentor analytics api
+class getallpasses(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if str(lid) != str(request.auth.get('login_id')):
+            return Response({'error': 'Unauthorized'}, status=403)
         # Filter passes for the last 24 hours
         threshold = timezone.now() - datetime.timedelta(hours=24)
         security_obj = exitpasstable.objects.filter(
@@ -1302,8 +1379,9 @@ class getallpasses(APIView):
         print("-----hhhhhh----", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-#forget password api   
+#forget password api
 class ForgetPassword(APIView):
+    throttle_classes = [PasswordResetThrottle]
     def post(self, request):
         print(request.data)
         email = request.data.get('Email')
@@ -1346,6 +1424,7 @@ class ForgetPassword(APIView):
 
 #reset password api
 class ResetPasswordAPI(APIView):
+    throttle_classes = [PasswordResetThrottle]
     def post(self, request):
         email = request.data.get('email')
         otp = request.data.get('otp')
@@ -1391,8 +1470,10 @@ class ResetPasswordAPI(APIView):
             return Response({"error": "User account not found"}, status=404) 
 
 #security accept/reject pass
-class AcceptPass(APIView):
+class AcceptPass(JWTAuthMixin, APIView):
     def post(self, request):
+        if request.auth.get('usertype') != 'security':
+            return Response({'error': 'Unauthorized'}, status=403)
         print(request.data)    
         obj = exitpasstable.objects.get(id=request.data.get('pass_id'))
         obj.security_status = 'scanned'
@@ -1400,8 +1481,10 @@ class AcceptPass(APIView):
         obj.save()
         return Response(status=status.HTTP_200_OK)
 
-class RejectPass(APIView):
+class RejectPass(JWTAuthMixin, APIView):
     def post(self, request):
+        if request.auth.get('usertype') != 'security':
+            return Response({'error': 'Unauthorized'}, status=403)
         print(request.data)    
         obj = exitpasstable.objects.get(id=request.data.get('pass_id'))
         obj.security_status = 'rejected'
@@ -1409,7 +1492,7 @@ class RejectPass(APIView):
         return Response(status=status.HTTP_200_OK)
 
 #security group pass list
-class SecurityGroupPassListAPI(APIView):
+class SecurityGroupPassListAPI(JWTAuthMixin, APIView):
     def get(self, request):
         today = timezone.localtime().date()
         print(f"DEBUG: Checking for passes on {today}")
@@ -1474,7 +1557,7 @@ class SecurityGroupPassListAPI(APIView):
         return Response(result)
 
 #security proceed group pass
-class ProceedGroupPassAPI(APIView):
+class ProceedGroupPassAPI(JWTAuthMixin, APIView):
     def post(self, request):
         try:
             pass_ids = request.data.get('pass_ids', [])
@@ -1492,7 +1575,7 @@ class ProceedGroupPassAPI(APIView):
             return Response({'error': str(e)}, status=400)
 
 #register device token to send notification
-class RegisterDeviceTokenAPI(APIView):
+class RegisterDeviceTokenAPI(JWTAuthMixin, APIView):
     """
     API to register FCM device token for mentors
     """
@@ -1538,7 +1621,7 @@ class RegisterDeviceTokenAPI(APIView):
             )
 
 #update device token
-class UpdateDeviceTokenAPI(APIView):
+class UpdateDeviceTokenAPI(JWTAuthMixin, APIView):
     """
     API to update FCM device token when it refreshes
     """
@@ -1590,7 +1673,7 @@ class UpdateDeviceTokenAPI(APIView):
             )
 
 #delete device token api for mentor
-class DeleteDeviceTokenAPI(APIView):
+class DeleteDeviceTokenAPI(JWTAuthMixin, APIView):
     """
     API to delete FCM device token on logout
     """

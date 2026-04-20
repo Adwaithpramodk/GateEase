@@ -62,7 +62,7 @@ class studenttable(models.Model):
     
     classs=models.ForeignKey(classstable,on_delete=models.CASCADE,null=True,blank=True)
     
-    Photo = models.FileField(upload_to='profile_photos/students/', null=True, blank=True)
+    Photo = models.ImageField(upload_to='profile_photos/students/', null=True, blank=True)
     
     @property
     def current_year(self):
@@ -108,7 +108,7 @@ class mentortable(models.Model):
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     department=models.ForeignKey(departmenttable,on_delete=models.CASCADE,null=True,blank=True)
-    image = models.FileField(upload_to='profile_photos/mentors/', null=True, blank=True)
+    image = models.ImageField(upload_to='profile_photos/mentors/', null=True, blank=True)
 
 
 class exitpasstable(models.Model):
@@ -121,7 +121,7 @@ class exitpasstable(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     approved_at=models.DateTimeField(null=True,blank=True)
     scanned_at=models.DateTimeField(null=True,blank=True)
-    qrcode = models.FileField(null=True, blank=True)
+    qrcode = models.ImageField(upload_to='qrcodes/', null=True, blank=True)
     reject_reason = models.TextField(null=True, blank=True)
     is_group_pass = models.BooleanField(default=False)
 
@@ -137,7 +137,7 @@ class securitytable(models.Model):
     email=models.CharField(max_length=100,null=True,blank=True)
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
-    Photo = models.FileField(upload_to='profile_photos/security/', null=True, blank=True)
+    Photo = models.ImageField(upload_to='profile_photos/security/', null=True, blank=True)
 
 
 class class_assigntable(models.Model):

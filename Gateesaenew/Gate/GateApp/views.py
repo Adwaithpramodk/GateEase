@@ -557,7 +557,7 @@ import qrcode
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from GateApp.throttles import (
@@ -571,9 +571,6 @@ from django.shortcuts import redirect
 from django.contrib import messages
 
 # -- JWT Auth Mixin --------------------------------------------------------------
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
-from rest_framework.permissions import BasePermission
 
 class IsTokenAuthenticated(BasePermission):
     """
@@ -654,7 +651,6 @@ class PingAPI(APIView):
 
 #user registration api for student (public -- no token required, rate limited)
 class UserReg_api(APIView):
-    # ... (rest of UserReg_api) ...
     throttle_classes = [SignupRateThrottle]
     def get(self, request):
         classes = classstable.objects.all()

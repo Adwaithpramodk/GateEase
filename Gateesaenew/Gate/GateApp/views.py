@@ -909,6 +909,7 @@ class StudentInfo_api(JWTAuthMixin, APIView):
                 
             student_obj = studenttable.objects.get(LOGINID_id=lid)
             serializer = StudentSerializer1(student_obj)
+            print(f"DEBUG: StudentInfo_api sending data: {serializer.data}")
             return Response(serializer.data, status=status.HTTP_200_OK)
             
         except studenttable.DoesNotExist:
@@ -953,8 +954,8 @@ class ExitPassTimelineAPI(JWTAuthMixin, APIView):
 
             if not exit_pass:
                 return Response(
-                    {'message': 'No pass found'},
-                    status=status.HTTP_404_NOT_FOUND
+                    {'message': 'No pass found', 'id': -1},
+                    status=status.HTTP_200_OK
                 )
 
             serializer = ExitpassSerializer(exit_pass)

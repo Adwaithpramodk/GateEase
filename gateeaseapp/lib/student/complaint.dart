@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
 
 class ComplaintPage extends StatefulWidget {
   const ComplaintPage({super.key});
@@ -28,6 +30,14 @@ class _ComplaintPageState extends State<ComplaintPage> {
 
   Future<void> fetchComplaints() async {
     try {
+      if (lid == null) {
+        final prefs = await SharedPreferences.getInstance();
+        lid = prefs.getInt('lid');
+      }
+      if (lid == null) {
+        setState(() => isLoading = false);
+        return;
+      }
       final response = await dio.get('$baseurl/ViewcomplaintAPI/$lid');
       debugPrint(response.data.toString());
       if (response.statusCode == 200) {
@@ -90,104 +100,61 @@ class _ComplaintPageState extends State<ComplaintPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F8),
-      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF2F4F8),
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text('Complaint', style: TextStyle(color: Colors.black)),
+        title: const Text('Support & Complaints'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ===== Complaint Input =====
-            const Padding(
-              padding: EdgeInsets.only(left: 4, bottom: 8),
-              child: Text(
-                'Enter your complaint',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-            ),
+            // Input Card
             Container(
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('Submit a Complaint', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: complaintController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      hintText: 'Describe your issue in detail...',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => registerComplaint(context),
+                    child: const Text('Send Report'),
                   ),
                 ],
               ),
-              child: TextField(
-                controller: complaintController,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: 'Type your complaint here...',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
             ),
+
+            const SizedBox(height: 40),
+
+            // History Section
+            const Text('Previous Complaints', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            Container(
-              height: 48,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () => registerComplaint(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Send'),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // ===== Previous Complaints =====
-            const Text(
-              'Previous Complaints',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
 
             if (isLoading)
               const Center(child: CircularProgressIndicator())
             else if (complaints.isEmpty)
-              const Center(
-                child: Text(
-                  'No complaints submitted yet',
-                  style: TextStyle(color: Colors.grey),
+              Center(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 40),
+                    Icon(Icons.mark_email_read_rounded, size: 48, color: Colors.grey.shade300),
+                    const SizedBox(height: 12),
+                    Text('No previous complaints', style: TextStyle(color: Colors.grey.shade500)),
+                  ],
                 ),
               )
             else
@@ -197,56 +164,56 @@ class _ComplaintPageState extends State<ComplaintPage> {
                 itemCount: complaints.length,
                 itemBuilder: (context, index) {
                   final item = complaints[index];
+                  final bool isPending = item['reply'] == null || item['reply'] == '';
 
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
+                    margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.report, color: Colors.black),
-                      ),
-                      title: Text(
-                        item['complaint'] ?? '',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          item['reply'] == null || item['reply'] == ''
-                              ? 'Admin Reply: Pending'
-                              : 'Admin Reply: ${item['reply']}',
-                          style: TextStyle(
-                            color: item['reply'] == null || item['reply'] == ''
-                                ? Colors.grey
-                                : Colors.black87,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(item['date'], style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: (isPending ? Colors.orange : AppTheme.accent).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  isPending ? 'Pending' : 'Resolved',
+                                  style: TextStyle(color: isPending ? Colors.orange : AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 10),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      trailing: Text(
-                        item['date'],
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
+                          const SizedBox(height: 12),
+                          Text(item['complaint'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          if (!isPending) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: AppTheme.background, borderRadius: BorderRadius.circular(12)),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('ADMIN REPLY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.textSecondary, letterSpacing: 0.5)),
+                                  const SizedBox(height: 4),
+                                  Text(item['reply'], style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   );

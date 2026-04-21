@@ -571,11 +571,33 @@ from django.shortcuts import redirect
 from django.contrib import messages
 
 # -- JWT Auth Mixin --------------------------------------------------------------
-# Inherit from this mixin in any API view that requires a valid JWT Bearer token.
-# Also enforces per-user rate limiting (100 req/min) via AuthenticatedAPIThrottle.
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
+from rest_framework.permissions import BasePermission
+
+class IsTokenAuthenticated(BasePermission):
+    """
+    Allows access only to authenticated users via JWT.
+    Does not require a Django User object to exist in the database.
+    """
+    def has_permission(self, request, view):
+        return bool(request.auth and 'login_id' in request.auth)
+
+class QuietJWTAuthentication(JWTAuthentication):
+    def get_user(self, validated_token):
+        try:
+            return super().get_user(validated_token)
+        except:
+            # Return a dummy user if the token is valid but no Django User exists
+            # This allows the API to function with custom Logintable
+            class AnonymousUser:
+                is_authenticated = True
+                def __str__(self): return "JWTUser"
+            return AnonymousUser()
+
 class JWTAuthMixin:
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [QuietJWTAuthentication]
+    permission_classes = [IsTokenAuthenticated]
     throttle_classes = [AuthenticatedAPIThrottle]
 
 
@@ -666,12 +688,17 @@ class LoginpageAPI(APIView):
         refresh = RefreshToken()
         refresh['login_id'] = t_user.id
         refresh['usertype'] = t_user.usertype
+        
+        # Explicitly set claims on access token to ensure visibility in JWTAuthMixin
+        access = refresh.access_token
+        access['login_id'] = t_user.id
+        access['usertype'] = t_user.usertype
 
         response_dict = {
             "message": "success",
             "login_id": t_user.id,
             "usertype": t_user.usertype,
-            "access": str(refresh.access_token),
+            "access": str(access),
             "refresh": str(refresh),
         }
 

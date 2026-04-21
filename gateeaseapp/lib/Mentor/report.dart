@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:pdf/pdf.dart';
@@ -15,7 +14,7 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
-  final Dio dio = Dio();
+  // Use the global dio instance (with JWT interceptor) instead of a bare local one
 
   List<dynamic> allPasses = [];
   List<dynamic> filteredPasses = [];

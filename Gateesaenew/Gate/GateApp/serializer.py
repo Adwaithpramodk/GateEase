@@ -26,11 +26,24 @@ class StudentSerializer(ModelSerializer):
         fields='__all__'
 
 class StudentSerializer1(ModelSerializer):
-    dept = serializers.CharField(source='classs.department_id.name')
-    stu_class = serializers.CharField(source='classs.class_name')
+    dept = serializers.SerializerMethodField()
+    stu_class = serializers.SerializerMethodField()
+
     class Meta:
-        model=studenttable
-        fields=['name', 'dept','admn_no','stu_class','Photo']
+        model = studenttable
+        fields = ['name', 'dept', 'admn_no', 'stu_class', 'Photo']
+
+    def get_dept(self, obj):
+        try:
+            return obj.classs.department_id.name
+        except:
+            return "No Department"
+
+    def get_stu_class(self, obj):
+        try:
+            return obj.classs.class_name
+        except:
+            return "No Class"
 
 class MentorSerializer(ModelSerializer):
     departmentname=serializers.CharField(source='department.name')
@@ -43,10 +56,13 @@ class ExitpassSerializer(serializers.ModelSerializer):
     final_status = serializers.ReadOnlyField()
     time = serializers.TimeField(format='%I:%M %p')
 
-    classs = serializers.CharField(
-        source='student_id.classs.class_name',
-        read_only=True
-    )
+    classs = serializers.SerializerMethodField()
+
+    def get_classs(self, obj):
+        try:
+            return obj.student_id.classs.class_name
+        except:
+            return "No Class"
 
     class Meta:
         model = exitpasstable

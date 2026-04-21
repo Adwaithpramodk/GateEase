@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
 
 class PendingPassPage extends StatefulWidget {
   const PendingPassPage({super.key});
@@ -21,6 +23,12 @@ class _PendingPassPageState extends State<PendingPassPage> {
   // ================= FETCH PENDING PASSES =================
   Future<void> getDetails() async {
     try {
+      if (lid == null) {
+        final prefs = await SharedPreferences.getInstance();
+        lid = prefs.getInt('lid');
+      }
+      if (lid == null) return;
+
       final response = await dio.get('$baseurl/Pendingpass_api/$lid');
 
       if (response.statusCode == 200) {
@@ -145,108 +153,106 @@ class _PendingPassPageState extends State<PendingPassPage> {
     );
   }
 
-  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 223, 223, 224),
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 223, 223, 224),
-        elevation: 0,
-        title: const Text('Pending Pass Requests'),
-        centerTitle: true,
+        title: const Text('Pass Requests'),
       ),
       body: pendingPasses.isEmpty
-          ? const Center(
-              child: Text(
-                'No pending pass requests',
-                style: TextStyle(color: Colors.grey),
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.checklist_rtl_rounded, size: 64, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text('No pending requests', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+                ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               itemCount: pendingPasses.length,
               itemBuilder: (context, index) {
                 final pass = pendingPasses[index];
 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // STUDENT NAME
-                        Text(
-                          pass['name'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
+                        // Header with color accent
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.05)),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.person_pin_rounded, color: AppTheme.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  pass['name'] ?? 'Student Name',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 13),
+                                ),
+                              ),
+                              Text(
+                                pass['classs'] ?? '',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                              ),
+                            ],
                           ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
                         ),
-                        const SizedBox(height: 10),
-
-                        _infoRow(Icons.class_, pass['classs'] ?? ''),
-                        _infoRow(Icons.access_time, pass['time'] ?? ''),
-                        _infoRow(Icons.description, pass['reason'] ?? ''),
-
-                        const SizedBox(height: 16),
-
-                        // ACTION BUTTONS
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  _showRejectDialog(pass['id']);
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(color: Colors.red),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
+                        
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _infoBlock('Reason', pass['reason'] ?? '', Icons.notes_rounded),
+                              const SizedBox(height: 16),
+                              _infoBlock('Expected Exit', pass['time'] ?? '', Icons.access_time_filled_rounded),
+                              
+                              const SizedBox(height: 24),
+                              
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => _showRejectDialog(pass['id']),
+                                      icon: const Icon(Icons.close_rounded, size: 18),
+                                      label: const Text('Reject'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppTheme.error,
+                                        side: const BorderSide(color: AppTheme.error),
+                                        minimumSize: const Size(0, 48),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => approvePassApi(pass['id']),
+                                      icon: const Icon(Icons.check_rounded, size: 18),
+                                      label: const Text('Approve'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.accent,
+                                        minimumSize: const Size(0, 48),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                icon: const Icon(Icons.cancel, size: 18),
-                                label: const Text('Reject'),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  approvePassApi(pass['id']);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                icon: const Icon(Icons.check_circle, size: 18),
-                                label: const Text('Approve'),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -257,17 +263,27 @@ class _PendingPassPageState extends State<PendingPassPage> {
     );
   }
 
-  // ================= INFO ROW =================
-  Widget _infoRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.grey),
-          const SizedBox(width: 6),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
-        ],
-      ),
+  Widget _infoBlock(String label, String value, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8)),
+          child: Icon(icon, size: 16, color: AppTheme.textSecondary),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.textSecondary, letterSpacing: 0.5)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

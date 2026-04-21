@@ -3,6 +3,8 @@ import 'package:numberpicker/numberpicker.dart';
 import 'package:dio/dio.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApplyPassPage extends StatefulWidget {
   const ApplyPassPage({super.key});
@@ -18,12 +20,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
   String _period = 'AM';
   bool _timeSelected = false;
 
-  final Dio dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
-    ),
-  );
+  // Use the global dio instance (with JWT interceptor) instead of a bare local one
 
   Map<String, dynamic>? details;
   late final String todayDate;
@@ -44,6 +41,12 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
 
   Future<void> getDetails() async {
     try {
+      if (lid == null) {
+        final prefs = await SharedPreferences.getInstance();
+        lid = prefs.getInt('lid');
+      }
+      if (lid == null) return;
+
       final response = await dio.get('$baseurl/StudentInfo_api/$lid');
       if (response.statusCode == 200 || response.statusCode == 201) {
         setState(() {
@@ -123,205 +126,164 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF2F4F8),
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text(
-          'Apply New Pass',
-          style: TextStyle(color: Colors.black),
-        ),
+        title: const Text('Apply New Pass'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 🔹 Student Info Card
+            // 🔹 Info Header Card
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.primary,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible(
-                    flex: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Text(
-                              'Name : ',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Flexible(
-                              child: Text(
-                                details?['name'] ?? 'Loading...',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Text(
-                              'Department : ',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Flexible(
-                              child: Text(
-                                details?['dept'] ?? '',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Flexible(
-                    flex: 1,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Text(
-                          'Date',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          todayDate,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-            _label('Reason'),
-            _inputField(
-              hint: 'Reason for the pass',
-              controller: reasonController,
-              maxLines: 4,
-              icon: Icons.edit_note,
-            ),
-
-            const SizedBox(height: 20),
-
-            _label('Exit Time'),
-            GestureDetector(
-              onTap: _showTimePicker,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.access_time, color: Colors.grey),
-                    const SizedBox(width: 12),
-                    Text(
-                      _timeSelected
-                          ? '${_hour.toString().padLeft(2, "0")}:${_minute.toString().padLeft(2, "0")} $_period'
-                          : 'Select time',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _timeSelected
-                            ? Colors.black87
-                            : Colors.grey[500],
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: Colors.grey[400],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // 🔹 Apply Button
-            Container(
-              height: 52,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppTheme.primary.withValues(alpha: 0.2),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: ElevatedButton(
-                onPressed: applyPass,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Application Date',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                      Text(
+                        todayDate,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                child: const Text(
-                  'Apply Pass',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  const Divider(color: Colors.white10, height: 24),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white10,
+                        backgroundImage: details?['Photo'] != null
+                            ? NetworkImage('$baseurl${details!['Photo']}')
+                            : null,
+                        child: details?['Photo'] == null
+                            ? const Icon(Icons.person, color: Colors.white70)
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              details?['name'] ?? 'Loading...',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              details?['dept'] ?? '',
+                              style: const TextStyle(color: Colors.white60, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // 🔹 Reason Field
+            _sectionLabel('Why are you leaving?'),
+            TextField(
+              controller: reasonController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: 'Enter a valid reason for your exit pass...',
+                alignLabelWithHint: true,
+                prefixIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 60),
+                  child: Icon(Icons.edit_note_rounded),
                 ),
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            // 🔹 Time Field
+            _sectionLabel('Exit Time'),
+            GestureDetector(
+              onTap: _showTimePicker,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.access_time_filled_rounded,
+                      color: _timeSelected ? AppTheme.primary : AppTheme.textSecondary,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      _timeSelected
+                          ? '${_hour.toString().padLeft(2, "0")}:${_minute.toString().padLeft(2, "0")} $_period'
+                          : 'Tap to select time',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: _timeSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: _timeSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 48),
+
+            // 🔹 Apply Button
+            ElevatedButton(
+              onPressed: applyPass,
+              child: const Text('Submit Application'),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          color: AppTheme.textPrimary,
         ),
       ),
     );
@@ -338,251 +300,48 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
       builder: (_) => StatefulBuilder(
         builder: (bsCtx, bsSetState) => Container(
           decoration: const BoxDecoration(
-            color: Color(0xFFF2F4F8),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            color: AppTheme.background,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 4),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Header
-              Container(
-                margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF2F4F8),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.schedule_rounded,
-                        color: Colors.black87,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Select Exit Time',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Scroll to pick hour & minute',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 12),
-              // Pickers row
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Hour
-                    Column(
-                      children: [
-                        const Text(
-                          'Hour',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        NumberPicker(
-                          value: tempHour,
-                          minValue: 1,
-                          maxValue: 12,
-                          itemHeight: 48,
-                          itemWidth: 70,
-                          textStyle: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
-                          selectedTextStyle: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(
-                                color: Colors.black.withValues(alpha: 0.12),
-                                width: 1.5,
-                              ),
-                              bottom: BorderSide(
-                                color: Colors.black.withValues(alpha: 0.12),
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                          onChanged: (val) => bsSetState(() => tempHour = val),
-                        ),
-                      ],
-                    ),
-                    // Colon
-                    const Padding(
-                      padding: EdgeInsets.only(top: 20, left: 4, right: 4),
-                      child: Text(
-                        ':',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    // Minute
-                    Column(
-                      children: [
-                        const Text(
-                          'Minute',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        NumberPicker(
-                          value: tempMinute,
-                          minValue: 0,
-                          maxValue: 59,
-                          itemHeight: 48,
-                          itemWidth: 70,
-                          zeroPad: true,
-                          textStyle: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
-                          selectedTextStyle: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(
-                                color: Colors.black.withValues(alpha: 0.12),
-                                width: 1.5,
-                              ),
-                              bottom: BorderSide(
-                                color: Colors.black.withValues(alpha: 0.12),
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                          onChanged: (val) =>
-                              bsSetState(() => tempMinute = val),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 16),
-                    // AM/PM
-                    Column(
-                      children: [
-                        const Text(
-                          'Period',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Column(
-                          children: ['AM', 'PM'].map((p) {
-                            final selected = tempPeriod == p;
-                            return GestureDetector(
-                              onTap: () => bsSetState(() => tempPeriod = p),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                margin: const EdgeInsets.symmetric(vertical: 4),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: selected
-                                      ? Colors.black87
-                                      : Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  p,
-                                  style: TextStyle(
-                                    color: selected
-                                        ? Colors.white
-                                        : Colors.grey,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 24),
+              const Text('Select Exit Time', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 32),
+              
+              // Pickers
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _timePickerColumn('Hour', 1, 12, tempHour, (val) => bsSetState(() => tempHour = val)),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 25, left: 8, right: 8),
+                    child: Text(':', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                  ),
+                  _timePickerColumn('Min', 0, 59, tempMinute, (val) => bsSetState(() => tempMinute = val), zeroPad: true),
+                  const SizedBox(width: 24),
+                  // AM/PM Toggle
+                  Column(
+                    children: [
+                      const Text('Period', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      _periodButton('AM', tempPeriod == 'AM', () => bsSetState(() => tempPeriod = 'AM')),
+                      const SizedBox(height: 8),
+                      _periodButton('PM', tempPeriod == 'PM', () => bsSetState(() => tempPeriod = 'PM')),
+                    ],
+                  ),
+                ],
               ),
-              // Confirm button
+              
+              const SizedBox(height: 40),
+              
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                child: GestureDetector(
-                  onTap: () {
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                child: ElevatedButton(
+                  onPressed: () {
                     setState(() {
                       _hour = tempHour;
                       _minute = tempMinute;
@@ -591,32 +350,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                     });
                     Navigator.pop(bsCtx);
                   },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Confirm Time',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: const Text('Confirm Time'),
                 ),
               ),
             ],
@@ -626,52 +360,43 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
     );
   }
 
-  Widget _label(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      ),
+  Widget _timePickerColumn(String label, int min, int max, int value, ValueChanged<int> onChanged, {bool zeroPad = false}) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        NumberPicker(
+          value: value,
+          minValue: min,
+          maxValue: max,
+          zeroPad: zeroPad,
+          itemHeight: 60,
+          itemWidth: 80,
+          selectedTextStyle: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primary),
+          textStyle: const TextStyle(fontSize: 20, color: Colors.grey),
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 
-  Widget _inputField({
-    required String hint,
-    required TextEditingController controller,
-    int maxLines = 1,
-    IconData? icon,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: icon != null ? Icon(icon) : null,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
+  Widget _periodButton(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? AppTheme.primary : Colors.grey.shade200),
+          boxShadow: isSelected ? [BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppTheme.textSecondary,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

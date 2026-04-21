@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
 
 class GroupPassPage extends StatefulWidget {
   const GroupPassPage({super.key});
@@ -23,6 +25,14 @@ class _GroupPassPageState extends State<GroupPassPage> {
 
   Future<void> fetchStudents() async {
     try {
+      if (lid == null) {
+        final prefs = await SharedPreferences.getInstance();
+        lid = prefs.getInt('lid');
+      }
+      if (lid == null) {
+        setState(() => isLoading = false);
+        return;
+      }
       final response = await dio.get('$baseurl/StudentListAPI/$lid');
       if (response.statusCode == 200) {
         setState(() {
@@ -46,7 +56,6 @@ class _GroupPassPageState extends State<GroupPassPage> {
     });
   }
 
-  // Helper to check if all in group are selected
   bool isGroupSelected(List<dynamic> students) {
     if (students.isEmpty) return false;
     for (var s in students) {
@@ -59,13 +68,9 @@ class _GroupPassPageState extends State<GroupPassPage> {
     bool allSelected = isGroupSelected(students);
     setState(() {
       if (allSelected) {
-        for (var s in students) {
-          selectedStudentIds.remove(s['id']);
-        }
+        for (var s in students) { selectedStudentIds.remove(s['id']); }
       } else {
-        for (var s in students) {
-          selectedStudentIds.add(s['id']);
-        }
+        for (var s in students) { selectedStudentIds.add(s['id']); }
       }
     });
   }
@@ -73,16 +78,11 @@ class _GroupPassPageState extends State<GroupPassPage> {
   Future<void> submitGroupPass() async {
     if (selectedStudentIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one student'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Select at least one student')),
       );
       return;
     }
-
     setState(() => isSubmitting = true);
-
     try {
       final response = await dio.post(
         '$baseurl/GroupPassAPI/$lid',
@@ -91,26 +91,17 @@ class _GroupPassPageState extends State<GroupPassPage> {
           'reason': 'Group Pass',
         },
       );
-
-      if (response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Group Pass Approved successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context);
-        }
+      if (response.statusCode == 200 && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Group Pass approved successfully!')),
+        );
+        Navigator.pop(context);
       }
     } catch (e) {
       debugPrint('Group pass error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to approve group pass'),
-            backgroundColor: Colors.red,
-          ),
+          const SnackBar(content: Text('Failed to approve group pass')),
         );
       }
     } finally {
@@ -121,125 +112,202 @@ class _GroupPassPageState extends State<GroupPassPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 223, 223, 224),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Group Pass'),
-        backgroundColor: const Color.fromARGB(255, 223, 223, 224),
-        elevation: 0,
+        backgroundColor: AppTheme.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Group Pass',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary))
           : Column(
               children: [
+                // Selection summary chip
+                if (selectedStudentIds.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    color: AppTheme.primaryLight,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.people_rounded,
+                            color: AppTheme.primary, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${selectedStudentIds.length} student${selectedStudentIds.length != 1 ? 's' : ''} selected',
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: classGroups.length,
                     itemBuilder: (context, index) {
                       final classGroup = classGroups[index];
-                      final className = classGroup['class_name'] ?? 'Unknown';
-                      final students = classGroup['students'] ?? [];
-
-                      // Check checkbox state for group
-                      bool allSelected = isGroupSelected(students);
+                      final className =
+                          classGroup['class_name'] ?? 'Unknown';
+                      final students =
+                          (classGroup['students'] as List?) ?? [];
+                      final allSelected = isGroupSelected(students);
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
+                        decoration: AppTheme.cardDecoration,
                         child: Theme(
-                          data: Theme.of(
-                            context,
-                          ).copyWith(dividerColor: Colors.transparent),
+                          data: Theme.of(context)
+                              .copyWith(dividerColor: Colors.transparent),
                           child: ExpansionTile(
-                            leading: Checkbox(
-                              value: allSelected,
-                              activeColor: Colors.blue,
-                              onChanged: (val) {
-                                toggleGroup(students);
-                              },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            collapsedShape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            tilePadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                            leading: GestureDetector(
+                              onTap: () => toggleGroup(students),
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: allSelected
+                                      ? AppTheme.primary
+                                      : AppTheme.surfaceAlt,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: allSelected
+                                        ? AppTheme.primary
+                                        : AppTheme.border,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: allSelected
+                                    ? const Icon(Icons.check_rounded,
+                                        color: Colors.white, size: 16)
+                                    : null,
+                              ),
                             ),
                             title: Text(
                               className,
                               style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                                fontSize: 15,
                               ),
                               overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
                             ),
-                            subtitle: Text('${students.length} students'),
-                            children: students.map<Widget>((student) {
-                              final isSelected = selectedStudentIds.contains(
-                                student['id'],
-                              );
-                              return CheckboxListTile(
-                                value: isSelected,
-                                activeColor: Colors.blue,
-                                onChanged: (val) =>
-                                    toggleSelection(student['id']),
-                                title: Text(
-                                  student['name'] ?? 'N/A',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                ),
-                                secondary: CircleAvatar(
-                                  backgroundColor: Colors.grey.shade200,
-                                  child: Text(
-                                    (student['name'] ?? 'U')[0].toUpperCase(),
+                            subtitle: Text(
+                              '${students.length} student${students.length != 1 ? 's' : ''}',
+                              style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12),
+                            ),
+                            children: [
+                              const Divider(height: 1),
+                              ...students.map<Widget>((student) {
+                                final isSelected = selectedStudentIds
+                                    .contains(student['id']);
+                                final initials =
+                                    (student['name'] ?? 'U')[0].toUpperCase();
+                                return ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                  leading: CircleAvatar(
+                                    backgroundColor: isSelected
+                                        ? AppTheme.primaryLight
+                                        : AppTheme.surfaceAlt,
+                                    child: Text(
+                                      initials,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? AppTheme.primary
+                                            : AppTheme.textSecondary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                  title: Text(
+                                    student['name'] ?? 'N/A',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: GestureDetector(
+                                    onTap: () =>
+                                        toggleSelection(student['id']),
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppTheme.primary
+                                            : AppTheme.surfaceAlt,
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AppTheme.primary
+                                              : AppTheme.border,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: isSelected
+                                          ? const Icon(Icons.check_rounded,
+                                              color: Colors.white, size: 16)
+                                          : null,
+                                    ),
+                                  ),
+                                  onTap: () =>
+                                      toggleSelection(student['id']),
+                                );
+                              }),
+                            ],
                           ),
                         ),
                       );
                     },
                   ),
                 ),
+
+                // Bottom action bar
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.surface,
+                    border: Border(
+                        top: BorderSide(color: AppTheme.border)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        offset: const Offset(0, -4),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 16,
+                        offset: const Offset(0, -4),
                       ),
                     ],
                   ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: isSubmitting ? null : submitGroupPass,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: isSubmitting
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              'Approve Selected (${selectedStudentIds.length})',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
+                  child: ElevatedButton(
+                    onPressed: isSubmitting ? null : submitGroupPass,
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2.5))
+                        : Text(selectedStudentIds.isEmpty
+                            ? 'Select Students to Approve'
+                            : 'Approve ${selectedStudentIds.length} Student${selectedStudentIds.length != 1 ? 's' : ''}'),
                   ),
                 ),
               ],

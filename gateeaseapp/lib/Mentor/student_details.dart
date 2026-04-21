@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StudentDetailsPage extends StatefulWidget {
   const StudentDetailsPage({super.key});
@@ -19,15 +21,17 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     fetchStudents();
   }
 
-  // ================= FETCH STUDENTS =================
   Future<void> fetchStudents() async {
     try {
+      if (lid == null) {
+        final prefs = await SharedPreferences.getInstance();
+        lid = prefs.getInt('lid');
+      }
       if (lid == null) {
         setState(() => isLoading = false);
         return;
       }
       final response = await dio.get('$baseurl/StudentListAPI/$lid');
-      debugPrint(response.data.toString());
       if (response.statusCode == 200) {
         setState(() {
           classGroups = (response.data as List).toList();
@@ -36,140 +40,159 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
       }
     } catch (e) {
       debugPrint('Fetch students error: $e');
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 223, 223, 224),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 223, 223, 224),
-        elevation: 0,
-        title: const Text('Student Details'),
+        backgroundColor: AppTheme.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Student Details',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary))
           : classGroups.isEmpty
-          ? const Center(child: Text('No students found'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: classGroups.length,
-              itemBuilder: (context, index) {
-                final classGroup = classGroups[index];
-                final className =
-                    classGroup['class_name']?.toString() ?? 'Unknown';
-                final studentCount = classGroup['student_count'] ?? 0;
-                final students = (classGroup['students'] as List?) ?? [];
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                      ),
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.people_outline_rounded,
+                          size: 60, color: AppTheme.textMuted),
+                      const SizedBox(height: 12),
+                      const Text('No students found',
+                          style: TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 15)),
                     ],
                   ),
-                  child: Theme(
-                    data: Theme.of(
-                      context,
-                    ).copyWith(dividerColor: Colors.transparent),
-                    child: ExpansionTile(
-                      tilePadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blue.shade100,
-                        child: Text(
-                          studentCount.toString(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        className,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                      ),
-                      subtitle: Text(
-                        '$studentCount student${studentCount != 1 ? 's' : ''}',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 12,
-                        ),
-                      ),
-                      children: [
-                        // Student list
-                        ...students.map<Widget>((student) {
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 8,
+                )
+              : RefreshIndicator(
+                  color: AppTheme.primary,
+                  onRefresh: fetchStudents,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: classGroups.length,
+                    itemBuilder: (context, index) {
+                      final classGroup = classGroups[index];
+                      final className =
+                          classGroup['class_name']?.toString() ?? 'Unknown';
+                      final studentCount = classGroup['student_count'] ?? 0;
+                      final students =
+                          (classGroup['students'] as List?) ?? [];
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: AppTheme.cardDecoration,
+                        child: Theme(
+                          data: Theme.of(context)
+                              .copyWith(dividerColor: Colors.transparent),
+                          child: ExpansionTile(
+                            tilePadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.grey.shade300,
-                              child: Text(
-                                (student['name']?.toString() ?? '?')[0]
-                                    .toUpperCase(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                            collapsedShape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            leading: Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryLight,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  studentCount.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primary,
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
                             ),
                             title: Text(
-                              student['name']?.toString() ?? 'N/A',
+                              className,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: AppTheme.textPrimary,
                               ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 2,
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Admn No: ${student['admn_no']?.toString() ?? 'N/A'}',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  'Phone: ${student['phone']?.toString() ?? 'N/A'}',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (student['email'] != null)
-                                  Text(
-                                    student['email'].toString(),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                              ],
+                            subtitle: Text(
+                              '$studentCount student${studentCount != 1 ? 's' : ''}',
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12,
+                              ),
                             ),
-                            isThreeLine: true,
-                          );
-                        }),
-                      ],
-                    ),
+                            children: [
+                              const Divider(height: 1),
+                              ...students.map<Widget>((student) {
+                                final initials =
+                                    (student['name']?.toString() ?? '?')[0]
+                                        .toUpperCase();
+                                return ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                  leading: CircleAvatar(
+                                    backgroundColor: AppTheme.primaryLight,
+                                    child: Text(initials,
+                                        style: const TextStyle(
+                                            color: AppTheme.primary,
+                                            fontWeight: FontWeight.bold)),
+                                  ),
+                                  title: Text(
+                                    student['name']?.toString() ?? 'N/A',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 2),
+                                      Text(
+                                          'Admn: ${student['admn_no']?.toString() ?? 'N/A'}',
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppTheme.textSecondary)),
+                                      Text(
+                                          'Phone: ${student['phone']?.toString() ?? 'N/A'}',
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppTheme.textSecondary)),
+                                      if (student['email'] != null)
+                                        Text(
+                                          student['email'].toString(),
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppTheme.textMuted),
+                                        ),
+                                    ],
+                                  ),
+                                  isThreeLine: true,
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
     );
   }
 }

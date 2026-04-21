@@ -3,21 +3,20 @@ import 'package:gateeaseapp/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:gateeaseapp/services/notification_service.dart';
+import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/Mentor/pending_pass.dart';
-// import 'package:gateeaseapp/Mentor/mentor_homepage.dart';
-// import 'package:gateeaseapp/Mentor/student_details.dart';
-// import 'package:gateeaseapp/Security/security_homepage.dart';
-// import 'package:gateeaseapp/student/student_homepage.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // 👈 REQUIRED
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Set up JWT interceptor so all API calls carry the auth token
+  setupDioInterceptor();
 
   // Initialize Firebase
   try {
     await Firebase.initializeApp();
     debugPrint('✅ Firebase initialized successfully');
-
-    // Set up background message handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (e) {
     debugPrint('❌ Firebase initialization error: $e');
@@ -34,9 +33,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'GateEase',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: AppTheme.lightTheme,
       // Add navigator key for notification navigation
       navigatorKey: NotificationService.navigatorKey,
       // Add routes for navigation

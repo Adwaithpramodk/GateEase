@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 import 'package:gateeaseapp/api_config.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -14,7 +16,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController otpController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
+  bool _obscureNew = true;
   bool isOtpSent = false;
   bool isLoading = false;
 
@@ -28,32 +30,24 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future<void> sendOtp() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => isLoading = true);
-
     try {
       final response = await dio.post(
-        "$baseurl/ForgetPassword",
-        data: {"Email": emailController.text.trim()},
+        '$baseurl/ForgetPassword',
+        data: {'Email': emailController.text.trim()},
       );
-
       if (!mounted) return;
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        setState(() {
-          isOtpSent = true;
-        });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("OTP sent to your email")));
+        setState(() => isOtpSent = true);
+        _snack('OTP sent to your email ✓', success: true);
       }
     } catch (e) {
       if (!mounted) return;
-      String msg = "Network Error";
+      String msg = 'Network Error';
       if (e is DioException && e.response != null && e.response!.data is Map) {
         msg = e.response!.data['error'] ?? msg;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      _snack(msg);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -61,215 +55,242 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future<void> resetPassword() async {
     if (!_formKey.currentState!.validate()) return;
-    if (otpController.text.length < 6) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Invalid OTP")));
-      return;
-    }
-
     setState(() => isLoading = true);
-
     try {
       final response = await dio.post(
-        "$baseurl/ResetPassword",
+        '$baseurl/ResetPassword',
         data: {
-          "email": emailController.text.trim(),
-          "otp": otpController.text.trim(),
-          "new_password": newPasswordController.text.trim(),
+          'email': emailController.text.trim(),
+          'otp': otpController.text.trim(),
+          'new_password': newPasswordController.text.trim(),
         },
       );
-
       if (!mounted) return;
-
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Password reset successful! Login now."),
-          ),
-        );
+        _snack('Password reset! Please sign in.', success: true);
         Navigator.pop(context);
       }
     } catch (e) {
       if (!mounted) return;
-      String msg = "Network Error";
+      String msg = 'Network Error';
       if (e is DioException && e.response != null && e.response!.data is Map) {
         msg = e.response!.data['error'] ?? msg;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      _snack(msg);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
 
+  void _snack(String msg, {bool success = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: success ? AppTheme.success : null,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F8),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: const Color(0xFFF2F4F8),
-        foregroundColor: Colors.black,
-        title: const Text('Forgot Password'),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Stack(
+          children: [
+            Container(
+              height: 220,
+              decoration: const BoxDecoration(
+                gradient: AppTheme.headerGradient,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
                 ),
-              ],
+              ),
             ),
-            child: Form(
-              key: _formKey,
+            SafeArea(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.lock_reset, size: 60, color: Colors.blue),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    isOtpSent ? 'Verify OTP' : 'Reset Password',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                  // Header bar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white, size: 20),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const Expanded(
+                          child: Text(
+                            'Reset Password',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 44),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-
-                  Text(
-                    isOtpSent
-                        ? 'Enter the 6-digit OTP sent to your email and your new password.'
-                        : 'Enter your registered email address.\nWe will send you a 6-digit OTP.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // EMAIL FIELD (Always visible, readonly after OTP sent)
-                  TextFormField(
-                    controller: emailController,
-                    readOnly: isOtpSent,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: 'Email Address',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Email is required";
-                      }
-                      if (!value.contains('@')) {
-                        return "Enter a valid email";
-                      }
-                      return null;
-                    },
-                  ),
-
-                  // OTP & NEW PASSWORD FIELDS (Visible only after OTP sent)
-                  if (isOtpSent) ...[
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: otpController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 6,
-                      decoration: InputDecoration(
-                        labelText: 'OTP Code',
-                        prefixIcon: const Icon(Icons.pin_outlined),
-                        counterText: "",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) =>
-                          value!.length != 6 ? "Enter valid 6-digit OTP" : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: newPasswordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: 'New Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) => (value!.length < 6)
-                          ? "Min 6 characters required"
-                          : null,
-                    ),
-                  ],
-
-                  const SizedBox(height: 28),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: isLoading
-                          ? null
-                          : (isOtpSent ? resetPassword : sendOtp),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            // Icon
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 2,
+                                ),
                               ),
-                            )
-                          : Text(
-                              isOtpSent ? 'Set New Password' : 'Send OTP',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                              child: const Icon(Icons.lock_reset_rounded,
+                                  size: 36, color: Colors.white),
+                            ),
+                            const SizedBox(height: 48),
+                            Container(
+                              padding: const EdgeInsets.all(28),
+                              decoration: AppTheme.elevatedCardDecoration,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isOtpSent ? 'Verify & Reset' : 'Forgot Password?',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppTheme.textPrimary,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    isOtpSent
+                                        ? 'Enter the 6-digit OTP and your new password.'
+                                        : 'Enter your registered email to receive an OTP.',
+                                    style: const TextStyle(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 13,
+                                        height: 1.4),
+                                  ),
+                                  const SizedBox(height: 24),
+
+                                  // Email field
+                                  TextFormField(
+                                    controller: emailController,
+                                    readOnly: isOtpSent,
+                                    keyboardType: TextInputType.emailAddress,
+                                    decoration: InputDecoration(
+                                      labelText: 'Email Address',
+                                      prefixIcon: const Icon(Icons.email_outlined),
+                                      filled: true,
+                                      fillColor: isOtpSent
+                                          ? AppTheme.border
+                                          : AppTheme.surfaceAlt,
+                                    ),
+                                    validator: (v) {
+                                      if (v == null || v.isEmpty) {
+                                        return 'Email is required';
+                                      }
+                                      if (!v.contains('@')) {
+                                        return 'Enter a valid email';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+
+                                  if (isOtpSent) ...[
+                                    const SizedBox(height: 16),
+                                    TextFormField(
+                                      controller: otpController,
+                                      keyboardType: TextInputType.number,
+                                      maxLength: 6,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
+                                      decoration: const InputDecoration(
+                                        labelText: 'OTP Code',
+                                        prefixIcon: Icon(Icons.pin_outlined),
+                                        counterText: '',
+                                      ),
+                                      validator: (v) => (v?.length ?? 0) != 6
+                                          ? 'Enter valid 6-digit OTP'
+                                          : null,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    TextFormField(
+                                      controller: newPasswordController,
+                                      obscureText: _obscureNew,
+                                      decoration: InputDecoration(
+                                        labelText: 'New Password',
+                                        prefixIcon: const Icon(Icons.lock_outline),
+                                        suffixIcon: IconButton(
+                                          icon: Icon(_obscureNew
+                                              ? Icons.visibility_off_rounded
+                                              : Icons.visibility_rounded,
+                                              size: 20),
+                                          onPressed: () => setState(
+                                              () => _obscureNew = !_obscureNew),
+                                        ),
+                                      ),
+                                      validator: (v) => (v?.length ?? 0) < 6
+                                          ? 'Min 6 characters'
+                                          : null,
+                                    ),
+                                  ],
+
+                                  const SizedBox(height: 28),
+
+                                  ElevatedButton(
+                                    onPressed: isLoading
+                                        ? null
+                                        : (isOtpSent ? resetPassword : sendOtp),
+                                    child: isLoading
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2.5))
+                                        : Text(isOtpSent
+                                            ? 'Set New Password'
+                                            : 'Send OTP'),
+                                  ),
+
+                                  if (isOtpSent) ...[
+                                    const SizedBox(height: 8),
+                                    Center(
+                                      child: TextButton(
+                                        onPressed: () =>
+                                            setState(() => isOtpSent = false),
+                                        child: const Text('← Change Email'),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                    ),
-                  ),
-
-                  if (isOtpSent)
-                    TextButton(
-                      onPressed: () => setState(() => isOtpSent = false),
-                      child: const Text(
-                        "Change Email",
-                        style: TextStyle(color: Colors.grey),
+                          ],
+                        ),
                       ),
-                    ),
-
-                  const SizedBox(height: 10),
-
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Back to Login',
-                      style: TextStyle(fontSize: 13),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

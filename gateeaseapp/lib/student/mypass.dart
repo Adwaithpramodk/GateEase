@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
 
 class Mypasses extends StatefulWidget {
   const Mypasses({super.key});
@@ -33,6 +35,14 @@ class _MypassesState extends State<Mypasses> {
   // ================= FETCH PASSES =================
   Future<void> getDetails() async {
     try {
+      if (lid == null) {
+        final prefs = await SharedPreferences.getInstance();
+        lid = prefs.getInt('lid');
+      }
+      if (lid == null) {
+        setState(() => isLoading = false);
+        return;
+      }
       final response = await dio.get('$baseurl/ApplypassAPI/$lid');
       if (response.statusCode == 200) {
         setState(() {
@@ -114,22 +124,26 @@ class _MypassesState extends State<Mypasses> {
         pass['security_status'] == 'rejected') {
       return {
         'text': 'Rejected',
-        'color': Colors.red,
-        'icon': Icons.cancel_outlined,
+        'color': AppTheme.error,
+        'icon': Icons.cancel_rounded,
       };
     } else if (pass['security_status'] == 'scanned') {
       return {
-        'text': 'Scanned',
-        'color': Colors.green,
-        'icon': Icons.verified_outlined,
+        'text': 'Completed',
+        'color': AppTheme.accent,
+        'icon': Icons.check_circle_rounded,
       };
     } else if (pass['mentor_status'] == 'approved') {
-      return {'text': 'Approved', 'color': Colors.blue, 'icon': Icons.qr_code};
+      return {
+        'text': 'Approved',
+        'color': AppTheme.primary,
+        'icon': Icons.qr_code_2_rounded,
+      };
     } else {
       return {
         'text': 'Pending',
         'color': Colors.orange,
-        'icon': Icons.hourglass_bottom,
+        'icon': Icons.hourglass_top_rounded,
       };
     }
   }
@@ -137,227 +151,208 @@ class _MypassesState extends State<Mypasses> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F8),
       appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: const Color(0xFFF2F4F8),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text('My Passes', style: TextStyle(color: Colors.black)),
+        title: const Text('My Passes'),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : details.isEmpty
-          ? const Center(child: Text('No passes found'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: details.length,
-              itemBuilder: (context, index) {
-                final pass = details[index];
-                final status = getStatus(pass);
-                final int passId = pass['id'];
-                final bool isGroupPass = pass['is_group_pass'] ?? false;
-
-                final bool canShowQr =
-                    !isGroupPass &&
-                    pass['mentor_status'] == 'approved' &&
-                    pass['security_status'] != 'scanned' &&
-                    pass['security_status'] != 'rejected';
-
-                // Check if QR exists in pass data or cache
-                final String? qrUrl = pass['qrcode'] ?? qrCodeCache[passId];
-                final bool hasQr = qrUrl != null && qrUrl.isNotEmpty;
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade300),
+                      const SizedBox(height: 16),
+                      Text('No passes found', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            backgroundColor: status['color'].withValues(
-                              alpha: 0.15,
-                            ),
-                            child: Icon(status['icon'], color: status['color']),
-                          ),
-                          title: Text(
-                            pass['reason'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Date: ${DateFormat('MMM dd, yyyy').format(DateTime.parse(pass['created_at']).toLocal())}',
-                              ),
-                              Text('Time: ${pass['time']}'),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  itemCount: details.length,
+                  itemBuilder: (context, index) {
+                    final pass = details[index];
+                    final status = getStatus(pass);
+                    final int passId = pass['id'];
+                    final bool isGroupPass = pass['is_group_pass'] ?? false;
 
-                              if (status['text'] == 'Rejected') ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Reason: ${pass['reject_reason'] ?? 'Not specified'}',
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
+                    final bool canShowQr =
+                        !isGroupPass &&
+                        pass['mentor_status'] == 'approved' &&
+                        pass['security_status'] != 'scanned' &&
+                        pass['security_status'] != 'rejected';
 
-                              if (pass['security_status'] == 'scanned') ...[
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Pass scanned at gate',
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: status['color'].withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              status['text'],
-                              style: TextStyle(
-                                color: status['color'],
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
+                    final String? qrUrl = pass['qrcode'] ?? qrCodeCache[passId];
+                    final bool hasQr = qrUrl != null && qrUrl.isNotEmpty;
 
-                        // Group Pass Indicator
-                        if (isGroupPass &&
-                            pass['mentor_status'] == 'approved') ...[
-                          const Divider(),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.group,
-                                  color: Colors.blue.shade700,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Group Pass - No QR code needed. Security will approve directly.',
-                                    style: TextStyle(
-                                      color: Colors.blue.shade700,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
                         ],
-
-                        // ================= QR CODE SECTION =================
-                        if (canShowQr) ...[
-                          const Divider(),
-                          const SizedBox(height: 8),
-
-                          if (hasQr) ...[
-                            // Show QR code
-                            Column(
-                              children: [
-                                Image.network(
-                                  "$imageBaseUrl$qrUrl",
-                                  height: 180,
-                                  width: 180,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Text(
-                                      "QR not available",
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 12,
-                                      ),
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Show this QR at the gate',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ] else ...[
-                            // Show button to generate QR
-                            Column(
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: () => generateQRCode(passId),
-                                  icon: const Icon(Icons.qr_code_2),
-                                  label: const Text('Generate QR Code'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                                if (qrErrorMessages[passId] != null) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    qrErrorMessages[passId]!,
-                                    style: const TextStyle(
-                                      color: Colors.orange,
-                                      fontSize: 12,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Column(
+                          children: [
+                            // Header part
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: status['color'].withValues(alpha: 0.05),
+                                border: Border(bottom: BorderSide(color: Colors.grey.shade100, style: BorderStyle.solid)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: status['color'].withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
                                     ),
-                                    textAlign: TextAlign.center,
+                                    child: Icon(status['icon'], color: status['color'], size: 24),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          pass['reason'] ?? 'No Reason',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          DateFormat('EEEE, MMM dd').format(DateTime.parse(pass['created_at']).toLocal()),
+                                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: status['color'],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      status['text'],
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                    ),
                                   ),
                                 ],
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Available 15 min before exit time',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey,
+                              ),
+                            ),
+                            
+                            // Body part
+                            Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      _passInfoTile('TIME', pass['time'] ?? '--:--'),
+                                      _passInfoTile('TYPE', isGroupPass ? 'Group' : 'Individual'),
+                                      _passInfoTile('PASS ID', '#${pass['id']}'),
+                                    ],
                                   ),
-                                ),
-                              ],
+                                  
+                                  if (pass['reject_reason'] != null && status['text'] == 'Rejected') ...[
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(color: AppTheme.error.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.info_outline, color: AppTheme.error, size: 16),
+                                          const SizedBox(width: 8),
+                                          Expanded(child: Text('Reason: ${pass['reject_reason']}', style: const TextStyle(color: AppTheme.error, fontSize: 12))),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+
+                                  if (isGroupPass && pass['mentor_status'] == 'approved') ...[
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.group_rounded, color: Colors.blue, size: 16),
+                                          SizedBox(width: 8),
+                                          Expanded(child: Text('Group pass approved. No QR code required.', style: TextStyle(color: Colors.blue, fontSize: 12))),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+
+                                  // QR Section
+                                  if (canShowQr) ...[
+                                    const SizedBox(height: 24),
+                                    if (hasQr) 
+                                      Column(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(16),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(color: Colors.grey.shade100),
+                                            ),
+                                            child: Image.network(
+                                              "$imageBaseUrl$qrUrl",
+                                              height: 180,
+                                              width: 180,
+                                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.qr_code, size: 100, color: Colors.grey),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          const Text('Show this at the security gate', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                                        ],
+                                      )
+                                    else
+                                      Column(
+                                        children: [
+                                          ElevatedButton.icon(
+                                            onPressed: () => generateQRCode(passId),
+                                            icon: const Icon(Icons.qr_code_scanner_rounded),
+                                            label: const Text('Generate Pass QR'),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          const Text('Available 15 min before exit', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                                        ],
+                                      ),
+                                  ],
+                                ],
+                              ),
                             ),
                           ],
-                          const SizedBox(height: 8),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+    );
+  }
+
+  Widget _passInfoTile(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary)),
+      ],
     );
   }
 }

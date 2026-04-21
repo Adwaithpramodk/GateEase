@@ -639,6 +639,7 @@ class JWTAuthMixin:
 
 class PingAPI(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
     def get(self, request):
         return Response({
             "status": "online",
@@ -652,6 +653,7 @@ class PingAPI(APIView):
 #user registration api for student (public -- no token required, rate limited)
 class UserReg_api(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
     throttle_classes = [SignupRateThrottle]
     def get(self, request):
         classes = classstable.objects.all()
@@ -705,6 +707,7 @@ class UserReg_api(APIView):
 #login api for student, mentor, security (public -- issues JWT tokens, rate limited)
 class LoginpageAPI(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
     throttle_classes = [LoginRateThrottle]
     def post(self, request):
         print("-------------------", request.data)
@@ -1476,6 +1479,8 @@ class getallpasses(JWTAuthMixin, APIView):
 
 #forget password api
 class ForgetPassword(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
     throttle_classes = [PasswordResetThrottle]
     def post(self, request):
         print(request.data)
@@ -1519,6 +1524,8 @@ class ForgetPassword(APIView):
 
 #reset password api
 class ResetPasswordAPI(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
     throttle_classes = [PasswordResetThrottle]
     def post(self, request):
         email = request.data.get('email')

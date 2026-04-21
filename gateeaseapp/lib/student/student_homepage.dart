@@ -7,6 +7,7 @@ import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/student/mypass.dart';
 import 'package:gateeaseapp/student/new_pass.dart';
 import 'package:gateeaseapp/theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StudentHomePage extends StatefulWidget {
   const StudentHomePage({super.key});
@@ -173,12 +174,16 @@ class _StudentHomePageState extends State<StudentHomePage>
   }
 
   Future<void> logout(BuildContext context) async {
-    Navigator.pop(context);
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
-    );
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Clear all session data including tokens
+    if (context.mounted) {
+      Navigator.pop(context);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (route) => false,
+      );
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {

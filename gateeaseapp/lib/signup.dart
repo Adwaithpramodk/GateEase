@@ -30,25 +30,21 @@ class _SignUpState extends State<SignUp> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     Map<String, dynamic> data = {
-      'name': nameController.text.trim(),
-      'email': emailController.text.trim(),
+      'name': nameController.text,
+      'email': emailController.text,
       'classs': selectedClassId,
-      'admn_no': admissionController.text.trim(),
-      'phone': phoneController.text.trim(),
-      'password': passwordController.text.trim(),
-      'confirmpassword': confirmpasswordController.text.trim(),
+      'admn_no': admissionController.text,
+      'phone': phoneController.text,
+      'password': passwordController.text,
+      'confirmpassword': confirmpasswordController.text,
     };
     try {
-      final response = await dio.post('$baseurl/UserReg/', data: data);
+      final response = await dio.post('$baseurl/UserReg', data: data);
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Registration successful! Wait for admin verification.',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Registration successful! Wait for admin verification.'),
+        ));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -57,7 +53,8 @@ class _SignUpState extends State<SignUp> {
       if (e is DioException && e.response != null && e.response!.data is Map) {
         msg = e.response!.data['message'] ?? msg;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -65,7 +62,7 @@ class _SignUpState extends State<SignUp> {
 
   Future<void> getClasses() async {
     try {
-      final response = await dio.get('$baseurl/UserReg/');
+      final response = await dio.get('$baseurl/UserReg');
       if (response.statusCode == 200) {
         setState(() {
           classes = List<Map<String, dynamic>>.from(response.data);
@@ -105,18 +102,12 @@ class _SignUpState extends State<SignUp> {
                 children: [
                   // Top bar
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white, size: 20),
                           onPressed: () => Navigator.pop(context),
                         ),
                         const Expanded(
@@ -177,10 +168,9 @@ class _SignUpState extends State<SignUp> {
                                 label: 'Email Address',
                                 icon: Icons.email_rounded,
                                 keyboard: TextInputType.emailAddress,
-                                validator: (v) =>
-                                    !RegExp(
-                                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                    ).hasMatch(v ?? '')
+                                validator: (v) => !RegExp(
+                                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                    .hasMatch(v ?? '')
                                     ? 'Enter a valid email'
                                     : null,
                               ),
@@ -192,24 +182,14 @@ class _SignUpState extends State<SignUp> {
                                   labelText: 'Batch / Class',
                                   prefixIcon: Icon(Icons.class_rounded),
                                 ),
-                                items: classes.isEmpty
-                                    ? [
-                                        const DropdownMenuItem(
-                                          value: null,
-                                          child: Text('Loading classes...'),
-                                        ),
-                                      ]
-                                    : classes
-                                          .map(
-                                            (cls) => DropdownMenuItem<int>(
-                                              value: cls['id'],
-                                              child: Text(
-                                                cls['class_name'].toString(),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
+                                items: classes
+                                    .map((cls) => DropdownMenuItem<int>(
+                                          value: cls['id'],
+                                          child: Text(
+                                              cls['class_name'].toString(),
+                                              overflow: TextOverflow.ellipsis),
+                                        ))
+                                    .toList(),
                                 validator: (v) =>
                                     v == null ? 'Select your batch' : null,
                                 onChanged: (v) =>
@@ -244,15 +224,12 @@ class _SignUpState extends State<SignUp> {
                                 icon: Icons.lock_rounded,
                                 obscure: _obscurePassword,
                                 suffix: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off_rounded
-                                        : Icons.visibility_rounded,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword,
-                                  ),
+                                  icon: Icon(_obscurePassword
+                                      ? Icons.visibility_off_rounded
+                                      : Icons.visibility_rounded,
+                                      size: 20),
+                                  onPressed: () => setState(() =>
+                                      _obscurePassword = !_obscurePassword),
                                 ),
                                 validator: (v) => (v?.length ?? 0) < 6
                                     ? 'Min 6 characters'
@@ -265,16 +242,13 @@ class _SignUpState extends State<SignUp> {
                                 icon: Icons.lock_clock_rounded,
                                 obscure: _obscureConfirmPassword,
                                 suffix: IconButton(
-                                  icon: Icon(
-                                    _obscureConfirmPassword
-                                        ? Icons.visibility_off_rounded
-                                        : Icons.visibility_rounded,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => setState(
-                                    () => _obscureConfirmPassword =
-                                        !_obscureConfirmPassword,
-                                  ),
+                                  icon: Icon(_obscureConfirmPassword
+                                      ? Icons.visibility_off_rounded
+                                      : Icons.visibility_rounded,
+                                      size: 20),
+                                  onPressed: () => setState(() =>
+                                      _obscureConfirmPassword =
+                                          !_obscureConfirmPassword),
                                 ),
                                 validator: (v) => v != passwordController.text
                                     ? 'Passwords do not match'
@@ -282,18 +256,15 @@ class _SignUpState extends State<SignUp> {
                               ),
                               const SizedBox(height: 28),
                               ElevatedButton(
-                                onPressed: _isLoading
-                                    ? null
-                                    : () => register(context),
+                                onPressed:
+                                    _isLoading ? null : () => register(context),
                                 child: _isLoading
                                     ? const SizedBox(
                                         width: 22,
                                         height: 22,
                                         child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2.5,
-                                        ),
-                                      )
+                                            color: Colors.white,
+                                            strokeWidth: 2.5))
                                     : const Text('Create Account'),
                               ),
                             ],
@@ -308,13 +279,9 @@ class _SignUpState extends State<SignUp> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          'Already have an account? ',
-                          style: TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
+                        const Text('Already have an account? ',
+                            style: TextStyle(
+                                color: AppTheme.textSecondary, fontSize: 13)),
                         TextButton(
                           onPressed: () => Navigator.pop(context),
                           style: TextButton.styleFrom(padding: EdgeInsets.zero),

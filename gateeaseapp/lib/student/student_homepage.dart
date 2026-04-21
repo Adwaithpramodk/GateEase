@@ -167,9 +167,7 @@ class _StudentHomePageState extends State<StudentHomePage>
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
       debugPrint('Timeline error: $e');
     }
   }
@@ -517,6 +515,30 @@ class _StudentHomePageState extends State<StudentHomePage>
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.2),
                           ),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              timeline
+                                  .where((t) => t['status'] == 'completed')
+                                  .length
+                                  .toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Passes',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

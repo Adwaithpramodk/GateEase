@@ -34,11 +34,11 @@ class _LoginPageState extends State<LoginPage> {
     }
     setState(() => _isLoading = true);
     Map<String, dynamic> data = {
-      'username': usernameController.text.trim(),
-      'password': passwordController.text.trim(),
+      'username': usernameController.text,
+      'password': passwordController.text,
     };
     try {
-      final response = await dio.post('$baseurl/LoginpageAPI/', data: data);
+      final response = await dio.post('$baseurl/LoginpageAPI', data: data);
       if (!context.mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         lid = response.data['login_id'];
@@ -52,45 +52,40 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('refresh_token', refreshToken);
         setupDioInterceptor();
         if (!context.mounted) return;
-        final lowerUserType = usertype?.toLowerCase();
-
-        if (lowerUserType == 'student') {
+        if (usertype == 'Student') {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => StudentHomePage()),
             (route) => false,
           );
-        } else if (lowerUserType == 'mentor') {
+        } else if (usertype == 'mentor') {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => MentorHomePage()),
             (route) => false,
           );
-        } else if (lowerUserType == 'security') {
+        } else if (usertype == 'security') {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => SecurityHomePage()),
             (route) => false,
           );
-        } else if (lowerUserType == 'rejected') {
+        } else if (usertype == 'Rejected') {
           _snack('Your account was rejected. Contact admin.');
-        } else if (lowerUserType == 'admin') {
-          _snack('Admin login restricted to web portal.');
         } else {
-          _snack('Account status: ${usertype ?? 'Unknown'}. Contact admin.');
+          _snack('Account not verified. Contact admin.');
         }
       } else {
         String msg = 'Login failed';
-        if (response.data is Map) {
-          msg = response.data['message'] ?? response.data['detail'] ?? msg;
+        if (response.data is Map && response.data.containsKey('message')) {
+          msg = response.data['message'];
         }
         _snack(msg);
       }
     } catch (e) {
       if (!context.mounted) return;
       if (e is DioException && e.response != null && e.response!.data is Map) {
-        final data = e.response!.data;
-        _snack(data['message'] ?? data['detail'] ?? 'Login failed');
+        _snack(e.response!.data['message'] ?? 'Login failed');
       } else {
         _snack('Server error. Try again later.');
       }

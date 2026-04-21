@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // ─────────────── Palette: Sapphire & Cyan ───────────────
-  // Primary: Royal Sapphire Blue
-  static const Color primary      = Color(0xFF2563EB); // Royal Blue
-  static const Color primaryDark  = Color(0xFF1E3A8A); // Deep Sapphire
-  static const Color primaryLight = Color(0xFFEFF6FF); // Soft ice blue
+  // ─────────────── Palette (inspired by reference design) ───────────────
+  // Primary: Deep Indigo/Purple
+  static const Color primary      = Color(0xFF4E3AE8); // Deep indigo
+  static const Color primaryDark  = Color(0xFF3425C5); // Darker indigo
+  static const Color primaryLight = Color(0xFFEAE7FF); // Soft lavender tint
 
-  // Accent: Vibrant Cyan/Teal (CTA, highlights)
-  static const Color accent       = Color(0xFF06B6D4); // Electric Cyan
-  static const Color accentLight  = Color(0xFFCFFAFE); // Light Cyan
+  // Accent: Vibrant Pink (CTA, highlights)
+  static const Color accent       = Color(0xFFFF2E63);
+  static const Color accentLight  = Color(0xFFFFE1E8);
 
-  // Secondary: Soft Purple/Violet
-  static const Color secondary    = Color(0xFF8B5CF6); // Violet
-  static const Color secondaryLight = Color(0xFFEDE9FE);
+  // Secondary: Soft Cyan/Teal
+  static const Color secondary    = Color(0xFF00C2CB);
+  static const Color secondaryLight = Color(0xFFCDFAFD);
 
   // Semantics
   static const Color success      = Color(0xFF10B981); // Emerald
@@ -24,20 +24,20 @@ class AppTheme {
   static const Color errorLight   = Color(0xFFFEE2E2);
 
   // Neutrals
-  static const Color background   = Color(0xFFF8FAFC); // Clean slate background
+  static const Color background   = Color(0xFFF0EFFF); // Soft lavender background
   static const Color surface      = Color(0xFFFFFFFF);
-  static const Color surfaceAlt   = Color(0xFFF1F5F9); // Slate-100
-  static const Color border       = Color(0xFFE2E8F0); // Slate-200
+  static const Color surfaceAlt   = Color(0xFFF8F7FF); // Very light violet tint
+  static const Color border       = Color(0xFFE8E6FF);
 
   // Text
-  static const Color textPrimary   = Color(0xFF0F172A); // Deep slate text
-  static const Color textSecondary = Color(0xFF64748B); // Slate-500
-  static const Color textMuted     = Color(0xFF94A3B8); // Slate-400
+  static const Color textPrimary   = Color(0xFF1A1560); // Deep indigo text
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textMuted     = Color(0xFF9CA3AF);
 
-  // Header gradient — Deep Ocean Blue gradient
-  static const Color headerTop    = Color(0xFF0F172A); // Midnight Slate
-  static const Color headerMid    = Color(0xFF1E3A8A); // Deep Sapphire
-  static const Color headerBottom = Color(0xFF2563EB); // Royal Blue
+  // Header gradient — matches reference deep purple header
+  static const Color headerTop    = Color(0xFF3425C5);
+  static const Color headerMid    = Color(0xFF4E3AE8);
+  static const Color headerBottom = Color(0xFF6E5EFF);
 
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -54,7 +54,7 @@ class AppTheme {
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [accent, Color(0xFF0891B2)], // Cyan-500 to Cyan-600
+    colors: [accent, Color(0xFFE51D4F)],
   );
 
   // ─────────────── ThemeData ───────────────

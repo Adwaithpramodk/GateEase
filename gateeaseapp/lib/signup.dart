@@ -176,20 +176,28 @@ class _SignUpState extends State<SignUp> {
                               ),
                               const SizedBox(height: 14),
                               DropdownButtonFormField<int>(
-                                initialValue: selectedClassId,
+                                value: selectedClassId,
                                 isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Batch / Class',
                                   prefixIcon: Icon(Icons.class_rounded),
                                 ),
-                                items: classes
-                                    .map((cls) => DropdownMenuItem<int>(
-                                          value: cls['id'],
-                                          child: Text(
-                                              cls['class_name'].toString(),
-                                              overflow: TextOverflow.ellipsis),
-                                        ))
-                                    .toList(),
+                                items: classes.isEmpty
+                                    ? [
+                                        const DropdownMenuItem(
+                                          value: null,
+                                          child: Text('Loading classes...'),
+                                        )
+                                      ]
+                                    : classes
+                                        .map((cls) => DropdownMenuItem<int>(
+                                              value: cls['id'],
+                                              child: Text(
+                                                  cls['class_name'].toString(),
+                                                  overflow:
+                                                      TextOverflow.ellipsis),
+                                            ))
+                                        .toList(),
                                 validator: (v) =>
                                     v == null ? 'Select your batch' : null,
                                 onChanged: (v) =>

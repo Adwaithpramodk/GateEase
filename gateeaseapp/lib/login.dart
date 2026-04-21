@@ -52,34 +52,45 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('refresh_token', refreshToken);
         setupDioInterceptor();
         if (!context.mounted) return;
-        if (usertype == 'Student') {
-          Navigator.pushAndRemoveUntil(context,
-              MaterialPageRoute(builder: (_) => StudentHomePage()),
-              (route) => false);
-        } else if (usertype == 'mentor') {
-          Navigator.pushAndRemoveUntil(context,
-              MaterialPageRoute(builder: (_) => MentorHomePage()),
-              (route) => false);
-        } else if (usertype == 'security') {
-          Navigator.pushAndRemoveUntil(context,
-              MaterialPageRoute(builder: (_) => SecurityHomePage()),
-              (route) => false);
-        } else if (usertype == 'Rejected') {
+        final lowerUserType = usertype?.toLowerCase();
+
+        if (lowerUserType == 'student') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => StudentHomePage()),
+            (route) => false,
+          );
+        } else if (lowerUserType == 'mentor') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => MentorHomePage()),
+            (route) => false,
+          );
+        } else if (lowerUserType == 'security') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => SecurityHomePage()),
+            (route) => false,
+          );
+        } else if (lowerUserType == 'rejected') {
           _snack('Your account was rejected. Contact admin.');
+        } else if (lowerUserType == 'admin') {
+          _snack('Admin login restricted to web portal.');
         } else {
-          _snack('Account not verified. Contact admin.');
+          _snack('Account status: ${usertype ?? 'Unknown'}. Contact admin.');
         }
       } else {
         String msg = 'Login failed';
-        if (response.data is Map && response.data.containsKey('message')) {
-          msg = response.data['message'];
+        if (response.data is Map) {
+          msg = response.data['message'] ?? response.data['detail'] ?? msg;
         }
         _snack(msg);
       }
     } catch (e) {
       if (!context.mounted) return;
       if (e is DioException && e.response != null && e.response!.data is Map) {
-        _snack(e.response!.data['message'] ?? 'Login failed');
+        final data = e.response!.data;
+        _snack(data['message'] ?? data['detail'] ?? 'Login failed');
       } else {
         _snack('Server error. Try again later.');
       }
@@ -89,8 +100,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _snack(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -103,13 +113,41 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             // Decorative header blob
             Container(
-              height: MediaQuery.of(context).size.height * 0.42,
+              height: MediaQuery.of(context).size.height * 0.45,
               decoration: const BoxDecoration(
                 gradient: AppTheme.headerGradient,
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(48),
                   bottomRight: Radius.circular(48),
                 ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -40,
+                    top: -20,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: -20,
+                    bottom: 40,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.accent.withValues(alpha: 0.15),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             SafeArea(
@@ -118,24 +156,8 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 36),
+
                     // Brand
-                    Hero(
-                      tag: 'logo',
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(Icons.shield_rounded,
-                            size: 36, color: Colors.white),
-                      ),
-                    ),
                     const SizedBox(height: 12),
                     const Text(
                       'GateEase',
@@ -147,7 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     Text(
-                      'Smart Campus Access',
+                      'Smart Campus Security System',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white.withValues(alpha: 0.7),
@@ -163,25 +185,30 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Welcome back',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.textPrimary,
-                                letterSpacing: -0.3,
-                              )),
+                          const Text(
+                            'Welcome back',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textPrimary,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          const Text('Sign in to your account',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppTheme.textSecondary)),
+                          const Text(
+                            'Sign in to your account',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
                           const SizedBox(height: 28),
 
                           // Username
                           TextFormField(
                             controller: usernameController,
                             decoration: const InputDecoration(
-                              labelText: 'Username',
+                              labelText: 'Email',
                               prefixIcon: Icon(Icons.person_outline_rounded),
                             ),
                           ),
@@ -193,7 +220,9 @@ class _LoginPageState extends State<LoginPage> {
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline_rounded),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
@@ -202,7 +231,8 @@ class _LoginPageState extends State<LoginPage> {
                                   size: 20,
                                 ),
                                 onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword),
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
                               ),
                             ),
                           ),
@@ -215,8 +245,8 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (_) =>
-                                        const ForgotPasswordPage()),
+                                  builder: (_) => const ForgotPasswordPage(),
+                                ),
                               ),
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.zero,
@@ -228,18 +258,39 @@ class _LoginPageState extends State<LoginPage> {
                           const SizedBox(height: 24),
 
                           // Sign In button
-                          ElevatedButton(
-                            onPressed: _isLoading ? null : () => login(context),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.5,
-                                    ),
-                                  )
-                                : const Text('Sign In'),
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.accent.withValues(alpha: 0.3),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () => login(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.accent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.5,
+                                      ),
+                                    )
+                                  : const Text('Sign In'),
+                            ),
                           ),
                         ],
                       ),
@@ -251,12 +302,18 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("Don't have an account? ",
-                            style: TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 14)),
+                        const Text(
+                          "Don't have an account? ",
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
                         TextButton(
-                          onPressed: () => Navigator.push(context,
-                              MaterialPageRoute(builder: (_) => const SignUp())),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SignUp()),
+                          ),
                           style: TextButton.styleFrom(padding: EdgeInsets.zero),
                           child: const Text('Sign Up'),
                         ),

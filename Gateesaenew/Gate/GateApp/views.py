@@ -718,7 +718,23 @@ class LoginpageAPI(APIView):
 
         t_user = Logintable.objects.only('id', 'username', 'password', 'usertype').filter(username=username).first()
 
-        if not t_user or not check_password(password, t_user.password):
+        if not t_user:
+            return Response(
+                {"message": "Invalid Username or Password"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Check password with fallback for plain-text migration
+        is_valid = False
+        if check_password(password, t_user.password):
+            is_valid = True
+        elif t_user.password == password:
+            # Migrate to hashed password on successful plain-text match
+            t_user.password = make_password(password)
+            t_user.save()
+            is_valid = True
+            
+        if not is_valid:
             return Response(
                 {"message": "Invalid Username or Password"},
                 status=status.HTTP_401_UNAUTHORIZED

@@ -122,25 +122,32 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Apply New Pass'),
+        backgroundColor: AppTheme.background,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 🔹 Info Header Card
+            // 🔹 Info Header Card (Deep Indigo Gradient)
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppTheme.primary, AppTheme.headerBottom],
+                ),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primary.withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: AppTheme.primary.withValues(alpha: 0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -151,32 +158,49 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                     children: [
                       const Text(
                         'Application Date',
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
                       ),
-                      Text(
-                        todayDate,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          todayDate,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const Divider(color: Colors.white10, height: 24),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Divider(color: Colors.white24, height: 1),
+                  ),
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.white10,
-                        backgroundImage: details?['Photo'] != null
-                            ? NetworkImage('$baseurl${details!['Photo']}')
-                            : null,
-                        child: details?['Photo'] == null
-                            ? const Icon(Icons.person, color: Colors.white70)
-                            : null,
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Colors.white.withValues(alpha: 0.15),
+                          backgroundImage: details?['Photo'] != null
+                              ? NetworkImage('$baseurl${details!['Photo']}')
+                              : null,
+                          child: details?['Photo'] == null
+                              ? const Icon(Icons.person_rounded, color: Colors.white)
+                              : null,
+                        ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,15 +209,16 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                               details?['name'] ?? 'Loading...',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            const SizedBox(height: 4),
                             Text(
                               details?['dept'] ?? '',
-                              style: const TextStyle(color: Colors.white60, fontSize: 12),
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -204,55 +229,77 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 36),
 
             // 🔹 Reason Field
             _sectionLabel('Why are you leaving?'),
             TextField(
               controller: reasonController,
               maxLines: 4,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Enter a valid reason for your exit pass...',
                 alignLabelWithHint: true,
-                prefixIcon: Padding(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+                ),
+                prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 60),
                   child: Icon(Icons.edit_note_rounded),
                 ),
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             // 🔹 Time Field
             _sectionLabel('Exit Time'),
             GestureDetector(
               onTap: _showTimePicker,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(50),
+                  boxShadow: [
+                    BoxShadow(color: AppTheme.primary.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.access_time_filled_rounded,
-                      color: _timeSelected ? AppTheme.primary : AppTheme.textSecondary,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _timeSelected ? AppTheme.primaryLight : AppTheme.surfaceAlt,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.access_time_filled_rounded,
+                        color: _timeSelected ? AppTheme.primary : AppTheme.textMuted,
+                        size: 20,
+                      ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     Text(
                       _timeSelected
                           ? '${_hour.toString().padLeft(2, "0")}:${_minute.toString().padLeft(2, "0")} $_period'
                           : 'Tap to select time',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: _timeSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: _timeSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+                        fontSize: 15,
+                        fontWeight: _timeSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: _timeSelected ? AppTheme.textPrimary : AppTheme.textMuted,
                       ),
                     ),
                     const Spacer(),
-                    const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary),
+                    Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
                   ],
                 ),
               ),
@@ -261,10 +308,28 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
             const SizedBox(height: 48),
 
             // 🔹 Apply Button
-            ElevatedButton(
-              onPressed: applyPass,
-              child: const Text('Submit Application'),
+            Container(
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.accent.withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: ElevatedButton(
+                onPressed: applyPass,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                ),
+                child: const Text('Submit Application'),
+              ),
             ),
+            const SizedBox(height: 32),
           ],
         ),
       ),

@@ -7,6 +7,7 @@ import 'package:gateeaseapp/student/new_pass.dart';
 import 'package:gateeaseapp/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gateeaseapp/theme/app_theme.dart';
+import 'package:dio/dio.dart';
 
 class StudentHomePage extends StatefulWidget {
   const StudentHomePage({super.key});
@@ -78,14 +79,24 @@ class _StudentHomePageState extends State<StudentHomePage>
       if (mounted) {
         String errorMsg = 'Failed to load profile';
         if (e is DioException) {
-          if (e.response?.statusCode == 403) {
-            errorMsg = 'Session expired. Please logout and login again.';
-          } else if (e.response?.statusCode == 404) {
-            errorMsg = 'Student profile not found.';
+          final status = e.response?.statusCode;
+          final data = e.response?.data;
+          if (status == 401) {
+            errorMsg = 'Unauthenticated. Please re-login.';
+          } else if (status == 403) {
+            errorMsg = 'Unauthorized: ${data is Map ? data['error'] : 'Check token claims'}';
+          } else if (status == 404) {
+            errorMsg = 'Profile not found (404).';
+          } else {
+            errorMsg = 'Server Error ($status): ${e.message}';
           }
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }

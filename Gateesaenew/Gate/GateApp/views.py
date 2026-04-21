@@ -600,6 +600,12 @@ class JWTAuthMixin:
     permission_classes = [IsTokenAuthenticated]
     throttle_classes = [AuthenticatedAPIThrottle]
 
+    def dispatch(self, request, *args, **kwargs):
+        # Debug logging to check for header stripping issues on production
+        auth_header = request.headers.get('Authorization')
+        print(f"DEBUG: Incoming Auth Header: {auth_header[:20] if auth_header else 'None'}...")
+        return super().dispatch(request, *args, **kwargs)
+
 
 #user registration api for student (public -- no token required, rate limited)
 class UserReg_api(APIView):

@@ -11,6 +11,7 @@ import 'package:gateeaseapp/theme/app_theme.dart';
 import 'package:gateeaseapp/services/notification_service.dart';
 import 'package:gateeaseapp/services/notification_api_service.dart';
 import 'dart:io' show Platform;
+import 'package:dio/dio.dart';
 
 class MentorHomePage extends StatefulWidget {
   const MentorHomePage({super.key});
@@ -88,6 +89,18 @@ class _MentorHomePageState extends State<MentorHomePage> {
       }
     } catch (e) {
       debugPrint('Get Details Error: $e');
+      if (mounted) {
+        String errorMsg = 'Failed to load mentor profile';
+        if (e is DioException) {
+          final status = e.response?.statusCode;
+          if (status == 403) {
+            errorMsg = 'Session expired. Please re-login.';
+          }
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
+        );
+      }
     }
   }
 

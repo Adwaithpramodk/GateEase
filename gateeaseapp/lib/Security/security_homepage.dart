@@ -7,6 +7,7 @@ import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 
 class SecurityHomePage extends StatefulWidget {
   const SecurityHomePage({super.key});
@@ -58,6 +59,18 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
       }
     } catch (e) {
       debugPrint('Get Details Error: $e');
+      if (mounted) {
+        String errorMsg = 'Failed to load security profile';
+        if (e is DioException) {
+          final status = e.response?.statusCode;
+          if (status == 403) {
+            errorMsg = 'Session expired. Please re-login.';
+          }
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
+        );
+      }
     }
   }
 

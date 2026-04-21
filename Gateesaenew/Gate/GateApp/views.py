@@ -1253,16 +1253,17 @@ class MentorExitReportAPI(JWTAuthMixin, APIView):
                     'classes': []
                 })
 
-            # Base query: only PROCESSED passes from assigned classes
+            # Base query: passes from assigned classes where the MENTOR has taken action
+            from django.db.models import Q
             passes = exitpasstable.objects.filter(
-                student_id__classs__id__in=assigned_classes_ids,
-                security_status__in=['scanned', 'approved']
+                student_id__classs__id__in=assigned_classes_ids
+            ).filter(
+                Q(mentor_status='approved') | Q(mentor_status='rejected')
             ).select_related(
                 'student_id', 
                 'student_id__classs', 
                 'student_id__classs__department_id'
             )
-            print(f"DEBUG: Found {passes.count()} exited passes for mentor's classes")
             
             # --- 3. Apply Filters ---
             
@@ -1280,14 +1281,14 @@ class MentorExitReportAPI(JWTAuthMixin, APIView):
                     from datetime import datetime
                     # Parse YYYY-MM-DD
                     filter_date_obj = datetime.strptime(date_filter, '%Y-%m-%d').date()
-                    # Filter matching date part of scanned_at datetime
-                    passes = passes.filter(scanned_at__date=filter_date_obj)
+                    # Filter matching date part of created_at datetime
+                    passes = passes.filter(created_at__date=filter_date_obj)
                 except ValueError:
                     print(f"Invalid date format received: {date_filter}")
                     # Optionally handle error or just ignore invalid date
             
-            # Order by most recent
-            passes = passes.order_by('-scanned_at')
+            # Order by most recent request
+            passes = passes.order_by('-created_at')
             
             # --- 4. Serialize Data ---
             data = []
@@ -1298,20 +1299,18 @@ class MentorExitReportAPI(JWTAuthMixin, APIView):
                 curr_dept = curr_class.department_id if curr_class else None
                 
                 # CRITICAL: Convert to local timezone before formatting
-                # This ensures the date matches what the user sees in their timezone
-                # Otherwise UTC dates can be off by a day, breaking PDF export filters
-                local_scanned = timezone.localtime(p.scanned_at) if p.scanned_at else None
+                local_time = timezone.localtime(p.created_at) if p.created_at else None
                 
-                scanned_time = local_scanned.strftime('%I:%M %p') if local_scanned else '-'
-                scanned_date = local_scanned.strftime('%d-%m-%Y') if local_scanned else '-'
+                display_time = local_time.strftime('%I:%M %p') if local_time else '-'
+                display_date = local_time.strftime('%d-%m-%Y') if local_time else '-'
                 
                 data.append({
                     'id': p.id,
                     'student_name': curr_student.name if curr_student else 'Unknown',
                     'department': curr_dept.name if curr_dept else '-',
                     'class': curr_class.class_name if curr_class else '-',
-                    'date': scanned_date,
-                    'time': scanned_time,
+                    'date': display_date,
+                    'time': display_time,
                     'status': 'Exited',
                     'reason': p.reason or '-',
                     'mentor_status': p.mentor_status or '-',

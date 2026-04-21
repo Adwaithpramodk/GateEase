@@ -75,6 +75,19 @@ class _StudentHomePageState extends State<StudentHomePage>
       }
     } catch (e) {
       debugPrint('Get Details Error: $e');
+      if (mounted) {
+        String errorMsg = 'Failed to load profile';
+        if (e is DioException) {
+          if (e.response?.statusCode == 403) {
+            errorMsg = 'Session expired. Please logout and login again.';
+          } else if (e.response?.statusCode == 404) {
+            errorMsg = 'Student profile not found.';
+          }
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
+        );
+      }
     }
   }
 
@@ -158,8 +171,16 @@ class _StudentHomePageState extends State<StudentHomePage>
         });
       }
     } catch (e) {
-      debugPrint('Timeline fetch error: $e');
-      setState(() => isLoading = false);
+      debugPrint('Fetch Timeline Error: $e');
+      if (mounted) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load pass history'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 

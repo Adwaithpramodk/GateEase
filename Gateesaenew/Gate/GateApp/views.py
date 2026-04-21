@@ -846,14 +846,27 @@ class ApplypassAPI(JWTAuthMixin, APIView):
 #student info api
 class StudentInfo_api(JWTAuthMixin, APIView):
     def get(self, request, lid):
-        if str(lid) != str(request.auth.get('login_id')):
-            return Response({'error': 'Unauthorized'}, status=403)
-        student_obj = studenttable.objects.get(LOGINID_id=lid)
-        print(student_obj)
-        
-        serializer = StudentSerializer1(student_obj)
-        print("---------", serializer.data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            auth_lid = request.auth.get('login_id')
+            print(f"DEBUG: StudentInfo_api request for lid={lid}, token login_id={auth_lid}")
+            
+            if auth_lid is None:
+                return Response({'error': 'Token missing login_id. Please re-login.'}, status=403)
+                
+            if str(lid) != str(auth_lid):
+                print(f"DEBUG: ID Mismatch! URL lid={lid} vs Token lid={auth_lid}")
+                return Response({'error': 'Unauthorized: ID mismatch'}, status=403)
+                
+            student_obj = studenttable.objects.get(LOGINID_id=lid)
+            serializer = StudentSerializer1(student_obj)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except studenttable.DoesNotExist:
+            print(f"DEBUG: Student not found for LOGINID_id={lid}")
+            return Response({'error': 'Student profile not found'}, status=404)
+        except Exception as e:
+            print(f"DEBUG: StudentInfo_api Error: {str(e)}")
+            return Response({'error': str(e)}, status=500)
     
 
 #view complaint and view reply api for student

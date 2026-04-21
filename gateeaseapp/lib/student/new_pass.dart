@@ -102,20 +102,16 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
       }
     } catch (e) {
       debugPrint('Apply Pass Error: $e');
+      String errorMsg = 'Failed to apply pass';
       if (e is DioException) {
-        debugPrint('DioError Type: ${e.type}');
-        debugPrint('DioError Message: ${e.message}');
-        if (e.response != null) {
-          debugPrint('DioError Response: ${e.response?.data}');
-          debugPrint('DioError Status: ${e.response?.statusCode}');
+        if (e.response?.data != null && e.response?.data is Map) {
+          errorMsg = e.response?.data['error'] ?? e.response?.data['message'] ?? errorMsg;
         }
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Failed to apply pass. Please checking console for details.',
-            ),
+          SnackBar(
+            content: Text(errorMsg),
             backgroundColor: Colors.red,
           ),
         );

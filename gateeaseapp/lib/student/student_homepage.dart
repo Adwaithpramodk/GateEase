@@ -118,62 +118,71 @@ class _StudentHomePageState extends State<StudentHomePage>
         final data = response.data;
         List<Map<String, String>> temp = [];
 
-        String formatTime(String? isoString) {
-          if (isoString == null || isoString.isEmpty) return 'Pending';
-          try {
-            final DateTime dt = DateTime.parse(isoString).toLocal();
-            int hour = dt.hour;
-            int minute = dt.minute;
-            String period = hour >= 12 ? 'PM' : 'AM';
-            hour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-            String minuteStr = minute.toString().padLeft(2, '0');
-            return '$hour:$minuteStr $period';
-          } catch (e) {
-            return isoString;
+        if (data is List) {
+          temp = List<Map<String, String>>.from(
+              data.map((x) => Map<String, String>.from(x)));
+        } else if (data is Map && data.containsKey('id') && data['id'] != -1) {
+          // Process single pass object into timeline
+          String formatTime(String? isoString) {
+            if (isoString == null || isoString.isEmpty) return 'Pending';
+            try {
+              final DateTime dt = DateTime.parse(isoString).toLocal();
+              int hour = dt.hour;
+              int minute = dt.minute;
+              String period = hour >= 12 ? 'PM' : 'AM';
+              hour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+              String minuteStr = minute.toString().padLeft(2, '0');
+              return '$hour:$minuteStr $period';
+            } catch (e) {
+              return isoString;
+            }
           }
-        }
 
-        temp.add({
-          'title': 'Pass Requested',
-          'time': formatTime(data['created_at']),
-          'status': 'completed',
-        });
-
-        if (data['mentor_status'] == 'approved') {
           temp.add({
-            'title': 'Mentor Approved',
-            'time': formatTime(data['approved_at']),
+            'title': 'Pass Requested',
+            'time': formatTime(data['created_at']),
             'status': 'completed',
           });
-        } else if (data['mentor_status'] == 'rejected') {
-          temp.add({
-            'title': 'Mentor Rejected',
-            'time': data['reject_reason'] ?? 'Rejected',
-            'status': 'rejected',
-          });
-        } else {
-          temp.add({
-            'title': 'Awaiting Mentor',
-            'time': 'Pending',
-            'status': 'pending',
-          });
-        }
 
-        if (data['mentor_status'] != 'rejected') {
-          if (data['security_status'] == 'scanned' ||
-              data['security_status'] == 'approved') {
+          if (data['mentor_status'] == 'approved') {
             temp.add({
-              'title': 'Security Scanned',
-              'time': formatTime(data['scanned_at']),
+              'title': 'Mentor Approved',
+              'time': formatTime(data['approved_at']),
               'status': 'completed',
+            });
+          } else if (data['mentor_status'] == 'rejected') {
+            temp.add({
+              'title': 'Mentor Rejected',
+              'time': data['reject_reason'] ?? 'Rejected',
+              'status': 'rejected',
             });
           } else {
             temp.add({
-              'title': 'Awaiting Security',
+              'title': 'Awaiting Mentor',
               'time': 'Pending',
               'status': 'pending',
             });
           }
+
+          if (data['mentor_status'] != 'rejected') {
+            if (data['security_status'] == 'scanned' ||
+                data['security_status'] == 'approved') {
+              temp.add({
+                'title': 'Security Scanned',
+                'time': formatTime(data['scanned_at']),
+                'status': 'completed',
+              });
+            } else {
+              temp.add({
+                'title': 'Awaiting Security',
+                'time': 'Pending',
+                'status': 'pending',
+              });
+            }
+          }
+        } else {
+          // 'No pass found' or id: -1
+          temp = [];
         }
 
         setState(() {
@@ -185,12 +194,6 @@ class _StudentHomePageState extends State<StudentHomePage>
       debugPrint('Fetch Timeline Error: $e');
       if (mounted) {
         setState(() => isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load pass history'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
       }
     }
   }

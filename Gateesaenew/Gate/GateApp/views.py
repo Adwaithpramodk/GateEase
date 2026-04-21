@@ -1243,17 +1243,17 @@ class MentorExitReportAPI(JWTAuthMixin, APIView):
             
             # --- 1. Get assigned classes for this mentor ---
             assigned_classes_ids = class_assigntable.objects.filter(mentor_id=mentor).values_list('class_id', flat=True)
+            print(f"DEBUG: MentorExitReportAPI for lid={lid}, mentor={mentor.name}, assigned_classes={list(assigned_classes_ids)}")
             
             # If no classes assigned, return empty results immediately
             if not assigned_classes_ids:
+                 print(f"DEBUG: No classes assigned to mentor {mentor.name}")
                  return Response({
                     'passes': [],
                     'classes': []
                 })
 
             # Base query: only PROCESSED passes from assigned classes
-            # Include BOTH 'scanned' (group passes) AND 'approved' (individual passes)
-            # Group passes use 'scanned', individual passes use 'approved'
             passes = exitpasstable.objects.filter(
                 student_id__classs__id__in=assigned_classes_ids,
                 security_status__in=['scanned', 'approved']
@@ -1262,6 +1262,7 @@ class MentorExitReportAPI(JWTAuthMixin, APIView):
                 'student_id__classs', 
                 'student_id__classs__department_id'
             )
+            print(f"DEBUG: Found {passes.count()} exited passes for mentor's classes")
             
             # --- 3. Apply Filters ---
             

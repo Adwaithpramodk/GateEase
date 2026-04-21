@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:pdf/pdf.dart';
@@ -44,6 +46,16 @@ class _ReportPageState extends State<ReportPage> {
     setState(() => isLoading = true);
 
     try {
+      if (lid == null) {
+        final prefs = await SharedPreferences.getInstance();
+        lid = prefs.getInt('lid');
+      }
+
+      if (lid == null) {
+        setState(() => isLoading = false);
+        return;
+      }
+
       // Build query parameters
       Map<String, String> queryParams = {
         'search': searchQuery,
@@ -76,7 +88,16 @@ class _ReportPageState extends State<ReportPage> {
       }
     } catch (e) {
       debugPrint('Error fetching report: $e');
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+        String errorMsg = 'Failed to load report';
+        if (e is DioException && e.response?.data != null) {
+          errorMsg = e.response?.data['error'] ?? errorMsg;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 

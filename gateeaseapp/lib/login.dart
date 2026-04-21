@@ -34,11 +34,11 @@ class _LoginPageState extends State<LoginPage> {
     }
     setState(() => _isLoading = true);
     Map<String, dynamic> data = {
-      'username': usernameController.text,
-      'password': passwordController.text,
+      'username': usernameController.text.trim(),
+      'password': passwordController.text.trim(),
     };
     try {
-      final response = await dio.post('$baseurl/LoginpageAPI', data: data);
+      final response = await dio.post('$baseurl/LoginpageAPI/', data: data);
       if (!context.mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         lid = response.data['login_id'];

@@ -584,14 +584,47 @@ class IsTokenAuthenticated(BasePermission):
         return bool(request.auth and 'login_id' in request.auth)
 
 class QuietJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request):
+        header = self.get_header(request)
+        if header is None:
+            # Fallback for servers that strip Authorization header (e.g. PythonAnywhere/Apache)
+            x_auth = request.headers.get('X-Authorization')
+            if x_auth:
+                if isinstance(x_auth, str):
+                    x_auth = x_auth.encode('utf-8')
+                header = x_auth
+            else:
+                return None
+
+        raw_token = self.get_raw_token(header)
+        if raw_token is None:
+            return None
+
+        validated_token = self.get_validated_token(raw_token)
+        return self.get_user(validated_token), validated_token
+
     def get_user(self, validated_token):
+        # We try to get the Django User if it exists, but we don't fail if it doesn't.
+        # This is because we use a custom Logintable.
         try:
+            # Try finding by the login_id claim we injected
+            login_id = validated_token.get('login_id')
+            if login_id:
+                # We return a simple object that satisfies is_authenticated
+                # This prevents IsAuthenticated/IsTokenAuthenticated from failing
+                class JWTUser:
+                    def __init__(self, id):
+                        self.id = id
+                        self.is_authenticated = True
+                        self.is_active = True
+                    def __str__(self): return f"User_{self.id}"
+                return JWTUser(login_id)
             return super().get_user(validated_token)
-        except:
-            # Return a dummy user if the token is valid but no Django User exists
-            # This allows the API to function with custom Logintable
+        except Exception as e:
+            print(f"DEBUG: QuietAuth Fallback for token: {e}")
             class AnonymousUser:
                 is_authenticated = True
+                is_active = True
                 def __str__(self): return "JWTUser"
             return AnonymousUser()
 

@@ -19,6 +19,8 @@ void setupDioInterceptor() {
         final token = prefs.getString('access_token');
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
+          // Fallback header for production servers that strip standard Authorization headers
+          options.headers['X-Authorization'] = 'Bearer $token';
         }
         return handler.next(options);
       },

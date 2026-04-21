@@ -80,6 +80,7 @@ urlpatterns = [
     path('ResetPassword', ResetPasswordAPI.as_view()),
     path('AcceptPass',AcceptPass.as_view()),
     path('RejectPass',RejectPass.as_view()),
+    path('ping', PingAPI.as_view()),
     path('Approvepassadmin/<int:id>',Approvepassadmin.as_view(),name='Approvepassadmin'),
     path('Rejectpassadmin/<int:id>',Rejectpassadmin.as_view(),name='Rejectpassadmin'),
     path('CheckPassStatus', CheckPassStatus.as_view()),

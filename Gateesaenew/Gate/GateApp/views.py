@@ -640,8 +640,21 @@ class JWTAuthMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
+class PingAPI(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        return Response({
+            "status": "online",
+            "headers": {k: v for k, v in request.headers.items() if k.lower() in ['authorization', 'x-authorization', 'user-agent']},
+            "auth_status": {
+                "has_auth": bool(request.auth),
+                "user": str(request.user),
+            }
+        })
+
 #user registration api for student (public -- no token required, rate limited)
 class UserReg_api(APIView):
+    # ... (rest of UserReg_api) ...
     throttle_classes = [SignupRateThrottle]
     def get(self, request):
         classes = classstable.objects.all()
@@ -726,11 +739,13 @@ class LoginpageAPI(APIView):
         # since Logintable is NOT Django's built-in User model.
         refresh = RefreshToken()
         refresh['login_id'] = t_user.id
+        refresh['user_id'] = t_user.id # Standard claim for library compatibility
         refresh['usertype'] = t_user.usertype
         
         # Explicitly set claims on access token to ensure visibility in JWTAuthMixin
         access = refresh.access_token
         access['login_id'] = t_user.id
+        access['user_id'] = t_user.id # Standard claim
         access['usertype'] = t_user.usertype
 
         response_dict = {

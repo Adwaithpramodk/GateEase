@@ -17,6 +17,10 @@ void main() async {
   try {
     await Firebase.initializeApp();
     debugPrint('✅ Firebase initialized successfully');
+    
+    // Initialize Notification Service
+    await NotificationService.initialize();
+    
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (e) {
     debugPrint('❌ Firebase initialization error: $e');

@@ -651,6 +651,7 @@ class PingAPI(APIView):
 
 #user registration api for student (public -- no token required, rate limited)
 class UserReg_api(APIView):
+    permission_classes = [AllowAny]
     throttle_classes = [SignupRateThrottle]
     def get(self, request):
         classes = classstable.objects.all()
@@ -703,6 +704,7 @@ class UserReg_api(APIView):
 
 #login api for student, mentor, security (public -- issues JWT tokens, rate limited)
 class LoginpageAPI(APIView):
+    permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
     def post(self, request):
         print("-------------------", request.data)

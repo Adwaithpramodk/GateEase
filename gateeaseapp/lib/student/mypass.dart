@@ -204,7 +204,7 @@ class _MypassesState extends State<Mypasses> {
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: AppTheme.cardDecoration,
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(16),
                         child: Column(
                           children: [
                             // Header part
@@ -247,7 +247,7 @@ class _MypassesState extends State<Mypasses> {
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                     decoration: BoxDecoration(
                                       color: status['color'],
-                                      borderRadius: BorderRadius.circular(50),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       status['text'],
@@ -329,23 +329,14 @@ class _MypassesState extends State<Mypasses> {
                                     else
                                       Column(
                                         children: [
-                                          Container(
-                                            width: double.infinity,
-                                            decoration: BoxDecoration(
-                                              boxShadow: [
-                                                BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6)),
-                                              ],
-                                              borderRadius: BorderRadius.circular(50),
+                                          ElevatedButton.icon(
+                                            onPressed: () => generateQRCode(passId),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppTheme.accent,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                             ),
-                                            child: ElevatedButton.icon(
-                                              onPressed: () => generateQRCode(passId),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: AppTheme.accent,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-                                              ),
-                                              icon: const Icon(Icons.qr_code_scanner_rounded),
-                                              label: const Text('Generate Pass QR'),
-                                            ),
+                                            icon: const Icon(Icons.qr_code_scanner_rounded),
+                                            label: const Text('Generate Pass QR'),
                                           ),
                                           const SizedBox(height: 12),
                                           const Text('Available 15 min before exit', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),

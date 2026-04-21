@@ -95,7 +95,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pass applied successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.success,
           ),
         );
         Navigator.pop(context);
@@ -190,13 +190,13 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                           border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
                         ),
                         child: CircleAvatar(
-                          radius: 24,
+                          radius: 32,
                           backgroundColor: Colors.white.withValues(alpha: 0.15),
                           backgroundImage: details?['Photo'] != null
                               ? NetworkImage('$baseurl${details!['Photo']}')
                               : null,
                           child: details?['Photo'] == null
-                              ? const Icon(Icons.person_rounded, color: Colors.white)
+                              ? const Icon(Icons.person_rounded, color: Colors.white, size: 32)
                               : null,
                         ),
                       ),
@@ -240,16 +240,16 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                 hintText: 'Enter a valid reason for your exit pass...',
                 alignLabelWithHint: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
                 ),
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 60),
@@ -268,7 +268,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(50),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(color: AppTheme.primary.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
                   ],
@@ -308,26 +308,14 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
             const SizedBox(height: 48),
 
             // 🔹 Apply Button
-            Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.accent.withValues(alpha: 0.3),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-                borderRadius: BorderRadius.circular(50),
+            ElevatedButton(
+              onPressed: applyPass,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: ElevatedButton(
-                onPressed: applyPass,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-                ),
-                child: const Text('Submit Application'),
-              ),
+              child: const Text('Submit Application'),
             ),
             const SizedBox(height: 32),
           ],
@@ -370,7 +358,12 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
               const SizedBox(height: 12),
               Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 24),
-              const Text('Select Exit Time', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text('Select Exit Time', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+              const SizedBox(height: 8),
+              const Text(
+                'Permitted: 10:00 AM - 03:40 PM',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary),
+              ),
               const SizedBox(height: 32),
               
               // Pickers
@@ -382,16 +375,30 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                     padding: EdgeInsets.only(top: 25, left: 8, right: 8),
                     child: Text(':', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppTheme.primary)),
                   ),
-                  _timePickerColumn('Min', 0, 59, tempMinute, (val) => bsSetState(() => tempMinute = val), zeroPad: true),
+                  _timePickerColumn(
+                    'Min', 
+                    0, 
+                    (tempPeriod == 'PM' && tempHour == 3) ? 40 : 59, 
+                    tempMinute > ((tempPeriod == 'PM' && tempHour == 3) ? 40 : 59) ? ((tempPeriod == 'PM' && tempHour == 3) ? 40 : 59) : tempMinute, 
+                    (val) => bsSetState(() => tempMinute = val), 
+                    zeroPad: true
+                  ),
                   const SizedBox(width: 24),
                   // AM/PM Toggle
                   Column(
                     children: [
                       const Text('Period', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-                      _periodButton('AM', tempPeriod == 'AM', () => bsSetState(() => tempPeriod = 'AM')),
+                      _periodButton('AM', tempPeriod == 'AM', () => bsSetState(() {
+                        tempPeriod = 'AM';
+                        if (tempHour < 10) tempHour = 10;
+                        if (tempHour > 11) tempHour = 10;
+                      })),
                       const SizedBox(height: 8),
-                      _periodButton('PM', tempPeriod == 'PM', () => bsSetState(() => tempPeriod = 'PM')),
+                      _periodButton('PM', tempPeriod == 'PM', () => bsSetState(() {
+                        tempPeriod = 'PM';
+                        if (tempHour > 3 && tempHour != 12) tempHour = 12;
+                      })),
                     ],
                   ),
                 ],
@@ -403,6 +410,25 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
                 child: ElevatedButton(
                   onPressed: () {
+                    // Time Restriction: 10:00 AM to 3:40 PM
+                    int hour24 = tempHour;
+                    if (tempPeriod == 'PM' && tempHour != 12) hour24 += 12;
+                    if (tempPeriod == 'AM' && tempHour == 12) hour24 = 0;
+
+                    final totalMinutes = hour24 * 60 + tempMinute;
+                    const startMinutes = 10 * 60; // 10:00 AM
+                    const endMinutes = 15 * 60 + 40; // 3:40 PM
+
+                    if (totalMinutes < startMinutes || totalMinutes > endMinutes) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Exit time must be between 10:00 AM and 03:40 PM'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                      return;
+                    }
+
                     setState(() {
                       _hour = tempHour;
                       _minute = tempMinute;

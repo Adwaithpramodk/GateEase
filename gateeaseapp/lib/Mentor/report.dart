@@ -5,6 +5,7 @@ import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:gateeaseapp/theme/app_theme.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -285,16 +286,17 @@ class _ReportPageState extends State<ReportPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isExited ? Colors.green.shade50 : Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isExited ? Colors.green.shade200 : Colors.orange.shade200),
+        color: isExited ? AppTheme.successLight : AppTheme.warningLight,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: isExited ? AppTheme.success.withValues(alpha: 0.3) : AppTheme.warning.withValues(alpha: 0.3)),
       ),
       child: Text(
         isExited ? 'EXITED' : 'PENDING',
         style: TextStyle(
-          color: isExited ? Colors.green.shade700 : Colors.orange.shade800,
+          color: isExited ? AppTheme.success : AppTheme.warning,
           fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
         ),
       ),
     );

@@ -100,6 +100,7 @@ class _SignUpState extends State<SignUp> {
             SafeArea(
               child: Column(
                 children: [
+                  const SizedBox(height: 32), // Added top spacing
                   // Top bar
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -143,7 +144,7 @@ class _SignUpState extends State<SignUp> {
                       fontSize: 13,
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 48),
 
                   Expanded(
                     child: SingleChildScrollView(

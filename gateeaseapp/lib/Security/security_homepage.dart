@@ -164,9 +164,10 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
 
   Widget _buildHeader() {
     return SliverAppBar(
-      expandedHeight: 210,
+      expandedHeight: 200, // Slightly reduced
       pinned: true,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       backgroundColor: AppTheme.headerTop,
       systemOverlayStyle: SystemUiOverlayStyle.light,
       automaticallyImplyLeading: false,
@@ -192,6 +193,7 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.parallax,
         background: Container(
           decoration: const BoxDecoration(gradient: AppTheme.headerGradient),
           child: Stack(
@@ -375,7 +377,7 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
             icon: Icons.groups_rounded,
             label: 'Group Pass',
             subtitle: 'Batch approve',
-            gradient: const [AppTheme.accent, Color(0xFF0F766E)],
+            gradient: const [AppTheme.accent, AppTheme.primaryDark],
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(
                     builder: (_) => const SecurityGroupPassPage())),

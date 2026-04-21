@@ -1,43 +1,40 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // ─────────────── Palette (inspired by reference design) ───────────────
-  // Primary: Deep Indigo/Purple
-  static const Color primary      = Color(0xFF4E3AE8); // Deep indigo
-  static const Color primaryDark  = Color(0xFF3425C5); // Darker indigo
-  static const Color primaryLight = Color(0xFFEAE7FF); // Soft lavender tint
+  // ─────────────── Palette (Modern Dark Blue / Navy) ───────────────
+  static const Color primary      = Color(0xFF1E40AF); // Royal Blue
+  static const Color primaryDark  = Color(0xFF1E3A8A); // Navy Blue
+  static const Color primaryLight = Color(0xFFDBEAFE); // Soft Blue Tint
 
-  // Accent: Vibrant Pink (CTA, highlights)
-  static const Color accent       = Color(0xFFFF2E63);
-  static const Color accentLight  = Color(0xFFFFE1E8);
+  static const Color accent       = Color(0xFF3B82F6); // Electric Blue
+  static const Color accentLight  = Color(0xFFEFF6FF);
 
-  // Secondary: Soft Cyan/Teal
-  static const Color secondary    = Color(0xFF00C2CB);
-  static const Color secondaryLight = Color(0xFFCDFAFD);
+  static const Color secondary    = Color(0xFF64748B); // Slate
+  static const Color secondaryLight = Color(0xFFF1F5F9);
 
   // Semantics
-  static const Color success      = Color(0xFF10B981); // Emerald
+  static const Color success      = Color(0xFF10B981);
   static const Color successLight = Color(0xFFD1FAE5);
-  static const Color warning      = Color(0xFFF59E0B); // Amber
+  static const Color warning      = Color(0xFFF59E0B);
   static const Color warningLight = Color(0xFFFEF3C7);
-  static const Color error        = Color(0xFFEF4444); // Red
+  static const Color error        = Color(0xFFEF4444);
   static const Color errorLight   = Color(0xFFFEE2E2);
 
   // Neutrals
-  static const Color background   = Color(0xFFF0EFFF); // Soft lavender background
+  static const Color background   = Color(0xFFF8FAFC); // Slate 50
   static const Color surface      = Color(0xFFFFFFFF);
-  static const Color surfaceAlt   = Color(0xFFF8F7FF); // Very light violet tint
-  static const Color border       = Color(0xFFE8E6FF);
+  static const Color surfaceAlt   = Color(0xFFF1F5F9); // Slate 100
+  static const Color border       = Color(0xFFE2E8F0); // Slate 200
 
   // Text
-  static const Color textPrimary   = Color(0xFF1A1560); // Deep indigo text
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textMuted     = Color(0xFF9CA3AF);
+  static const Color textPrimary   = Color(0xFF0F172A); // Slate 900
+  static const Color textSecondary = Color(0xFF475569); // Slate 600
+  static const Color textMuted     = Color(0xFF94A3B8); // Slate 400
 
-  // Header gradient — matches reference deep purple header
-  static const Color headerTop    = Color(0xFF3425C5);
-  static const Color headerMid    = Color(0xFF4E3AE8);
-  static const Color headerBottom = Color(0xFF6E5EFF);
+  // Header gradient — Deep Professional Navy
+  static const Color headerTop    = Color(0xFF1E3A8A);
+  static const Color headerMid    = Color(0xFF1E40AF);
+  static const Color headerBottom = Color(0xFF2563EB);
 
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -49,12 +46,6 @@ class AppTheme {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [primary, primaryDark],
-  );
-
-  static const LinearGradient accentGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [accent, Color(0xFFE51D4F)],
   );
 
   // ─────────────── ThemeData ───────────────
@@ -78,32 +69,32 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(50), // pill shape
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(50),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(50),
-          borderSide: const BorderSide(color: primary, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(50),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(50),
-          borderSide: const BorderSide(color: error, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: error, width: 1.5),
         ),
         labelStyle: const TextStyle(color: textSecondary, fontSize: 14),
         floatingLabelStyle: const TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.w600),
@@ -115,10 +106,10 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 54),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          minimumSize: const Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.3),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.3),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -139,19 +130,11 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
-      checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primary;
-          return Colors.transparent;
-        }),
-        side: const BorderSide(color: border, width: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      ),
       dividerTheme: const DividerThemeData(color: border, thickness: 1),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: textPrimary,
         contentTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -160,25 +143,23 @@ class AppTheme {
   // ─────────────── Reusable Decorations ───────────────
   static BoxDecoration get cardDecoration => BoxDecoration(
     color: surface,
-    borderRadius: BorderRadius.circular(24),
+    borderRadius: BorderRadius.circular(16),
     boxShadow: [
-      BoxShadow(color: primary.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 6)),
+      BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
     ],
   );
 
   static BoxDecoration get elevatedCardDecoration => BoxDecoration(
     color: surface,
-    borderRadius: BorderRadius.circular(24),
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(color: border, width: 1),
     boxShadow: [
-      BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8)),
+      BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 2)),
     ],
   );
 
   static BoxDecoration get accentCardDecoration => BoxDecoration(
-    gradient: accentGradient,
-    borderRadius: BorderRadius.circular(24),
-    boxShadow: [
-      BoxShadow(color: accent.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
-    ],
+    color: accent,
+    borderRadius: BorderRadius.circular(16),
   );
 }

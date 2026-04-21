@@ -1512,8 +1512,8 @@ class ForgetPassword(APIView):
         try:
             send_mail(
                 'GateEase Password Reset',
-                f'Your OTP for password reset is: {otp}\nValid for 10 minutes.\nAny queries contact: gateeaseapp@gmail.com',
-                'gateeaseapp@gmail.com',
+                f'Your OTP for password reset is: {otp}\nValid for 10 minutes.\nAny queries contact: {settings.EMAIL_HOST_USER}',
+                settings.EMAIL_HOST_USER,
                 [email],
                 fail_silently=False,
             )

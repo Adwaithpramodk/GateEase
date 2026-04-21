@@ -78,7 +78,7 @@ class _ComplaintPageState extends State<ComplaintPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Complaint submitted successfully!'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppTheme.success,
             ),
           );
         }

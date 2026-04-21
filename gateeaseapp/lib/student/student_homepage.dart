@@ -317,8 +317,6 @@ class _StudentHomePageState extends State<StudentHomePage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 24),
-                        _buildSearchBar(),
-                        const SizedBox(height: 28),
                         _buildCategoryGrid(),
                         const SizedBox(height: 28),
                         _buildRecentActivity(),
@@ -337,9 +335,10 @@ class _StudentHomePageState extends State<StudentHomePage>
 
   Widget _buildHeader() {
     return SliverAppBar(
-      expandedHeight: 230,
+      expandedHeight: 200, // Slightly reduced
       pinned: true,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       backgroundColor: AppTheme.headerTop,
       systemOverlayStyle: SystemUiOverlayStyle.light,
       automaticallyImplyLeading: false,
@@ -372,6 +371,7 @@ class _StudentHomePageState extends State<StudentHomePage>
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.parallax,
         background: FadeTransition(
           opacity: _headerFade,
           child: Container(
@@ -442,7 +442,7 @@ class _StudentHomePageState extends State<StudentHomePage>
                           ),
                         ),
                         child: CircleAvatar(
-                          radius: 30,
+                          radius: 38,
                           backgroundColor: Colors.white.withValues(alpha: 0.2),
                           backgroundImage: details?['Photo'] != null
                               ? NetworkImage('$baseurl${details!['Photo']}')
@@ -450,7 +450,7 @@ class _StudentHomePageState extends State<StudentHomePage>
                           child: details?['Photo'] == null
                               ? const Icon(
                                   Icons.person_rounded,
-                                  size: 30,
+                                  size: 38,
                                   color: Colors.white,
                                 )
                               : null,
@@ -508,44 +508,6 @@ class _StudentHomePageState extends State<StudentHomePage>
                           ],
                         ),
                       ),
-                      // Stats badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              timeline
-                                  .where((t) => t['status'] == 'completed')
-                                  .length
-                                  .toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'Passes',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -557,53 +519,7 @@ class _StudentHomePageState extends State<StudentHomePage>
     );
   }
 
-  Widget _buildSearchBar() {
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const Mypasses()),
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(50),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primary.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.search_rounded, color: AppTheme.textMuted, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Search your pass history...',
-                style: TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child:
-                  const Icon(Icons.tune_rounded, color: Colors.white, size: 16),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildCategoryGrid() {
     final categories = [

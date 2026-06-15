@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/theme/app_theme.dart';
+import 'package:gateeaseapp/privacy_policy_screen.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -22,6 +23,7 @@ class _SignUpState extends State<SignUp> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  bool _isPrivacyAccepted = false;
   List<Map<String, dynamic>> classes = [];
   int? selectedClassId;
   final _formKey = GlobalKey<FormState>();
@@ -255,10 +257,92 @@ class _SignUpState extends State<SignUp> {
                                     ? 'Passwords do not match'
                                     : null,
                               ),
-                              const SizedBox(height: 28),
+                               const SizedBox(height: 14),
+                              // Privacy Policy Checkbox
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: _isPrivacyAccepted 
+                                    ? AppTheme.primary.withValues(alpha: 0.05)
+                                    : AppTheme.background,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _isPrivacyAccepted 
+                                      ? AppTheme.primary.withValues(alpha: 0.2)
+                                      : AppTheme.border,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: Checkbox(
+                                        value: _isPrivacyAccepted,
+                                        onChanged: (v) =>
+                                            setState(() => _isPrivacyAccepted = v!),
+                                        activeColor: AppTheme.primary,
+                                        side: BorderSide(
+                                          color: _isPrivacyAccepted 
+                                            ? AppTheme.primary 
+                                            : AppTheme.textMuted, 
+                                          width: 1.5
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Wrap(
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        children: [
+                                          Text(
+                                            'I accept the ',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: _isPrivacyAccepted 
+                                                ? AppTheme.primary.withValues(alpha: 0.8)
+                                                : AppTheme.textSecondary,
+                                              fontWeight: _isPrivacyAccepted 
+                                                ? FontWeight.w600 
+                                                : FontWeight.w400,
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const PrivacyPolicyScreen(),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              'Privacy Policy',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: AppTheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                                decoration:
+                                                    TextDecoration.underline,
+                                                decorationColor: AppTheme.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 24),
                               ElevatedButton(
-                                onPressed:
-                                    _isLoading ? null : () => register(context),
+                                onPressed: _isLoading || !_isPrivacyAccepted
+                                    ? null
+                                    : () => register(context),
                                 child: _isLoading
                                     ? const SizedBox(
                                         width: 22,

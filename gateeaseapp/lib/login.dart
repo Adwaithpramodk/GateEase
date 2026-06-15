@@ -9,6 +9,7 @@ import 'package:gateeaseapp/signup.dart';
 import 'package:gateeaseapp/student/student_homepage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gateeaseapp/theme/app_theme.dart';
+import 'package:gateeaseapp/privacy_policy_screen.dart';
 
 int? lid;
 String? usertype;
@@ -25,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isPrivacyAccepted = false;
 
   Future<void> login(BuildContext context) async {
     if (usernameController.text.trim().isEmpty ||
@@ -189,21 +191,28 @@ class _LoginPageState extends State<LoginPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Welcome Back',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppTheme.textPrimary,
-                                        letterSpacing: -0.3,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      'Sign in to your account',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: AppTheme.textSecondary,
+                                    const Center(
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'Welcome Back',
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppTheme.textPrimary,
+                                              letterSpacing: -0.5,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Sign in to your account',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: AppTheme.textSecondary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(height: 32),
@@ -265,11 +274,70 @@ class _LoginPageState extends State<LoginPage> {
                                         child: const Text('Forgot Password?'),
                                       ),
                                     ),
+                                    const SizedBox(height: 12),
+                                    // Privacy Checkbox
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: _isPrivacyAccepted 
+                                          ? AppTheme.primary.withValues(alpha: 0.05)
+                                          : AppTheme.background,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: _isPrivacyAccepted 
+                                            ? AppTheme.primary.withValues(alpha: 0.2)
+                                            : AppTheme.border,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: Checkbox(
+                                              value: _isPrivacyAccepted,
+                                              onChanged: (v) => setState(
+                                                  () => _isPrivacyAccepted = v!),
+                                              activeColor: AppTheme.primary,
+                                              side: BorderSide(
+                                                color: _isPrivacyAccepted 
+                                                  ? AppTheme.primary 
+                                                  : AppTheme.textMuted, 
+                                                width: 1.5
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: GestureDetector(
+                                              onTap: () => setState(() =>
+                                                  _isPrivacyAccepted =
+                                                      !_isPrivacyAccepted),
+                                              child: Text(
+                                                'I accept the Privacy Policy',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: _isPrivacyAccepted 
+                                                    ? FontWeight.w600 
+                                                    : FontWeight.w400,
+                                                  color: _isPrivacyAccepted 
+                                                    ? AppTheme.primary 
+                                                    : AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                     const SizedBox(height: 24),
-
                                     // Sign In button
                                     ElevatedButton(
-                                      onPressed: _isLoading
+                                      onPressed: _isLoading || !_isPrivacyAccepted
                                           ? null
                                           : () => login(context),
                                       child: _isLoading
@@ -313,6 +381,28 @@ class _LoginPageState extends State<LoginPage> {
                                     child: const Text('Create Account'),
                                   ),
                                 ],
+                              ),
+                              const SizedBox(height: 16),
+                              TextButton(
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const PrivacyPolicyScreen(),
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: const Size(0, 30),
+                                ),
+                                child: const Text(
+                                  'Privacy Policy',
+                                  style: TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 12,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: AppTheme.textMuted,
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 40),
                             ],

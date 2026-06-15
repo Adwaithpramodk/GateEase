@@ -95,6 +95,53 @@
 </head>
 
 <body>
+<!-- Django Messages Toast -->
+{% if messages %}
+<div id="django-messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%;">
+    {% for message in messages %}
+    <div class="django-message toast {% if 'success' in message.tags or 'info' in message.tags %}msg-success{% else %}msg-error{% endif %}" data-tags="{{ message.tags }}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 14px; font-weight: 500; transition: opacity 0.3s ease, transform 0.3s ease; animation: slideInMessage 0.3s ease forwards;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            {% if 'success' in message.tags or 'info' in message.tags %}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            {% else %}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            {% endif %}
+            <span>{{ message }}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 16px; font-weight: bold; padding: 0 4px; line-height: 1;">&times;</button>
+    </div>
+    {% endfor %}
+</div>
+<style>
+@keyframes slideInMessage {
+    from { transform: translateX(50px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+.django-message.fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+.django-message.msg-success {
+    background-color: #ecfdf5; color: #065f46; border-left: 4px solid #10b981;
+}
+.django-message.msg-error {
+    background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444;
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        const toasts = document.querySelectorAll('.django-message');
+        toasts.forEach(function(toast) {
+            toast.classList.add('fade-out');
+            setTimeout(function() {
+                toast.remove();
+            }, 300);
+        });
+    }, 4000);
+});
+</script>
+{% endif %}
 
     <div class="login-card">
         <form method="post" id="loginForm" onsubmit="return validateForm()">
@@ -116,23 +163,64 @@
     </div>
 
     <script>
+        function showToast(message, isSuccess = false) {
+            let container = document.getElementById("django-messages-container");
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "django-messages-container";
+                container.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%;";
+                document.body.appendChild(container);
+            }
+            
+            const toast = document.createElement("div");
+            toast.className = "django-message toast";
+            toast.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 14px; font-weight: 500; transition: opacity 0.3s ease, transform 0.3s ease; animation: slideInMessage 0.3s ease forwards;" +
+                (isSuccess 
+                    ? "background-color: #ecfdf5; color: #065f46; border-left: 4px solid #10b981;" 
+                    : "background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444;");
+            
+            const content = document.createElement("div");
+            content.style.cssText = "display: flex; align-items: center; gap: 8px;";
+            
+            const icon = isSuccess 
+                ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+                : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+            
+            content.innerHTML = icon + '<span>' + message + '</span>';
+            toast.appendChild(content);
+            
+            const closeBtn = document.createElement("button");
+            closeBtn.innerHTML = "&times;";
+            closeBtn.style.cssText = "background: none; border: none; color: inherit; cursor: pointer; font-size: 16px; font-weight: bold; padding: 0 4px; line-height: 1;";
+            closeBtn.onclick = function() { toast.remove(); };
+            toast.appendChild(closeBtn);
+            
+            container.appendChild(toast);
+            
+            setTimeout(function() {
+                toast.style.opacity = "0";
+                toast.style.transform = "translateY(-20px)";
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 4000);
+        }
+
         function validateForm() {
             var email = document.forms["loginForm"]["email"].value.trim();
             var password = document.forms["loginForm"]["password"].value;
 
             if (email === "") {
-                alert("Email address is required to login.");
+                showToast("Email address is required to login.", false);
                 return false;
             }
 
             var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailPattern.test(email)) {
-                alert("Please enter a valid format for the email address (e.g. user@example.com).");
+                showToast("Please enter a valid format for the email address (e.g. user@example.com).", false);
                 return false;
             }
 
             if (password === "") {
-                alert("Password is required to login.");
+                showToast("Password is required to login.", false);
                 return false;
             }
 

@@ -55,7 +55,7 @@ class NotificationService {
     try {
       String? token = await _firebaseMessaging.getToken();
       if (token != null) {
-        debugPrint('✅ FCM Token retrieved successfully');
+        debugPrint('✅ FCM Token: $token');
       }
       return token;
     } catch (e) {
@@ -67,12 +67,30 @@ class NotificationService {
   /// Handle foreground notifications (when app is open)
   static void _handleForegroundMessage(RemoteMessage message) {
     debugPrint('📬 Foreground notification received');
-    debugPrint('Title: ${message.notification?.title}');
-    debugPrint('Body: ${message.notification?.body}');
-    debugPrint('Data: ${message.data}');
-
-    // You can show a local notification or in-app notification here
-    // For now, we're just logging it
+    
+    final context = navigatorKey.currentContext;
+    if (context != null && message.notification != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                message.notification!.title ?? 'New Notification',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(message.notification!.body ?? ''),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'View',
+            onPressed: () => _handleNotificationTap(message),
+          ),
+        ),
+      );
+    }
   }
 
   /// Handle notification tap (when user taps notification)

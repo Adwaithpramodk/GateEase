@@ -29,8 +29,9 @@ class _MentorHomePageState extends State<MentorHomePage> {
   @override
   void initState() {
     super.initState();
-    _loadAll();
-    _initializeNotifications();
+    _loadAll().then((_) {
+      if (mounted) _initializeNotifications();
+    });
   }
 
   Future<void> _initializeNotifications() async {

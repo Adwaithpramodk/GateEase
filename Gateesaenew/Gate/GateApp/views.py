@@ -2,6 +2,7 @@ import datetime
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
+from django.contrib import messages
 from django.http import HttpResponse
 from .serializer import *
 from .models import *
@@ -21,29 +22,37 @@ class LandingPage(View):
     def get(self, request):
         return render(request, 'index.html')
 
+class PrivacyPolicy(View):
+    def get(self, request):
+        return render(request, 'privacy.html')
+
 #admin role checking
 class AdminRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         # Check if user is logged in
         if not request.session.get('user_id'):
-            return HttpResponse('<script>alert("Login Required");window.location="/"</script>')
+            messages.error(request, "Login Required")
+            return redirect('/')
         
         # Check if user is admin
         if request.session.get('usertype') != 'admin':
-             return HttpResponse('<script>alert("Unauthorized Access: Admins Only");window.location="/"</script>')
+             messages.error(request, "Unauthorized Access: Admins Only")
+             return redirect('/')
         
         return super().dispatch(request, *args, **kwargs)
 #login required for all pages
 class LoginRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         if not request.session.get('user_id'):
-            return HttpResponse('<script>alert("Login Required");window.location="/"</script>')
+            messages.error(request, "Login Required")
+            return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
 class Logout(View):
     def get(self, request):
         request.session.flush()
-        return HttpResponse('<script>alert("Logged out successfully");window.location="login/"</script>')
+        messages.success(request, "Logged out successfully")
+        return redirect('/login/')
 
 #login page for admin
 class LoginPage(View):
@@ -55,11 +64,13 @@ class LoginPage(View):
         
         # Server-side Validation
         if not username or not password:
-            return HttpResponse('''<script>alert("Login Failed: Email and Password are required!");window.location='/login/'</script>''')
+            messages.error(request, "Login Failed: Email and Password are required!")
+            return redirect('/login/')
             
         import re
         if not re.match(r"[^@]+@[^@]+\.[^@]+", username):
-            return HttpResponse('''<script>alert("Login Failed: Please provide a valid email address!");window.location='/login/'</script>''')
+            messages.error(request, "Login Failed: Please provide a valid email address!")
+            return redirect('/login/')
         try:
             #searching username
             obj = Logintable.objects.filter(username=username).first()
@@ -70,11 +81,14 @@ class LoginPage(View):
                 request.session['usertype']=obj.usertype #storing usertype
                 
                 if obj.usertype=='admin':
-                    return HttpResponse('''<script>alert("Login Successful");window.location='/HomePage'</script>''')
+                    messages.success(request, "Login Successful")
+                    return redirect('/HomePage')
                 elif obj.usertype=='mentor':
-                    return HttpResponse('''<script>alert("Login Successful");window.location='/MntrHome'</script>''')
+                    messages.success(request, "Login Successful")
+                    return redirect('/MntrHome')
                 else:
-                     return HttpResponse('''<script>alert("Login UnSuccessful");window.location='/'</script>''')
+                     messages.error(request, "Login Unsuccessful")
+                     return redirect('/')
             
             #if password is not hashed
             elif obj and obj.password == password:
@@ -87,17 +101,22 @@ class LoginPage(View):
                 request.session['usertype']=obj.usertype
                 
                 if obj.usertype=='admin':
-                    return HttpResponse('''<script>alert("Login Successful (Security Updated)");window.location='/HomePage'</script>''')
+                    messages.success(request, "Login Successful (Security Updated)")
+                    return redirect('/HomePage')
                 elif obj.usertype=='mentor':
-                    return HttpResponse('''<script>alert("Login Successful (Security Updated)");window.location='/MntrHome'</script>''')
+                    messages.success(request, "Login Successful (Security Updated)")
+                    return redirect('/MntrHome')
                 else:
-                     return HttpResponse('''<script>alert("Login UnSuccessful");window.location='/'</script>''')
+                     messages.error(request, "Login Unsuccessful")
+                     return redirect('/')
                      
             else:
-                 return HttpResponse('''<script>alert("Login Failed: Invalid Credentials");window.location='/'</script>''')
+                 messages.error(request, "Login Failed: Invalid Credentials")
+                 return redirect('/')
         except Exception as e:
              print(e)
-             return HttpResponse('''<script>alert("Login Error");window.location='/'</script>''')
+             messages.error(request, "Login Error")
+             return redirect('/')
 
 from django.views import View
 from django.shortcuts import render
@@ -127,7 +146,8 @@ class EditStudent(AdminRequiredMixin, View):
         form = EditStudentForm(request.POST, instance=student)
         if form.is_valid():
             form.save()
-            return HttpResponse('<script>alert("Student Updated Successfully");window.location="/VerifyStudent"</script>')
+            messages.success(request, "Student Updated Successfully")
+            return redirect('/VerifyStudent')
         return render(request, 'tables/form/edit_student.html', {'form': form, 'student': student})
     
 class AcceptStudent(AdminRequiredMixin, View):
@@ -135,17 +155,20 @@ class AcceptStudent(AdminRequiredMixin, View):
         login_obj=Logintable.objects.get(id=lid)
         login_obj.usertype='Student'
         login_obj.save()
+        messages.success(request, "Student Accepted successfully")
         return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
-
+ 
 class RejectStudent(AdminRequiredMixin, View):
     def get(self,request, lid):
         login_obj=Logintable.objects.get(id=lid)
         login_obj.usertype='Rejected'
         login_obj.save()
+        messages.warning(request, "Student Rejected")
         return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
     
 class DeleteStudent(AdminRequiredMixin, View):
     def get(self,request,id):
+        referer = request.META.get('HTTP_REFERER', '/VerifyStudent')
         try:
             s=studenttable.objects.get(id=id)
             if s.LOGINID:
@@ -153,12 +176,11 @@ class DeleteStudent(AdminRequiredMixin, View):
             else:
                 s.delete()
             
-            # Use javascript to alert and redirect back to referer
-            referer = request.META.get('HTTP_REFERER', '/VerifyStudent')
-            return HttpResponse(f'''<script>alert("Student Deleted successfully");window.location='{referer}'</script>''')
+            messages.success(request, "Student Deleted successfully")
+            return redirect(referer)
         except Exception:
-             referer = request.META.get('HTTP_REFERER', '/VerifyStudent')
-             return HttpResponse(f'''<script>alert("Error Deleting Student");window.location='{referer}'</script>''')
+             messages.error(request, "Error Deleting Student")
+             return redirect(referer)
 
 class UploadImage(AdminRequiredMixin, View):
     def post(self, request, s_id):
@@ -180,7 +202,8 @@ class AddDepartment(AdminRequiredMixin, View):
         deprt=AddDepartmentForm(request.POST)
         if deprt.is_valid():
             m=deprt.save()
-            return HttpResponse('''<script>alert("Department Added succesfull");window.location='ManageDepartment'</script>''')
+            messages.success(request, "Department Added successfully")
+            return redirect('ManageDepartment')
 
 class ManageDepartment(AdminRequiredMixin, View):
     def get(self,request):
@@ -237,7 +260,8 @@ class SendReply(AdminRequiredMixin, View):
         reply_text=request.POST.get('reply')
         complaint.reply=reply_text
         complaint.save()
-        return HttpResponse('''<script>alert("Reply succesfull");window.location='/ComplaintManage'</script>''')
+        messages.success(request, "Reply successful")
+        return redirect('/ComplaintManage')
 
 class AddClass(AdminRequiredMixin, View):
     def get(self,request):
@@ -247,13 +271,15 @@ class AddClass(AdminRequiredMixin, View):
         cls=AddClassForm(request.POST)
         if cls.is_valid():
             m=cls.save()
-            return HttpResponse('''<script>alert("Class Added succesfull");window.location='ManageClass'</script>''')
+            messages.success(request, "Class Added successfully")
+            return redirect('ManageClass')
         
 class DeleteClass(AdminRequiredMixin, View):
     def get(self,request,id):
         s=classstable.objects.get(id=id)
         s.delete()
-        return HttpResponse('''<script>alert("Class Deleted succesfull");window.location='/ManageClass'</script>''')
+        messages.success(request, "Class Deleted successfully")
+        return redirect('/ManageClass')
 
 class ManageClass(AdminRequiredMixin, View):
     def get(self,request):
@@ -279,13 +305,15 @@ class AssignClass(AdminRequiredMixin, View):
             mentor_id_id=mentor_id,
             class_id_id=class_id
         )
-        return HttpResponse('''<script>alert("Assigned succesfully");window.location='/AssignClass'</script>''')
+        messages.success(request, "Assigned successfully")
+        return redirect('/AssignClass')
 
 class DeleteAssignClass(AdminRequiredMixin, View):
     def get(self,request,id):
         s=class_assigntable.objects.get(id=id)
         s.delete()
-        return HttpResponse('''<script>alert("Deleted succesfull");window.location='/AssignClass'</script>''')
+        messages.success(request, "Deleted successfully")
+        return redirect('/AssignClass')
 
 class AssignDepartment(AdminRequiredMixin, View):
     def get(self, request):
@@ -305,15 +333,15 @@ class AssignDepartment(AdminRequiredMixin, View):
             mentor_id_id=mentor_id,
             department_id_id=dept
         )
-        return HttpResponse(
-            '''<script>alert("Assigned succesfully");window.location='/AssignDepartment'</script>'''
-        )
+        messages.success(request, "Assigned successfully")
+        return redirect('/AssignDepartment')
 
 class DeleteAssignDept(AdminRequiredMixin, View):
     def get(self,request,id):
         s=dept_assigntable.objects.get(id=id)
         s.delete()
-        return HttpResponse('''<script>alert("Deleted succesfull");window.location='/AssignDepartment'</script>''') 
+        messages.success(request, "Deleted successfully")
+        return redirect('/AssignDepartment') 
 #homepage login required
 class HomePage(LoginRequiredMixin,AdminRequiredMixin,View):
     def get(self,request):
@@ -345,8 +373,8 @@ class MentorProfileUpdate(LoginRequiredMixin, View):
             mentor.image = image
             
         mentor.save()
-        
-        return HttpResponse('''<script>alert("Profile Updated successfully");window.location='/MntrHome'</script>''')
+        messages.success(request, "Profile Updated successfully")
+        return redirect('/MntrHome')
 
 class ManageMentor(AdminRequiredMixin, View):
     def get(self,request):
@@ -367,10 +395,12 @@ class AddMentor(AdminRequiredMixin, View):
                 
                 # Validation checks
                 if Logintable.objects.filter(username=email).exists():
-                     return HttpResponse('''<script>alert("Error: Email already registered");window.location='/AddMentor'</script>''')
+                     messages.error(request, "Error: Email already registered")
+                     return redirect('/AddMentor')
                 
                 if not password or len(password) < 8:
-                     return HttpResponse('''<script>alert("Error: Password must be at least 8 characters long");window.location='/AddMentor'</script>''')
+                     messages.error(request, "Error: Password must be at least 8 characters long")
+                     return redirect('/AddMentor')
 
                 with transaction.atomic():
                     m = mntr.save(commit=False)
@@ -380,14 +410,16 @@ class AddMentor(AdminRequiredMixin, View):
                     m.LOGINID = l
                     m.save()
 
-                return HttpResponse('''<script>alert("Mentor registraion succesfull");window.location='/ManageMentor'</script>''')
+                messages.success(request, "Mentor registration successful")
+                return redirect('/ManageMentor')
             else:
-                 # Clean up error message for alert
-                 errors = mntr.errors.as_text().replace('\n', '\\n').replace('"', "'")
-                 return HttpResponse(f'''<script>alert("Form Invalid: {errors}");window.location='/AddMentor'</script>''')
+                 errors = mntr.errors.as_text().replace('\n', ' ').replace('"', "'")
+                 messages.error(request, f"Form Invalid: {errors}")
+                 return redirect('/AddMentor')
         except Exception as e:
             print(f"Error in AddMentor: {e}")
-            return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='/AddMentor'</script>''')
+            messages.error(request, f"Server Error: {str(e)}")
+            return redirect('/AddMentor')
 
 class EditMentor(AdminRequiredMixin, View):
     def get(self,request,id):
@@ -416,7 +448,8 @@ class EditMentor(AdminRequiredMixin, View):
                 if m.LOGINID:
                     m.LOGINID.password = make_password(password)
                     m.LOGINID.save()
-            return HttpResponse('''<script>alert("Mentor Updated succesfull");window.location='/ManageMentor'</script>''')
+            messages.success(request, "Mentor Updated successfully")
+            return redirect('/ManageMentor')
 
 class DeleteMentor(AdminRequiredMixin, View):
     def get(self,request,id):
@@ -425,7 +458,8 @@ class DeleteMentor(AdminRequiredMixin, View):
             s.LOGINID.delete()
         else:
             s.delete()
-        return HttpResponse('''<script>alert("Mentor Deleted succesfull");window.location='/ManageMentor'</script>''')
+        messages.success(request, "Mentor Deleted successfully")
+        return redirect('/ManageMentor')
 
 class AddDepartment(AdminRequiredMixin, View):
     def get(self,request):
@@ -434,13 +468,15 @@ class AddDepartment(AdminRequiredMixin, View):
         deprt=AddDepartmentForm(request.POST)
         if deprt.is_valid():
             m=deprt.save()
-            return HttpResponse('''<script>alert("Department Added succesfull");window.location='/ManageDepartment'</script>''')
+            messages.success(request, "Department Added successfully")
+            return redirect('/ManageDepartment')
         
 class DeleteDepartment(AdminRequiredMixin, View):
     def get(self,request,id):
         s=departmenttable.objects.get(id=id)
         s.delete()
-        return HttpResponse('''<script>alert("Department Deleted succesfull");window.location='/ManageDepartment'</script>''')
+        messages.success(request, "Department Deleted successfully")
+        return redirect('/ManageDepartment')
  
 class ManageSecurity(AdminRequiredMixin, View):
     def get(self,request):
@@ -459,10 +495,12 @@ class AddSecurity(AdminRequiredMixin, View):
                 
                 # Validation checks
                 if Logintable.objects.filter(username=email).exists():
-                     return HttpResponse('''<script>alert("Error: Email already registered");window.location='/AddSecurity'</script>''')
+                     messages.error(request, "Error: Email already registered")
+                     return redirect('/AddSecurity')
                 
                 if not password or len(password) < 8:
-                     return HttpResponse('''<script>alert("Error: Password must be at least 8 characters long");window.location='/AddSecurity'</script>''')
+                     messages.error(request, "Error: Password must be at least 8 characters long")
+                     return redirect('/AddSecurity')
 
                 with transaction.atomic():
                     m=scr.save(commit=False)
@@ -473,14 +511,16 @@ class AddSecurity(AdminRequiredMixin, View):
                     m.save()
                     print(f"DEBUG: Saved Security {m.id} linked to Login {l.id}")
 
-                return HttpResponse('''<script>alert("Security registraion succesfull");window.location='/ManageSecurity'</script>''')
+                messages.success(request, "Security registration successful")
+                return redirect('/ManageSecurity')
             else:
-                 # Clean up error message for alert
-                 errors = scr.errors.as_text().replace('\n', '\\n').replace('"', "'")
-                 return HttpResponse(f'''<script>alert("Form Invalid: {errors}");window.location='/AddSecurity'</script>''')
+                 errors = scr.errors.as_text().replace('\n', ' ').replace('"', "'")
+                 messages.error(request, f"Form Invalid: {errors}")
+                 return redirect('/AddSecurity')
         except Exception as e:
             print(f"Error in AddSecurity: {e}")
-            return HttpResponse(f'''<script>alert("Server Error: {str(e)}");window.location='/AddSecurity'</script>''')
+            messages.error(request, f"Server Error: {str(e)}")
+            return redirect('/AddSecurity')
 
 class AddClass(AdminRequiredMixin, View):
     def get(self,request):
@@ -490,13 +530,15 @@ class AddClass(AdminRequiredMixin, View):
         cls=AddClassForm(request.POST)
         if cls.is_valid():
             m=cls.save()
-            return HttpResponse('''<script>alert("Class Added succesfull");window.location='/ManageClass'</script>''')
+            messages.success(request, "Class Added successfully")
+            return redirect('/ManageClass')
         
 class DeleteClass(AdminRequiredMixin, View):
     def get(self,request,id):
         s=classstable.objects.get(id=id)
         s.delete()
-        return HttpResponse('''<script>alert("Class Deleted succesfull");window.location='/ManageClass'</script>''')
+        messages.success(request, "Class Deleted successfully")
+        return redirect('/ManageClass')
 #edit security
 class EditSecurity(AdminRequiredMixin, View):
     def get(self,request,id):
@@ -512,7 +554,8 @@ class EditSecurity(AdminRequiredMixin, View):
                 if sr.LOGINID:
                     sr.LOGINID.password = make_password(password)
                     sr.LOGINID.save()
-            return HttpResponse('''<script>alert("Security Updated succesfull");window.location='/ManageSecurity'</script>''')
+            messages.success(request, "Security Updated successfully")
+            return redirect('/ManageSecurity')
   
 #delete security
 class DeleteSecurity(AdminRequiredMixin, View):
@@ -522,7 +565,8 @@ class DeleteSecurity(AdminRequiredMixin, View):
             s.LOGINID.delete()
         else:
             s.delete()
-        return HttpResponse('''<script>alert("Security Deleted succesfull");window.location='/ManageSecurity'</script>''')
+        messages.success(request, "Security Deleted successfully")
+        return redirect('/ManageSecurity')
 
 #admin approve pass
 class Approvepassadmin(AdminRequiredMixin, View):
@@ -531,10 +575,8 @@ class Approvepassadmin(AdminRequiredMixin, View):
         exit_pass.mentor_status = "approved"
         exit_pass.approved_at = timezone.now()
         exit_pass.save()
-        
-        return HttpResponse(
-            '<script>alert("Pass Approved");window.location="/Pass"</script>'
-        )
+        messages.success(request, "Pass Approved")
+        return redirect('/Pass')
 
 #admin reject pass
 class Rejectpassadmin(AdminRequiredMixin, View):
@@ -542,7 +584,8 @@ class Rejectpassadmin(AdminRequiredMixin, View):
         obj = exitpasstable.objects.get(id=id)
         obj.mentor_status = "rejected"
         obj.save()
-        return HttpResponse('<script>alert("pass Rejected");window.location="/Pass"</script>')
+        messages.warning(request, "Pass Rejected")
+        return redirect('/Pass')
 
 #/////////////////////////////////////////////////////API/////////////////////////////////////////////
 from django.conf import settings
@@ -1830,9 +1873,11 @@ class DeleteDeviceTokenAPI(JWTAuthMixin, APIView):
 class MentorRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         if not request.session.get('user_id'):
-            return HttpResponse('<script>alert("Login Required");window.location="/"</script>')
+            messages.error(request, "Login Required")
+            return redirect('/')
         if request.session.get('usertype') != 'mentor':
-             return HttpResponse('<script>alert("Unauthorized Access: Mentor Only");window.location="/"</script>')
+             messages.error(request, "Unauthorized Access: Mentor Only")
+             return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
 class VerifyStudentMentor(MentorRequiredMixin, View):
@@ -1842,7 +1887,8 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
         mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
         
         if not mentor_obj:
-            return HttpResponse('<script>alert("Mentor Profile Not Found");window.location="/"</script>')
+            messages.error(request, "Mentor Profile Not Found")
+            return redirect('/')
 
         # Get assigned classes for this mentor
         assigned_classes_objs = class_assigntable.objects.filter(mentor_id=mentor_obj).select_related('class_id')

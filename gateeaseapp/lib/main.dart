@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
       navigatorKey: NotificationService.navigatorKey,
       // Add routes for navigation
       routes: {'/pending-passes': (context) => const PendingPassPage()},
-      home: SplashScreen(),
+      home: const SplashScreen(),
     );
   }
 }

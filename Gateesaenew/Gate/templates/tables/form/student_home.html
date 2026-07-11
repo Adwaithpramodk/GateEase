@@ -33,13 +33,6 @@
         </div>
         <div class="flex items-center gap-3">
             <span class="text-xs font-semibold tracking-wider text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded-md hidden sm:block">Student</span>
-            {% if student.Photo %}
-                <img src="{{ student.Photo.url }}" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-indigo-100 shadow-sm">
-            {% else %}
-                <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center border-2 border-white shadow-sm">
-                    {{ student.name|default:"S"|make_list|first|upper }}
-                </div>
-            {% endif %}
             <a href="/Logout" onclick="showLogoutModal(event);" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </a>
@@ -50,7 +43,7 @@
     <main class="flex-1 w-full max-w-3xl mx-auto p-4 content-area md:p-6 lg:p-8">
         
         <!-- Profile Card -->
-        <div class="mb-8 mt-2 bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex items-center gap-6 relative overflow-hidden">
+        <div class="mb-8 mt-2 bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 relative overflow-hidden">
             <!-- Decorative bg -->
             <div class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-50 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
             
@@ -67,7 +60,7 @@
             <div class="relative flex-1">
                 <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ student.name|default:"Student" }}</h1>
                 
-                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2">
+                <div class="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-4 mt-3">
                     <div class="flex items-center gap-1.5 text-slate-500 text-sm font-medium">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
                         {{ student.classs.class_name|default:"No Batch Assigned" }}

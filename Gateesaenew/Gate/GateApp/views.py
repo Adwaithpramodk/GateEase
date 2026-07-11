@@ -450,7 +450,7 @@ class MentorProfileUpdate(LoginRequiredMixin, View):
         l_id = request.session.get('user_id')
         try:
             mentor = mentortable.objects.get(LOGINID_id=l_id)
-            return render(request, 'tables/form/mntr_profile.html', {'mentor': mentor})
+            return render(request, 'tables/form/mentor_profile.html', {'mentor': mentor})
         except mentortable.DoesNotExist:
             return redirect('/login')
         

@@ -1,0 +1,43 @@
+{% if messages %}
+<div id="django-messages-container" class="fixed top-20 right-4 z-[9999] flex flex-col gap-3 w-80 max-w-full pointer-events-none sm:top-24 sm:right-6">
+    {% for message in messages %}
+    <div class="django-message pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-lg border-l-4 transition-all duration-300 transform translate-x-0 opacity-100 bg-white
+        {% if 'success' in message.tags or 'info' in message.tags %}border-emerald-500{% elif 'error' in message.tags or 'warning' in message.tags %}border-red-500{% else %}border-indigo-500{% endif %}" 
+        id="toast-{{ forloop.counter }}">
+        
+        <div class="flex-shrink-0 mt-0.5">
+            {% if 'success' in message.tags or 'info' in message.tags %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            {% else %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            {% endif %}
+        </div>
+        
+        <div class="flex-1 text-sm font-semibold text-slate-800 leading-tight">
+            {{ message }}
+        </div>
+        
+        <button type="button" onclick="closeToast('toast-{{ forloop.counter }}')" class="flex-shrink-0 ml-2 text-slate-400 hover:text-slate-600 transition-colors p-1 -m-1 rounded-full hover:bg-slate-100 focus:outline-none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+    
+    <script>
+        setTimeout(() => {
+            closeToast('toast-{{ forloop.counter }}');
+        }, 5000); // 5 seconds
+    </script>
+    {% endfor %}
+</div>
+
+<script>
+    function closeToast(id) {
+        const toast = document.getElementById(id);
+        if (toast) {
+            toast.classList.remove('translate-x-0', 'opacity-100');
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }
+</script>
+{% endif %}

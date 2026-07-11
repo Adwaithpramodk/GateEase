@@ -21,10 +21,7 @@
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
     <!-- Toast Messages -->
-    {% if messages %}
-    <div id="django-messages-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 w-11/12 max-w-sm pointer-events-none">
-        {% for message in messages %}
-        <div class="pointer-events-auto flex items-center justify-between p-4 rounded-xl shadow-lg {% if 'success' in message.tags or 'info' in message.tags %}bg-emerald-50 text-emerald-800 border-l-4 border-emerald-500{% else %}bg-red-50 text-red-800 border-l-4 border-red-500{% endif %} font-medium text-sm">
+    {% include 'partials/messages.html' %} font-medium text-sm">
             <span>{{ message }}</span>
         </div>
         <script>
@@ -75,16 +72,16 @@
                     <ul class="space-y-1">
                         {% for student in students %}
                         <li>
-                            <label class="flex items-center p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100">
-                                <input type="checkbox" name="student_ids" value="{{ student.id }}" class="student-checkbox rounded text-purple-600 focus:ring-purple-500 bg-slate-100 border-slate-300">
-                                <div class="ml-4 flex-1">
-                                    <div class="font-bold text-slate-800">{{ student.name }}</div>
-                                    <div class="text-xs text-slate-500 font-medium">Admn: {{ student.admn_no|default:"N/A" }} &bull; {{ student.get_year_label }}</div>
+                            <label class="flex items-center p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100 gap-3">
+                                <input type="checkbox" name="student_ids" value="{{ student.id }}" class="student-checkbox flex-shrink-0 rounded text-purple-600 focus:ring-purple-500 bg-slate-100 border-slate-300">
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-bold text-slate-800 truncate">{{ student.name }}</div>
+                                    <div class="text-xs text-slate-500 font-medium truncate">Admn: {{ student.admn_no|default:"N/A" }} &bull; {{ student.get_year_label }}</div>
                                 </div>
                                 {% if student.Photo %}
-                                    <img src="{{ student.Photo.url }}" class="w-10 h-10 rounded-full object-cover border border-slate-200 ml-2">
+                                    <img src="{{ student.Photo.url }}" class="flex-shrink-0 w-10 h-10 rounded-full object-cover border border-slate-200">
                                 {% else %}
-                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 font-bold flex items-center justify-center border border-slate-200 ml-2 text-sm">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-100 text-slate-400 font-bold flex items-center justify-center border border-slate-200 text-sm">
                                         {{ student.name|make_list|first|upper }}
                                     </div>
                                 {% endif %}

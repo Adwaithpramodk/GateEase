@@ -1,189 +1,93 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Registration</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GateEase - Student Registration</title>
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: var(--bg-color);
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-color);
-        }
-
-        .login-card {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            margin: 40px 0;
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: var(--text-color);
-            font-weight: 600;
-            font-size: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #4b5563;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 14px;
-            outline: none;
-            box-sizing: border-box;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            background: var(--primary-color);
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background: var(--primary-hover);
-        }
-
-        .register-link {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-
-        .register-link a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .register-link a:hover {
-            text-decoration: underline;
-        }
+        body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex items-center justify-center p-4 py-10">
 
-<body>
-    <!-- Django Messages Toast -->
-    {% if messages %}
-    <div id="django-messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%;">
-        {% for message in messages %}
-        <div class="django-message toast" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 14px; font-weight: 500; background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444;">
-            <span>{{ message }}</span>
+    {% include 'partials/messages.html' %}
+
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100 relative overflow-hidden">
+        
+        <!-- Decorative bg blob -->
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+
+        <div class="relative z-10">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm shadow-indigo-200">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                </div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900 tracking-tight">Create Account</h1>
+                <p class="text-slate-500 mt-2 text-sm font-medium">Join GateEase as a Student</p>
+            </div>
+
+            <form method="POST" action="/StudentRegister" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-semibold text-slate-700">Full Name</label>
+                    <input type="text" name="name" placeholder="John Doe" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-800 font-medium text-sm transition-all bg-slate-50/50 focus:bg-white placeholder-slate-400">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-semibold text-slate-700">Email Address</label>
+                    <input type="email" name="email" placeholder="student@example.com" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-800 font-medium text-sm transition-all bg-slate-50/50 focus:bg-white placeholder-slate-400">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-semibold text-slate-700">Admission No</label>
+                        <input type="number" name="admn_no" placeholder="e.g. 12345" required
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-800 font-medium text-sm transition-all bg-slate-50/50 focus:bg-white placeholder-slate-400">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-semibold text-slate-700">Phone</label>
+                        <input type="number" name="phone" placeholder="10 digits" required
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-800 font-medium text-sm transition-all bg-slate-50/50 focus:bg-white placeholder-slate-400">
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-semibold text-slate-700">Class/Batch</label>
+                    <select name="class_id" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-800 font-medium text-sm transition-all bg-slate-50/50 focus:bg-white">
+                        <option value="" disabled selected>-- Select your class --</option>
+                        {% for c in classes %}
+                            <option value="{{ c.id }}">{{ c.class_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-semibold text-slate-700">Password</label>
+                    <input type="password" name="password" placeholder="Create a password (min 8 chars)" minlength="8" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-800 font-medium text-sm transition-all bg-slate-50/50 focus:bg-white placeholder-slate-400">
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4">
+                    Register
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+            </form>
+
+            <div class="mt-8 text-center border-t border-slate-100 pt-6">
+                <p class="text-sm font-medium text-slate-500">
+                    Already have an account? 
+                    <a href="/login/" class="text-indigo-600 font-bold hover:text-indigo-700 hover:underline ml-1">Log in here</a>
+                </p>
+            </div>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <div class="login-card">
-        <h2>Student Registration</h2>
-        <form method="POST" action="/StudentRegister">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="student@example.com" required>
-            </div>
-
-            <div class="form-group">
-                <label for="admn_no">Admission Number</label>
-                <input type="number" id="admn_no" name="admn_no" placeholder="e.g. 12345" required>
-            </div>
-
-            <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="number" id="phone" name="phone" placeholder="Enter your 10 digit number" required>
-            </div>
-
-            <div class="form-group">
-                <label for="class_id">Select Class/Batch</label>
-                <select id="class_id" name="class_id" required>
-                    <option value="" disabled selected>-- Select your class --</option>
-                    {% for c in classes %}
-                        <option value="{{ c.id }}">{{ c.class_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Create a password (min 8 chars)" minlength="8" required>
-            </div>
-
-            <button type="submit">Register</button>
-
-            <div class="register-link">
-                Already have an account? <a href="/login/">Login here</a>
-            </div>
-        </form>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                const toasts = document.querySelectorAll('.django-message');
-                toasts.forEach(function(toast) {
-                    toast.style.opacity = '0';
-                    setTimeout(function() {
-                        toast.remove();
-                    }, 300);
-                });
-            }, 4000);
-        });
-    </script>
 </body>
 </html>

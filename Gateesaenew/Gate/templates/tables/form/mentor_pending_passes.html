@@ -18,10 +18,7 @@
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
     <!-- Toast Messages Container -->
-    {% if messages %}
-    <div id="django-messages-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 w-11/12 max-w-sm pointer-events-none">
-        {% for message in messages %}
-        <div class="pointer-events-auto flex items-center justify-between p-4 rounded-xl shadow-lg {% if 'success' in message.tags or 'info' in message.tags %}bg-emerald-50 text-emerald-800 border-l-4 border-emerald-500{% else %}bg-red-50 text-red-800 border-l-4 border-red-500{% endif %} font-medium text-sm">
+    {% include 'partials/messages.html' %} font-medium text-sm">
             <span>{{ message }}</span>
         </div>
         {% endfor %}
@@ -45,7 +42,7 @@
                     {{ mentor.name|default:"M"|make_list|first|upper }}
                 </div>
             {% endif %}
-            <a href="/Logout" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
+            <a href="/Logout" onclick="return confirm(\'Are you sure you want to logout?\');" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </a>
         </div>

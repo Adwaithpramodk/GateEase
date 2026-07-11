@@ -15,10 +15,7 @@
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
     <!-- Toast Messages Container -->
-    {% if messages %}
-    <div id="django-messages-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 w-11/12 max-w-sm pointer-events-none">
-        {% for message in messages %}
-        <div class="pointer-events-auto flex items-center justify-between p-4 rounded-xl shadow-lg {% if 'success' in message.tags or 'info' in message.tags %}bg-emerald-50 text-emerald-800 border-l-4 border-emerald-500{% else %}bg-red-50 text-red-800 border-l-4 border-red-500{% endif %} font-medium text-sm transition-all duration-300 transform translate-y-0 opacity-100" id="toast-{{ forloop.counter }}">
+    {% include 'partials/messages.html' %} font-medium text-sm transition-all duration-300 transform translate-y-0 opacity-100" id="toast-{{ forloop.counter }}">
             <span>{{ message }}</span>
         </div>
         <script>

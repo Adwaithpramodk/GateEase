@@ -14,6 +14,25 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        /* Secure QR Animation */
+        @keyframes scan-line {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(79, 70, 229, 0.7);
+            box-shadow: 0 0 10px rgba(79, 70, 229, 0.5), 0 0 20px rgba(79, 70, 229, 0.3);
+            animation: scan-line 2s linear infinite;
+            z-index: 10;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
@@ -35,7 +54,7 @@
                     {{ student.name|default:"S"|make_list|first|upper }}
                 </div>
             {% endif %}
-            <a href="/Logout" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
+            <a href="/Logout" onclick="return confirm(\'Are you sure you want to logout?\');" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </a>
         </div>
@@ -137,16 +156,34 @@
                 </button>
             </div>
             
-            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-center">
-                <div id="qrcode-container" class="bg-white p-2 rounded-xl"></div>
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-center flex-col items-center">
+                <div class="relative inline-block bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                    <div id="qrcode-container" class="relative z-0"></div>
+                    <!-- Live Scanning Animation Overlay -->
+                    <div class="scan-overlay rounded-full"></div>
+                </div>
+                
+                <!-- Live Ticking Clock (Screenshot protection) -->
+                <div class="mt-5 bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-2 flex items-center gap-2">
+                    <div class="w-2 h-2 bg-indigo-600 rounded-full animate-ping"></div>
+                    <span class="text-indigo-900 font-mono font-bold text-lg tracking-wider" id="secure-clock">00:00:00</span>
+                </div>
             </div>
             
-            <p class="text-center text-sm text-slate-500 mt-6 font-medium">Show this code to the security guard at the gate for scanning.</p>
+            <p class="text-center text-sm text-slate-500 mt-5 font-medium">Show this live code to the security guard.</p>
         </div>
     </div>
 
     <script>
         let qrcode = null;
+        let clockInterval = null;
+
+        function updateClock() {
+            const clockEl = document.getElementById('secure-clock');
+            if (!clockEl) return;
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString('en-US', { hour12: false });
+        }
 
         function showQRCode(passId) {
             const modal = document.getElementById('qrModal');
@@ -175,6 +212,10 @@
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
+
+            // Start clock
+            updateClock();
+            clockInterval = setInterval(updateClock, 1000);
         }
 
         function closeQRCode() {
@@ -183,6 +224,10 @@
             
             modal.classList.add('opacity-0');
             modalContent.classList.add('scale-95');
+            
+            if (clockInterval) {
+                clearInterval(clockInterval);
+            }
             
             setTimeout(() => {
                 modal.classList.add('hidden');

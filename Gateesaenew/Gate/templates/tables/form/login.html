@@ -1,101 +1,15 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--bg-color);
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-color);
-        }
-
-        .login-card {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: var(--text-color);
-            font-weight: 600;
-            font-size: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #4b5563;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 14px;
-            outline: none;
-            box-sizing: border-box;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            background: var(--primary-color);
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background: var(--primary-hover);
-        }
-    </style>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GateEase - Login</title>
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- PWA Setup -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1e293b">
+    <meta name="theme-color" content="#4f46e5">
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -105,145 +19,106 @@
             });
         }
     </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex items-center justify-center p-4">
 
-<body>
-<!-- Django Messages Toast -->
-{% if messages %}
-<div id="django-messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%;">
-    {% for message in messages %}
-    <div class="django-message toast {% if 'success' in message.tags or 'info' in message.tags %}msg-success{% else %}msg-error{% endif %}" data-tags="{{ message.tags }}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 14px; font-weight: 500; transition: opacity 0.3s ease, transform 0.3s ease; animation: slideInMessage 0.3s ease forwards;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            {% if 'success' in message.tags or 'info' in message.tags %}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            {% else %}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-            {% endif %}
-            <span>{{ message }}</span>
+    {% include 'partials/messages.html' %}
+
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100 relative overflow-hidden">
+        
+        <!-- Decorative bg blob -->
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+
+        <div class="relative z-10">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm shadow-slate-300">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                </div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900 tracking-tight">Welcome Back</h1>
+                <p class="text-slate-500 mt-2 text-sm font-medium">Log in to continue to GateEase</p>
+            </div>
+
+            <form method="post" id="loginForm" onsubmit="return validateForm()" class="space-y-5">
+                {% csrf_token %}
+                
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-semibold text-slate-700">Email Address</label>
+                    <input type="email" name="email" id="email" placeholder="you@example.com" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-800 font-medium text-sm transition-all bg-slate-50/50 focus:bg-white placeholder-slate-400">
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-sm font-semibold text-slate-700">Password</label>
+                        <a href="/ForgotPassword" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">Forgot password?</a>
+                    </div>
+                    <input type="password" name="password" id="password" placeholder="••••••••" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-800 font-medium text-sm transition-all bg-slate-50/50 focus:bg-white placeholder-slate-400">
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2">
+                    Log In
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </form>
+
+            <div class="mt-8 text-center border-t border-slate-100 pt-6">
+                <p class="text-sm font-medium text-slate-500">
+                    New student? 
+                    <a href="/StudentRegister" class="text-indigo-600 font-bold hover:text-indigo-700 hover:underline ml-1">Create an account</a>
+                </p>
+            </div>
         </div>
-        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 16px; font-weight: bold; padding: 0 4px; line-height: 1;">&times;</button>
     </div>
-    {% endfor %}
-</div>
-<style>
-@keyframes slideInMessage {
-    from { transform: translateX(50px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-.django-message.fade-out {
-    opacity: 0;
-    transform: translateY(-20px);
-}
-.django-message.msg-success {
-    background-color: #ecfdf5; color: #065f46; border-left: 4px solid #10b981;
-}
-.django-message.msg-error {
-    background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444;
-}
-</style>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-        const toasts = document.querySelectorAll('.django-message');
-        toasts.forEach(function(toast) {
-            toast.classList.add('fade-out');
-            setTimeout(function() {
-                toast.remove();
-            }, 300);
-        });
-    }, 4000);
-});
-</script>
-{% endif %}
 
-    <div class="login-card">
-        <form method="post" id="loginForm" onsubmit="return validateForm()">
-            {% csrf_token %}
-            <h2>Login</h2>
-
-            <div class="form-group">
-                <label>Username</label>
-                <input type="email" name="email" placeholder="Enter Username" required>
-            </div>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Enter your password" required>
-            </div>
-
-            <button type="submit">Log In</button>
-
-            <div style="text-align: center; margin-top: 20px; font-size: 14px;">
-                Are you a student? <a href="/StudentRegister" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">Register here</a>
-            </div>
-        </form>
-    </div>
+    <!-- Error container for JS validation -->
+    <div id="js-messages" class="fixed top-20 right-4 z-[9999] flex flex-col gap-3 w-80 max-w-full pointer-events-none sm:top-24 sm:right-6"></div>
 
     <script>
-        function showToast(message, isSuccess = false) {
-            let container = document.getElementById("django-messages-container");
-            if (!container) {
-                container = document.createElement("div");
-                container.id = "django-messages-container";
-                container.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%;";
-                document.body.appendChild(container);
-            }
-            
-            const toast = document.createElement("div");
-            toast.className = "django-message toast";
-            toast.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 14px; font-weight: 500; transition: opacity 0.3s ease, transform 0.3s ease; animation: slideInMessage 0.3s ease forwards;" +
-                (isSuccess 
-                    ? "background-color: #ecfdf5; color: #065f46; border-left: 4px solid #10b981;" 
-                    : "background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444;");
-            
-            const content = document.createElement("div");
-            content.style.cssText = "display: flex; align-items: center; gap: 8px;";
-            
-            const icon = isSuccess 
-                ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
-                : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
-            
-            content.innerHTML = icon + '<span>' + message + '</span>';
-            toast.appendChild(content);
-            
-            const closeBtn = document.createElement("button");
-            closeBtn.innerHTML = "&times;";
-            closeBtn.style.cssText = "background: none; border: none; color: inherit; cursor: pointer; font-size: 16px; font-weight: bold; padding: 0 4px; line-height: 1;";
-            closeBtn.onclick = function() { toast.remove(); };
-            toast.appendChild(closeBtn);
-            
-            container.appendChild(toast);
-            
-            setTimeout(function() {
-                toast.style.opacity = "0";
-                toast.style.transform = "translateY(-20px)";
-                setTimeout(function() { toast.remove(); }, 300);
-            }, 4000);
+        function showToast(message) {
+            const container = document.getElementById("js-messages");
+            const toastId = 'js-toast-' + Date.now();
+            const toastHtml = `
+                <div class="django-message pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-lg border-l-4 transition-all duration-300 bg-white border-red-500" id="${toastId}">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                    </div>
+                    <div class="flex-1 text-sm font-semibold text-slate-800 leading-tight">${message}</div>
+                    <button type="button" onclick="document.getElementById('${toastId}').remove()" class="flex-shrink-0 ml-2 text-slate-400 hover:text-slate-600 p-1 -m-1 rounded-full hover:bg-slate-100">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', toastHtml);
+            setTimeout(() => {
+                const el = document.getElementById(toastId);
+                if(el) el.remove();
+            }, 5000);
         }
 
         function validateForm() {
-            var email = document.forms["loginForm"]["email"].value.trim();
-            var password = document.forms["loginForm"]["password"].value;
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
 
             if (email === "") {
-                showToast("Email address is required to login.", false);
+                showToast("Email address is required.");
                 return false;
             }
-
-            var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailPattern.test(email)) {
-                showToast("Please enter a valid format for the email address (e.g. user@example.com).", false);
+                showToast("Please enter a valid email address.");
                 return false;
             }
-
             if (password === "") {
-                showToast("Password is required to login.", false);
+                showToast("Password is required.");
                 return false;
             }
-
             return true;
         }
     </script>
 </body>
-
 </html>

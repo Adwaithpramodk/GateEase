@@ -85,6 +85,101 @@ class Logout(View):
         return redirect('/login/')
 
 #login page for admin
+class ForgotPasswordWeb(View):
+    def get(self, request):
+        return render(request, 'tables/form/forgot_password.html')
+        
+    def post(self, request):
+        email = request.POST.get('email')
+        if not email:
+            messages.error(request, "Email is required.")
+            return redirect('/ForgotPassword')
+            
+        user_tables = [studenttable, mentortable, securitytable]
+        user_found = False
+        
+        for table in user_tables:
+            if table.objects.filter(email=email).exists():
+                user_found = True
+                break
+                
+        if not user_found and not Logintable.objects.filter(username=email).exists():
+            messages.error(request, "Email not registered.")
+            return redirect('/ForgotPassword')
+            
+        import random
+        otp = str(random.randint(100000, 999999))
+        PasswordResetOTP.objects.create(email=email, otp=otp)
+        
+        try:
+            send_mail(
+                'GateEase Password Reset',
+                f'Your OTP for password reset is: {otp}\nValid for 10 minutes.\nAny queries contact: {settings.EMAIL_HOST_USER}',
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+            request.session['reset_email'] = email
+            messages.success(request, "OTP sent successfully. Please check your email.")
+            return redirect('/ResetPassword')
+        except Exception as e:
+            print("Mail Error:", e)
+            messages.error(request, "Failed to send email. Please try again later.")
+            return redirect('/ForgotPassword')
+
+class ResetPasswordWeb(View):
+    def get(self, request):
+        email = request.session.get('reset_email')
+        if not email:
+            messages.error(request, "Please start the password reset process first.")
+            return redirect('/ForgotPassword')
+        return render(request, 'tables/form/reset_password.html', {'email': email})
+        
+    def post(self, request):
+        email = request.session.get('reset_email')
+        if not email:
+            return redirect('/ForgotPassword')
+            
+        otp = request.POST.get('otp')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        if not all([otp, new_password, confirm_password]):
+            messages.error(request, "All fields are required.")
+            return redirect('/ResetPassword')
+            
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect('/ResetPassword')
+            
+        if len(new_password) < 8:
+            messages.error(request, "Password must be at least 8 characters.")
+            return redirect('/ResetPassword')
+            
+        otp_obj = PasswordResetOTP.objects.filter(email=email, is_used=False).order_by('-created_at').first()
+        
+        if not otp_obj or otp_obj.otp != otp:
+            messages.error(request, "Invalid or expired OTP.")
+            return redirect('/ResetPassword')
+            
+        if timezone.now() > otp_obj.created_at + timezone.timedelta(minutes=10):
+            messages.error(request, "OTP has expired. Please request a new one.")
+            return redirect('/ForgotPassword')
+            
+        login_obj = Logintable.objects.filter(username=email).first()
+        if login_obj:
+            login_obj.password = make_password(new_password)
+            login_obj.save()
+            
+        otp_obj.is_used = True
+        otp_obj.save()
+        
+        if 'reset_email' in request.session:
+            del request.session['reset_email']
+        
+        messages.success(request, "Password reset successfully. Please login.")
+        return redirect('/login/')
+
 class LoginPage(View):
     def get(self,request):
         return render(request, 'tables/form/login.html')

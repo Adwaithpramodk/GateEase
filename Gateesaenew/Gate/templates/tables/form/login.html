@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,6 +15,7 @@
             margin: 0;
             padding: 0;
         }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9;
@@ -24,6 +26,7 @@
             color: #0f172a;
             padding: 20px;
         }
+
         .login-card {
             background-color: #ffffff;
             width: 100%;
@@ -33,23 +36,28 @@
             padding: 40px;
             border: 1px solid #e2e8f0;
         }
+
         .login-header {
             text-align: center;
             margin-bottom: 32px;
         }
+
         .login-header h1 {
             font-size: 26px;
             font-weight: 700;
             color: #1e293b;
             margin-bottom: 8px;
         }
+
         .login-header p {
             color: #64748b;
             font-size: 15px;
         }
+
         .form-group {
             margin-bottom: 20px;
         }
+
         .form-label {
             display: block;
             font-size: 14px;
@@ -57,6 +65,7 @@
             color: #334155;
             margin-bottom: 8px;
         }
+
         .input-field {
             width: 100%;
             padding: 14px 16px;
@@ -67,26 +76,31 @@
             transition: all 0.2s ease;
             background-color: #f8fafc;
         }
+
         .input-field:focus {
             outline: none;
             border-color: #4f46e5;
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
         }
+
         .forgot-link-container {
             display: flex;
             justify-content: flex-end;
             margin-bottom: 24px;
         }
+
         .forgot-link {
             font-size: 14px;
             font-weight: 600;
             color: #4f46e5;
             text-decoration: none;
         }
+
         .forgot-link:hover {
             text-decoration: underline;
         }
+
         .btn-primary {
             width: 100%;
             padding: 14px 16px;
@@ -99,25 +113,30 @@
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
+
         .btn-primary:hover {
             background-color: #4338ca;
         }
+
         .register-footer {
             text-align: center;
             margin-top: 24px;
             font-size: 14px;
             color: #64748b;
         }
+
         .register-footer a {
             font-weight: 600;
             color: #4f46e5;
             text-decoration: none;
         }
+
         .register-footer a:hover {
             text-decoration: underline;
         }
     </style>
 </head>
+
 <body>
 
     {% include 'partials/messages.html' %}
@@ -130,23 +149,24 @@
 
         <form action="/login/" method="POST">
             {% csrf_token %}
-            
+
             <div class="form-group">
                 <label for="email" class="form-label">Email Address</label>
                 <input type="email" id="email" name="email" class="input-field" placeholder="name@example.com" required>
             </div>
-            
+
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" id="password" name="password" class="input-field" placeholder="••••••••" required>
+                <input type="password" id="password" name="password" class="input-field" placeholder="••••••••"
+                    required>
             </div>
-            
+
             <div class="forgot-link-container">
                 <a href="/ForgotPassword" class="forgot-link">Forgot password?</a>
             </div>
-            
+
             <button type="submit" class="btn-primary">Sign In</button>
-            
+
             <div class="register-footer">
                 Don't have an account? <a href="/StudentRegister">Register here</a>
             </div>
@@ -154,4 +174,5 @@
     </div>
 
 </body>
+
 </html>

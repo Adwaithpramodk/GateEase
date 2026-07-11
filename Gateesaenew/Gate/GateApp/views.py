@@ -248,17 +248,22 @@ class LoginPage(View):
                 return redirect('/')
 
             if response:
+                # 30 days in seconds
+                max_age_seconds = 30 * 24 * 60 * 60
+                
                 response.set_cookie(
                     'access_token',
                     str(refresh.access_token),
                     httponly=True,
-                    samesite='Lax'
+                    samesite='Lax',
+                    max_age=max_age_seconds
                 )
                 response.set_cookie(
                     'refresh_token',
                     str(refresh),
                     httponly=True,
-                    samesite='Lax'
+                    samesite='Lax',
+                    max_age=max_age_seconds
                 )
                 # Keep session for messages framework but not auth
                 request.session.cycle_key() 

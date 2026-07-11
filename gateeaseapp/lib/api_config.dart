@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String baseurl = 'https://gateease.pythonanywhere.com';
+const String baseurl = 'https://gateeasee.pythonanywhere.com';
 
 final Dio dio = Dio(BaseOptions(
   baseUrl: baseurl,

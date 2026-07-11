@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GateEase Student App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        :root {
+            /* Palette (Modern Dark Blue / Navy) */
+            --primary: #1E40AF;
+            --primaryLight: #DBEAFE;
+            --accent: #3B82F6;
+            --accentLight: #EFF6FF;
+            --secondary: #64748B;
+            --secondaryLight: #F1F5F9;
+            --success: #10B981;
+            --successLight: #D1FAE5;
+            --warning: #F59E0B;
+            --warningLight: #FEF3C7;
+            --error: #EF4444;
+            --errorLight: #FEE2E2;
+            --background: #F8FAFC;
+            --surface: #FFFFFF;
+            --border: #E2E8F0;
+            --textPrimary: #0F172A;
+            --textSecondary: #475569;
+            --textMuted: #94A3B8;
+            --headerTop: #1E3A8A;
+            --headerMid: #1E40AF;
+            --headerBottom: #2563EB;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--background);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Responsive App Container */
+        .app-container {
+            width: 100%;
+            background-color: var(--background);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Inner Wrapper for Desktop constraints */
+        .wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            height: 100%;
+        }
+
+        /* Header Section */
+        .header {
+            position: relative;
+            height: 240px;
+            background: linear-gradient(to bottom right, var(--headerTop), var(--headerMid), var(--headerBottom));
+            padding: 20px 0;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* Decorative Blobs */
+        .blob-1 {
+            position: absolute;
+            right: -5%;
+            top: -20px;
+            width: clamp(200px, 30vw, 400px);
+            height: clamp(200px, 30vw, 400px);
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+        .blob-2 {
+            position: absolute;
+            right: 10%;
+            top: 40px;
+            width: clamp(100px, 15vw, 200px);
+            height: clamp(100px, 15vw, 200px);
+            background-color: rgba(255, 255, 255, 0.07);
+            border-radius: 50%;
+        }
+        .blob-3 {
+            position: absolute;
+            left: -5%;
+            bottom: -10px;
+            width: clamp(120px, 20vw, 300px);
+            height: clamp(120px, 20vw, 300px);
+            background-color: rgba(59, 130, 246, 0.15);
+            border-radius: 50%;
+        }
+
+        /* App Bar */
+        .app-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            margin-top: 10px;
+            padding: 0 20px;
+        }
+
+        .app-title {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .logout-btn {
+            width: 38px;
+            height: 38px;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border: none;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .logout-btn .material-icons-round {
+            font-size: 18px;
+        }
+
+        /* User Info */
+        .user-info {
+            position: absolute;
+            bottom: 28px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .avatar-container {
+            padding: 2px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            margin-right: 14px;
+        }
+
+        .avatar {
+            width: 76px;
+            height: 76px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .avatar .material-icons-round {
+            font-size: 38px;
+            color: white;
+        }
+
+        .greeting-small {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .user-name {
+            font-size: clamp(20px, 4vw, 28px);
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            margin-bottom: 5px;
+        }
+
+        .dept-badge {
+            display: inline-block;
+            background-color: rgba(59, 130, 246, 0.25);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 24px 20px 40px 20px;
+        }
+
+        /* Content Grid for Desktop layout */
+        .desktop-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+
+        @media (min-width: 768px) {
+            .desktop-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--textPrimary);
+            letter-spacing: -0.3px;
+        }
+
+        /* Quick Access Grid */
+        .quick-access-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        @media (min-width: 480px) {
+            .quick-access-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .category-card {
+            background-color: var(--surface);
+            padding: 20px 0;
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        
+        .category-card:active {
+            transform: scale(0.95);
+        }
+
+        .category-icon-bg {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .category-icon-bg .material-icons-round {
+            font-size: 26px;
+        }
+
+        .category-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--textPrimary);
+            text-align: center;
+        }
+
+        /* Specific Colors for Category Cards */
+        .cat-primary .category-icon-bg { background-color: var(--primaryLight); }
+        .cat-primary .material-icons-round { color: var(--primary); }
+        .cat-secondary .category-icon-bg { background-color: var(--secondaryLight); }
+        .cat-secondary .material-icons-round { color: var(--secondary); }
+        .cat-accent .category-icon-bg { background-color: var(--accentLight); }
+        .cat-accent .material-icons-round { color: var(--accent); }
+
+        .category-card:hover.cat-primary .category-icon-bg { background-color: var(--primary); }
+        .category-card:hover.cat-primary .material-icons-round { color: white; }
+        .category-card:hover.cat-secondary .category-icon-bg { background-color: var(--secondary); }
+        .category-card:hover.cat-secondary .material-icons-round { color: white; }
+        .category-card:hover.cat-accent .category-icon-bg { background-color: var(--accent); }
+        .category-card:hover.cat-accent .material-icons-round { color: white; }
+
+        /* Recent Activity Badge */
+        .latest-pass-badge {
+            padding: 5px 12px;
+            background-color: var(--primaryLight);
+            border-radius: 20px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Timeline Card */
+        .timeline-card {
+            background-color: var(--surface);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            height: 100%;
+        }
+
+        .timeline-item {
+            display: flex;
+            position: relative;
+        }
+
+        .timeline-column {
+            width: 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 16px;
+        }
+
+        .timeline-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .timeline-dot .material-icons-round {
+            font-size: 18px;
+        }
+
+        .timeline-line {
+            width: 2px;
+            background-color: var(--border);
+            flex-grow: 1;
+            margin: 4px 0;
+        }
+
+        .timeline-content {
+            padding-bottom: 28px;
+            padding-top: 8px;
+            flex: 1;
+        }
+
+        .timeline-item:last-child .timeline-content {
+            padding-bottom: 0;
+        }
+        
+        .timeline-item:last-child .timeline-line {
+            display: none;
+        }
+
+        .timeline-title {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--textPrimary);
+            margin-bottom: 4px;
+        }
+
+        .timeline-time {
+            font-size: 13px;
+            color: var(--textSecondary);
+            font-weight: 500;
+        }
+
+        /* Status Colors */
+        .status-completed .timeline-dot { background-color: var(--successLight); color: var(--success); }
+        .status-pending .timeline-dot { background-color: var(--warningLight); color: var(--warning); }
+        .status-rejected .timeline-dot { background-color: var(--errorLight); color: var(--error); }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="blob-1"></div>
+            <div class="blob-2"></div>
+            <div class="blob-3"></div>
+            
+            <div class="wrapper">
+                <div class="app-bar">
+                    <div class="app-title">GateEase</div>
+                    <button class="logout-btn">
+                        <span class="material-icons-round">logout</span>
+                    </button>
+                </div>
+
+                <div class="user-info">
+                    <div class="avatar-container">
+                        <div class="avatar">
+                            <span class="material-icons-round">person</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="greeting-small">Hey there! 👋</div>
+                        <div class="user-name">Alex Johnson</div>
+                        <div class="dept-badge">Computer Science</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="wrapper">
+            <div class="content">
+                
+                <div class="desktop-grid">
+                    <!-- Left Column: Quick Access -->
+                    <div>
+                        <div class="section-header">
+                            <div class="section-title">Quick Access</div>
+                        </div>
+                        
+                        <div class="quick-access-grid">
+                            <div class="category-card cat-primary">
+                                <div class="category-icon-bg">
+                                    <span class="material-icons-round">add_circle</span>
+                                </div>
+                                <div class="category-label">New Pass</div>
+                            </div>
+                            
+                            <div class="category-card cat-secondary">
+                                <div class="category-icon-bg">
+                                    <span class="material-icons-round">confirmation_number</span>
+                                </div>
+                                <div class="category-label">My Passes</div>
+                            </div>
+                            
+                            <div class="category-card cat-accent">
+                                <div class="category-icon-bg">
+                                    <span class="material-icons-round">support_agent</span>
+                                </div>
+                                <div class="category-label">Support</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Recent Activity -->
+                    <div>
+                        <div class="section-header">
+                            <div class="section-title">Recent Activity</div>
+                            <div class="latest-pass-badge">Latest pass</div>
+                        </div>
+
+                        <div class="timeline-card">
+                            <!-- Step 1 -->
+                            <div class="timeline-item status-completed">
+                                <div class="timeline-column">
+                                    <div class="timeline-dot">
+                                        <span class="material-icons-round">check_circle</span>
+                                    </div>
+                                    <div class="timeline-line"></div>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Pass Requested</div>
+                                    <div class="timeline-time">10:00 AM</div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2 -->
+                            <div class="timeline-item status-pending">
+                                <div class="timeline-column">
+                                    <div class="timeline-dot">
+                                        <span class="material-icons-round">schedule</span>
+                                    </div>
+                                    <div class="timeline-line"></div>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Mentor Review</div>
+                                    <div class="timeline-time">Pending</div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="timeline-item status-pending">
+                                <div class="timeline-column">
+                                    <div class="timeline-dot">
+                                        <span class="material-icons-round">schedule</span>
+                                    </div>
+                                    <div class="timeline-line"></div>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Security Scan</div>
+                                    <div class="timeline-time">Pending</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>

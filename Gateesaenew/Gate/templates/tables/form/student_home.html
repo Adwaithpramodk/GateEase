@@ -51,9 +51,9 @@
             
             <div class="relative shrink-0 z-10">
                 {% if student.Photo %}
-                    <img src="{{ student.Photo.url }}" alt="Profile" class="w-20 h-20 rounded-full object-cover border-[3px] border-white/30 p-1">
+                    <img src="{{ student.Photo.url }}" alt="Profile" class="w-14 h-14 rounded-full object-cover border-[2px] border-white/30 p-0.5">
                 {% else %}
-                    <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-3xl border-[3px] border-white/30 p-1 bg-clip-content">
+                    <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-xl border-[2px] border-white/30 p-0.5 bg-clip-content">
                         {{ student.name|default:"S"|make_list|first|upper }}
                     </div>
                 {% endif %}

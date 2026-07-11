@@ -214,7 +214,21 @@
         .btn-primary:hover {
             background: #7c3aed;
         }
-        
+        .badge-pending { background: #fef3c7; color: #b45309; }
+        .badge-scanned { background: #dbeafe; color: #1e40af; }
+
+        /* Responsive Mobile Layout */
+        @media (max-width: 768px) {
+            .layout-wrapper { display: flex !important; flex-direction: column !important; padding: 70px 1rem 1rem !important; gap: 1rem !important; }
+            .sidebar { position: static !important; width: 100% !important; height: auto !important; padding: 0 !important; border-right: none !important; }
+            .sidebar-nav { flex-direction: row !important; overflow-x: auto !important; white-space: nowrap !important; padding-bottom: 8px !important; gap: 0.5rem !important; }
+            .nav-item { flex-shrink: 0 !important; padding: 0.5rem 0.75rem !important; font-size: 0.85rem !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; }
+            .page-title { font-size: 1.5rem !important; }
+            .nav-container { padding: 0 1rem !important; }
+            .pass-grid, .stats-grid, .passes-list { grid-template-columns: 1fr !important; }
+            .group-card { flex-direction: column; align-items: flex-start; gap: 1rem; }
+        }
     </style>
 </head>
 

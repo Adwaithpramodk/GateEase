@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error | GateEase</title>
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 flex items-center justify-center min-h-screen p-4 text-center">
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-md w-full">
+        <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">500 - Server Error</h1>
+        <p class="text-slate-500 font-medium mb-8">Something went wrong on our end. Please try again later.</p>
+        <button onclick="window.location.reload()" class="bg-red-500 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-red-600 transition-colors shadow-md shadow-red-200 w-full active:scale-95">
+            Reload Page
+        </button>
+        <a href="/" class="block mt-4 text-slate-600 font-semibold hover:underline">Return to Home</a>
+    </div>
+</body>
+</html>

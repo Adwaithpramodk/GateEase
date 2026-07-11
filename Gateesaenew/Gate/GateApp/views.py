@@ -2191,6 +2191,136 @@ class MentorRequiredMixin:
              return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
+class MentorGroupPassCreate(MentorRequiredMixin, View):
+    def get(self, request):
+        mentor_dept_id = request.session.get('user_id')
+        mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
+        if not mentor_obj:
+            messages.error(request, "Mentor Profile Not Found")
+            return redirect('/')
+
+        assigned_classes_objs = class_assigntable.objects.filter(mentor_id=mentor_obj).select_related('class_id')
+        assigned_classes_ids = [obj.class_id.id for obj in assigned_classes_objs]
+        class_names = ", ".join([obj.class_id.class_name for obj in assigned_classes_objs])
+        
+        students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids).order_by('name')
+
+        return render(
+            request,
+            'tables/form/mentor_group_pass.html',
+            {
+                'students': students_list,
+                'mentor_name': mentor_obj.name,
+                'class_names': class_names,
+                'mentor': mentor_obj
+            }
+        )
+
+    def post(self, request):
+        mentor_dept_id = request.session.get('user_id')
+        mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
+        if not mentor_obj:
+            messages.error(request, "Mentor Profile Not Found")
+            return redirect('/')
+
+        student_ids = request.POST.getlist('student_ids')
+        reason = request.POST.get('reason', 'Group Pass')
+        
+        if not student_ids:
+            messages.error(request, "Please select at least one student.")
+            return redirect('/MentorGroupPassCreate')
+        
+        now = timezone.localtime()
+        current_time = now.time()
+        
+        count = 0
+        for sid in student_ids:
+            try:
+                student = studenttable.objects.get(id=sid)
+                exitpasstable.objects.create(
+                    student_id=student,
+                    mentor_id=mentor_obj,
+                    reason=reason,
+                    time=current_time,
+                    mentor_status='approved',
+                    security_status='pending',
+                    approved_at=now,
+                    is_group_pass=True
+                )
+                count += 1
+            except Exception as e:
+                print(f"Error for student {sid}: {e}")
+        
+        messages.success(request, f"Group Pass Approved for {count} students.")
+        return redirect('/MntrHome')
+
+import csv
+from django.http import HttpResponse
+
+class MentorAnalyticsView(MentorRequiredMixin, View):
+    def get(self, request):
+        mentor_dept_id = request.session.get('user_id')
+        mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
+        if not mentor_obj:
+            messages.error(request, "Mentor Profile Not Found")
+            return redirect('/')
+            
+        assigned_classes_objs = class_assigntable.objects.filter(mentor_id=mentor_obj).select_related('class_id')
+        assigned_classes_ids = [obj.class_id.id for obj in assigned_classes_objs]
+        
+        students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids)
+        
+        passes = exitpasstable.objects.filter(student_id__in=students_list).order_by('-created_at')
+        
+        total_passes = passes.count()
+        approved_passes = passes.filter(mentor_status='approved').count()
+        rejected_passes = passes.filter(mentor_status='rejected').count()
+        pending_passes = passes.filter(mentor_status='pending').count()
+        
+        return render(request, 'tables/form/mentor_analytics.html', {
+            'mentor': mentor_obj,
+            'total_passes': total_passes,
+            'approved_passes': approved_passes,
+            'rejected_passes': rejected_passes,
+            'pending_passes': pending_passes,
+            'passes': passes[:50]
+        })
+
+class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
+    def get(self, request):
+        mentor_dept_id = request.session.get('user_id')
+        mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
+        if not mentor_obj:
+            messages.error(request, "Mentor Profile Not Found")
+            return redirect('/')
+            
+        assigned_classes_objs = class_assigntable.objects.filter(mentor_id=mentor_obj).select_related('class_id')
+        assigned_classes_ids = [obj.class_id.id for obj in assigned_classes_objs]
+        
+        students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids)
+        passes = exitpasstable.objects.filter(student_id__in=students_list).order_by('-created_at')
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="mentor_analytics_report.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Student Name', 'Admission No', 'Batch', 'Reason', 'Date Requested', 'Time', 'Mentor Status', 'Security Status', 'Scanned At'])
+        
+        for p in passes:
+            writer.writerow([
+                p.student_id.name if p.student_id else 'N/A',
+                p.student_id.admn_no if p.student_id else 'N/A',
+                p.student_id.classs.class_name if (p.student_id and p.student_id.classs) else 'N/A',
+                p.reason,
+                p.created_at.strftime('%Y-%m-%d') if p.created_at else 'N/A',
+                p.time.strftime('%I:%M %p') if p.time else 'N/A',
+                p.mentor_status,
+                p.security_status,
+                p.scanned_at.strftime('%Y-%m-%d %I:%M %p') if p.scanned_at else 'Not Scanned'
+            ])
+            
+        return response
+
 class VerifyStudentMentor(MentorRequiredMixin, View):
     def get(self, request):
         mentor_dept_id = request.session.get('user_id')
@@ -2229,7 +2359,7 @@ class SecurityGroupPass(SecurityRequiredMixin, View):
         today = timezone.localtime().date()
         passes = exitpasstable.objects.filter(
             created_at__date=today, 
-            reason='Group Pass', 
+            is_group_pass=True, 
             security_status='pending',
             mentor_status='approved'
         ).select_related('student_id', 'mentor_id', 'student_id__classs')

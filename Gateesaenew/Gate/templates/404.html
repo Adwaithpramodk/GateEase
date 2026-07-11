@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found | GateEase</title>
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 flex items-center justify-center min-h-screen p-4 text-center">
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-md w-full">
+        <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </div>
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">404 - Not Found</h1>
+        <p class="text-slate-500 font-medium mb-8">Oops! The page you are looking for doesn't exist or has been moved.</p>
+        <button onclick="window.history.back()" class="bg-indigo-600 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 w-full active:scale-95">
+            Go Back
+        </button>
+        <a href="/" class="block mt-4 text-indigo-600 font-semibold hover:underline">Return to Home</a>
+    </div>
+</body>
+</html>

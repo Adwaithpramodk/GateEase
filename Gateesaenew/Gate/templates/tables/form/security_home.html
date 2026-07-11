@@ -147,7 +147,7 @@
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
-        let html5QrcodeScanner;
+        let html5QrCode;
 
         function openScanner() {
             const modal = document.getElementById('qrModal');
@@ -162,13 +162,22 @@
             modal.classList.remove('opacity-0');
             modalContent.classList.remove('scale-95');
             
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader",
-                { fps: 10, qrbox: {width: 250, height: 250} },
-                false
-            );
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
             
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                console.error("Error starting scanner", err);
+                alert("Could not access back camera. Please ensure permissions are granted.");
+            });
         }
 
         function closeScanner() {
@@ -181,8 +190,8 @@
             setTimeout(() => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
-                if (html5QrcodeScanner) {
-                    html5QrcodeScanner.clear();
+                if (html5QrCode) {
+                    html5QrCode.stop().catch(err => console.error("Error stopping scanner", err));
                 }
             }, 300);
         }

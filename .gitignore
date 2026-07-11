@@ -59,3 +59,4 @@ gateeaseapp/android/app/release/
 # ── OS ────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+java_pid6420.hprof

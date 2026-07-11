@@ -1,246 +1,125 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Passes - GateEase</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GateEase - Group Passes</title>
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --blue: #2563eb;
-            --blue-hover: #1d4ed8;
-            --blue-light: #eff6ff;
-            --dark: #0f172a;
-            --ink: #1e293b;
-            --muted: #64748b;
-            --border: #e2e8f0;
-            --bg: #f8fafc;
-            --white: #ffffff;
-            --radius: 12px;
-            --success: #10b981;
-            --warning: #f59e0b;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--ink);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        /* HEADER */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: var(--white);
-            border-bottom: 1px solid var(--border);
-            z-index: 50;
-            height: 60px;
-        }
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-            height: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--dark);
-            text-decoration: none;
-            letter-spacing: -0.5px;
-        }
-        .logo span { color: var(--blue); }
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .security-badge {
-            background: var(--blue-light);
-            color: var(--blue);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .logout-btn {
-            color: var(--muted);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-        .logout-btn:hover { color: var(--danger); }
-
-        /* LAYOUT */
-        .layout-wrapper {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 80px 1.5rem 2rem;
-            display: grid;
-            grid-template-columns: 240px 1fr;
-            gap: 2rem;
-        }
-
-        /* SIDEBAR */
-        .sidebar { position: sticky; top: 80px; }
-        .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            color: var(--muted);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .nav-item:hover { background: var(--white); color: var(--blue); }
-        .nav-item.active { background: var(--blue); color: var(--white); }
-
-        /* MAIN */
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 2rem;
-        }
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--dark);
-            margin: 0;
-        }
-
-        /* CARDS */
-        .group-card {
-            background: var(--white);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .group-info h3 {
-            margin: 0 0 0.25rem;
-            font-size: 1.1rem;
-            color: var(--dark);
-        }
-        .group-details {
-            font-size: 0.9rem;
-            color: var(--muted);
-            line-height: 1.4;
-        }
-        .btn-scan {
-            background: var(--success);
-            color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-scan:hover { background: #059669; }
-
-        .msg-success { background-color: #ecfdf5; color: #065f46; border-left: 4px solid #10b981; }
-        .msg-error { background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444; }
-
-        /* Responsive Mobile Layout */
-        @media (max-width: 768px) {
-            .layout-wrapper { display: flex !important; flex-direction: column !important; padding: 70px 1rem 1rem !important; gap: 1rem !important; }
-            .sidebar { position: static !important; width: 100% !important; height: auto !important; padding: 0 !important; border-right: none !important; }
-            .sidebar-nav { flex-direction: row !important; overflow-x: auto !important; white-space: nowrap !important; padding-bottom: 8px !important; gap: 0.5rem !important; }
-            .nav-item { flex-shrink: 0 !important; padding: 0.5rem 0.75rem !important; font-size: 0.85rem !important; }
-            .main-content { margin-left: 0 !important; padding: 0 !important; }
-            .page-title { font-size: 1.5rem !important; }
-            .nav-container { padding: 0 1rem !important; }
-            .pass-grid, .stats-grid, .passes-list { grid-template-columns: 1fr !important; }
-            .group-card { flex-direction: column; align-items: flex-start; gap: 1rem; }
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .content-area { padding-bottom: 90px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body>
-    <header>
-        <div class="nav-container">
-            <a href="#" class="logo">Gate<span>Ease</span></a>
-            <div class="nav-right">
-                <span class="security-badge">Security Guard</span>
-                <a href="/Logout" class="logout-btn">Logout</a>
-            </div>
-        </div>
-    </header>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
+    <!-- Toast Messages Container -->
     {% if messages %}
-    <div id="django-messages-container" style="position: fixed; top: 90px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 350px;">
+    <div id="django-messages-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 w-11/12 max-w-sm pointer-events-none">
         {% for message in messages %}
-        <div class="django-message toast {% if 'success' in message.tags or 'info' in message.tags %}msg-success{% else %}msg-error{% endif %}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 14px; font-weight: 500;">
+        <div class="pointer-events-auto flex items-center justify-between p-4 rounded-xl shadow-lg {% if 'success' in message.tags or 'info' in message.tags %}bg-emerald-50 text-emerald-800 border-l-4 border-emerald-500{% else %}bg-red-50 text-red-800 border-l-4 border-red-500{% endif %} font-medium text-sm">
             <span>{{ message }}</span>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <div class="layout-wrapper">
-        <aside class="sidebar">
-            <nav class="sidebar-nav">
-                <a href="/SecurityHome" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    Recent Scans
-                </a>
-                <a href="/SecurityGroupPass" class="nav-item active">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                    Group Passes
-                </a>
-            </nav>
-        </aside>
-
-        <main class="main-content">
-            <div class="page-header">
-                <div>
-                    <h1 class="page-title">Pending Group Passes</h1>
-                    <p style="color: var(--muted); margin-top: 0.5rem;">Mark group passes as scanned</p>
+    <!-- Top App Bar -->
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-sm">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            </div>
+            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900">GateEase</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold tracking-wider text-slate-700 uppercase bg-slate-100 px-2 py-1 rounded-md hidden sm:block">Security</span>
+            {% if security.Photo %}
+                <img src="{{ security.Photo.url }}" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 shadow-sm">
+            {% else %}
+                <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center border-2 border-white shadow-sm">
+                    {{ security.name|default:"S"|make_list|first|upper }}
                 </div>
-            </div>
+            {% endif %}
+            <a href="/Logout" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </a>
+        </div>
+    </header>
 
-            <div class="passes-list">
-                {% if groups %}
-                    {% for group in groups %}
-                    <div class="group-card">
-                        <div class="group-info">
-                            <h3>{{ group.class_names }} - {{ group.student_names }}</h3>
-                            <div class="group-details">
-                                <div>Approved By: <strong>{{ group.mentor_name }}</strong></div>
-                                <div>Approved At: {{ group.date }} {{ group.time }}</div>
-                            </div>
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-4xl mx-auto p-4 content-area md:p-6 lg:p-8">
+        
+        <div class="mb-6 mt-2">
+            <h1 class="text-2xl font-bold text-slate-900">Pending Group Passes</h1>
+            <p class="text-slate-500 mt-1 text-sm">Review and mark group passes as scanned.</p>
+        </div>
+
+        <div class="space-y-4">
+            {% if groups %}
+                {% for group in groups %}
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between">
+                    <!-- Group Info -->
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                Group Pass
+                            </span>
+                            <span class="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{{ group.class_names }}</span>
                         </div>
-                        <div>
-                            <form method="POST" action="/SecurityGroupPass">
-                                {% csrf_token %}
-                                <input type="hidden" name="pass_ids" value="{{ group.pass_ids }}">
-                                <button type="submit" class="btn-scan">Mark Scanned</button>
-                            </form>
+                        
+                        <h3 class="font-bold text-slate-900 text-lg leading-tight">{{ group.student_names }}</h3>
+                        
+                        <div class="mt-3 text-sm text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p><span class="font-semibold text-slate-700">Approved by:</span> {{ group.mentor_name }}</p>
+                            <p class="mt-1"><span class="font-semibold text-slate-700">Time:</span> {{ group.date }} at {{ group.time }}</p>
                         </div>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; color: var(--muted); border: 1px dashed var(--border);">
-                        No pending group passes for today.
+                    
+                    <!-- Action -->
+                    <div class="w-full md:w-auto mt-2 md:mt-0">
+                        <form method="POST" action="/SecurityGroupPass" class="w-full">
+                            {% csrf_token %}
+                            <input type="hidden" name="pass_ids" value="{{ group.pass_ids }}">
+                            <button type="submit" class="w-full bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 flex items-center justify-center gap-2 active:scale-95">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                Mark Scanned
+                            </button>
+                        </form>
                     </div>
-                {% endif %}
-            </div>
-        </main>
-    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-10 text-center flex flex-col items-center">
+                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800">No group passes</h3>
+                    <p class="text-slate-500 text-sm mt-1">There are no pending group passes for today.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Bottom Navigation Bar (Mobile / Tablet) -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] lg:hidden">
+        <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
+            <a href="/SecurityHome" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span class="text-[10px] font-medium mt-1">Scans</span>
+            </a>
+            
+            <a href="/SecurityGroupPass" class="flex flex-col items-center justify-center w-full h-full text-indigo-600">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                <span class="text-[10px] font-semibold mt-1">Group Passes</span>
+            </a>
+        </div>
+    </nav>
+    
 </body>
 </html>

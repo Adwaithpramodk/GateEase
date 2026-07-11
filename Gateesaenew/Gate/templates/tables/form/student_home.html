@@ -1,392 +1,159 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GateEase | Student Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GateEase - Student Dashboard</title>
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --blue: #2563eb;
-            --blue-hover: #1d4ed8;
-            --blue-light: #eff6ff;
-            --blue-mid: #dbeafe;
-            --dark: #0f172a;
-            --ink: #1e293b;
-            --muted: #64748b;
-            --border: #e2e8f0;
-            --bg: #f8fafc;
-            --white: #ffffff;
-            --radius: 12px;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--ink);
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-        }
-
-        /* ── HEADER ── */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.98);
-            border-bottom: 1px solid var(--border);
-            z-index: 100;
-            backdrop-filter: blur(8px);
-        }
-
-        .nav-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--dark);
-            letter-spacing: -0.5px;
-            text-decoration: none;
-        }
-
-        .logo span {
-            color: var(--blue);
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .student-badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--success);
-            background: #ecfdf5;
-            padding: 4px 10px;
-            border-radius: 20px;
-            border: 1px solid #a7f3d0;
-        }
-
-        .logout-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 0.625rem 1.25rem;
-            background: var(--white);
-            color: var(--muted);
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border: 1px solid var(--border);
-            transition: all 0.2s ease;
-        }
-        .logout-btn:hover {
-            background: #f1f5f9;
-            color: var(--danger);
-        }
-
-        /* ── LAYOUT ── */
-        .layout-wrapper {
-            display: flex;
-            padding-top: 73px; /* Header height */
-            min-height: 100vh;
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        /* ── SIDEBAR ── */
-        .sidebar {
-            width: 280px;
-            background: var(--white);
-            border-right: 1px solid var(--border);
-            padding: 2rem 1.5rem;
-            position: fixed;
-            height: calc(100vh - 73px);
-            overflow-y: auto;
-        }
-
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.875rem 1rem;
-            color: var(--muted);
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .nav-item:hover {
-            background: var(--blue-light);
-            color: var(--blue);
-        }
-
-        .nav-item.active {
-            background: var(--blue-light);
-            color: var(--blue);
-            font-weight: 600;
-        }
-
-        /* ── MAIN CONTENT ── */
-        .main-content {
-            flex: 1;
-            margin-left: 280px; /* Sidebar width */
-            padding: 2rem;
-        }
-
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-title {
-            font-size: 1.875rem;
-            font-weight: 700;
-            color: var(--dark);
-            letter-spacing: -0.5px;
-        }
-
-        .welcome-text {
-            color: var(--muted);
-            margin-top: 0.5rem;
-        }
-
-        /* ── CARDS ── */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--white);
-            padding: 1.5rem;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .stat-card h3 {
-            font-size: 0.875rem;
-            color: var(--muted);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-card .value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--dark);
-            margin-top: 0.5rem;
-        }
-
-        .content-card {
-            background: var(--white);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
+        body { font-family: 'Inter', sans-serif; }
+        /* Add padding to the bottom so content isn't hidden behind the fixed bottom nav */
+        .content-area { padding-bottom: 90px; }
         
-        .content-card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        /* Pass List */
-        .pass-list {
-            list-style: none;
-        }
-        .pass-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        .pass-info h4 {
-            color: var(--dark);
-            margin-bottom: 0.25rem;
-        }
-        .pass-info p {
-            font-size: 0.875rem;
-            color: var(--muted);
-        }
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .badge-pending { background: #fef3c7; color: #b45309; }
-        .badge-approved { background: #ecfdf5; color: #047857; }
-        .badge-rejected { background: #fef2f2; color: #b91c1c; }
-        .badge-scanned { background: #dbeafe; color: #1e40af; }
-        
-        .btn-primary {
-            background: var(--blue);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 500;
-            display: inline-block;
-            transition: background 0.2s;
-        }
-        .btn-primary:hover {
-            background: var(--blue-hover);
-        }
-
-        /* Responsive Mobile Layout */
-        @media (max-width: 768px) {
-            .layout-wrapper { display: flex !important; flex-direction: column !important; padding: 70px 1rem 1rem !important; gap: 1rem !important; }
-            .sidebar { position: static !important; width: 100% !important; height: auto !important; padding: 0 !important; border-right: none !important; }
-            .sidebar-nav { flex-direction: row !important; overflow-x: auto !important; white-space: nowrap !important; padding-bottom: 8px !important; gap: 0.5rem !important; }
-            .nav-item { flex-shrink: 0 !important; padding: 0.5rem 0.75rem !important; font-size: 0.85rem !important; }
-            .main-content { margin-left: 0 !important; padding: 0 !important; }
-            .page-title { font-size: 1.5rem !important; }
-            .nav-container { padding: 0 1rem !important; }
-            .pass-grid, .stats-grid, .passes-list { grid-template-columns: 1fr !important; }
-            .group-card { flex-direction: column; align-items: flex-start; gap: 1rem; }
-        }
+        /* Hide scrollbar for clean look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-<body>
-    <!-- Header -->
-    <header>
-        <div class="nav-container">
-            <a href="#" class="logo">Gate<span>Ease</span></a>
-            <div class="nav-right">
-                <span class="student-badge">Student Portal</span>
-                <a href="/Logout" class="logout-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    Logout
-                </a>
+    <!-- Toast Messages Container -->
+    {% if messages %}
+    <div id="django-messages-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 w-11/12 max-w-sm pointer-events-none">
+        {% for message in messages %}
+        <div class="pointer-events-auto flex items-center justify-between p-4 rounded-xl shadow-lg {% if 'success' in message.tags or 'info' in message.tags %}bg-emerald-50 text-emerald-800 border-l-4 border-emerald-500{% else %}bg-red-50 text-red-800 border-l-4 border-red-500{% endif %} font-medium text-sm">
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Top App Bar -->
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
             </div>
+            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-900">GateEase</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold tracking-wider text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded-md hidden sm:block">Student</span>
+            {% if student.Photo %}
+                <img src="{{ student.Photo.url }}" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-indigo-100 shadow-sm">
+            {% else %}
+                <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center border-2 border-white shadow-sm">
+                    {{ student.name|default:"S"|make_list|first|upper }}
+                </div>
+            {% endif %}
+            <a href="/Logout" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </a>
         </div>
     </header>
 
-    <!-- Layout Wrapper -->
-    <div class="layout-wrapper">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <nav class="sidebar-nav">
-                <a href="/StudentHome" class="nav-item active">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    Dashboard
-                </a>
-                <a href="/StudentNewPass" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                    Apply New Pass
-                </a>
-                <a href="/StudentMyPasses" class="nav-item">
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-3xl mx-auto p-4 content-area md:p-6 lg:p-8">
+        
+        <!-- Welcome Hero -->
+        <div class="mb-8 mt-2">
+            <h1 class="text-2xl font-bold text-slate-900">Welcome back, {{ student.name|default:"Student" }}</h1>
+            <p class="text-slate-500 mt-1 text-sm">{{ student.classs.class_name|default:"GateEase Dashboard" }}</p>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <a href="/StudentNewPass" class="bg-indigo-600 text-white p-5 rounded-2xl shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all flex flex-col justify-between group h-32 active:scale-95">
+                <div class="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">Apply Pass</h3>
+                </div>
+            </a>
+            
+            <a href="/StudentMyPasses" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group h-32 active:scale-95">
+                <div class="bg-slate-100 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    My Passes
-                </a>
-                <a href="/StudentComplaint" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                    Complaints
-                </a>
-            </nav>
-        </aside>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-800">My Passes</h3>
+                </div>
+            </a>
+        </div>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <div class="page-header">
-                <h1 class="page-title">Welcome back, {{ student.name }}</h1>
-                <p class="welcome-text">Here is the latest overview of your exit passes.</p>
+        <!-- Recent Passes Section -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800">Recent Activity</h2>
+                <a href="/StudentMyPasses" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">View All</a>
             </div>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Course</h3>
-                    <div class="value" style="font-size: 1.25rem;">{{ student.course }}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Roll No</h3>
-                    <div class="value" style="font-size: 1.25rem;">{{ student.roll_no }}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Passes</h3>
-                    <div class="value">{{ recent_passes|length }}</div>
-                </div>
-            </div>
-
-            <div class="content-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
-                    <h2 class="content-card-title" style="margin-bottom: 0; padding-bottom: 0; border: none;">Recent Passes</h2>
-                    <a href="/StudentNewPass" class="btn-primary">Apply New Pass</a>
-                </div>
-                
+            
+            <div class="divide-y divide-slate-100">
                 {% if recent_passes %}
-                <ul class="pass-list">
                     {% for pass in recent_passes %}
-                    <li class="pass-item">
-                        <div class="pass-info">
-                            <h4>{{ pass.reason }}</h4>
-                            <p>Exit: {{ pass.created_at|date:"M d, Y" }} {{ pass.time|time:"H:i" }}</p>
+                    <div class="p-5 hover:bg-slate-50 transition-colors">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium text-slate-900 truncate pr-4">{{ pass.reason }}</h4>
+                            <span class="text-xs text-slate-500 whitespace-nowrap">{{ pass.created_at|date:"M d" }}</span>
                         </div>
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                            <span class="badge badge-{{ pass.mentor_status|lower }}">Mentor: {{ pass.mentor_status }}</span>
-                            <span class="badge badge-{{ pass.security_status|lower }}">Security: {{ pass.security_status }}</span>
+                        <div class="flex items-center gap-2 mt-3">
+                            <!-- Mentor Status Badge -->
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-md flex items-center gap-1
+                                {% if pass.mentor_status == 'pending' %}bg-amber-50 text-amber-700
+                                {% elif pass.mentor_status == 'approved' %}bg-emerald-50 text-emerald-700
+                                {% else %}bg-red-50 text-red-700{% endif %}">
+                                Mentor: {{ pass.mentor_status|title }}
+                            </span>
+                            
+                            <!-- Security Status Badge -->
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-md flex items-center gap-1
+                                {% if pass.security_status == 'scanned' %}bg-blue-50 text-blue-700
+                                {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                Gate: {{ pass.security_status|title }}
+                            </span>
                         </div>
-                    </li>
+                    </div>
                     {% endfor %}
-                </ul>
                 {% else %}
-                <div style="text-align: center; padding: 3rem 0; color: var(--muted);">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 1rem; opacity: 0.5;">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    </svg>
-                    <p>No exit passes applied yet.</p>
-                </div>
+                    <div class="p-10 text-center flex flex-col items-center">
+                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        </div>
+                        <p class="text-slate-500 font-medium">No recent passes</p>
+                        <p class="text-slate-400 text-sm mt-1">Apply for a pass to see it here.</p>
+                    </div>
                 {% endif %}
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation Bar (Mobile / Tablet) -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+        <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
+            <a href="/StudentHome" class="flex flex-col items-center justify-center w-full h-full text-indigo-600">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span class="text-[10px] font-semibold mt-1">Home</span>
+            </a>
+            
+            <a href="/StudentNewPass" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                <span class="text-[10px] font-medium mt-1">Apply</span>
+            </a>
+            
+            <a href="/StudentMyPasses" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span class="text-[10px] font-medium mt-1">Passes</span>
+            </a>
+            
+            <a href="/StudentComplaint" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span class="text-[10px] font-medium mt-1">Complaints</span>
+            </a>
+        </div>
+    </nav>
+    
 </body>
 </html>

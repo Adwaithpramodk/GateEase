@@ -401,7 +401,7 @@ class MentorPendingPasses(MentorRequiredMixin, View):
             ).order_by('-created_at')
         except mentortable.DoesNotExist:
             pending_passes = []
-        return render(request, 'tables/form/mentor_pending_passes.html', {'passes': pending_passes})
+        return render(request, 'tables/form/mentor_pending_passes.html', {'passes': pending_passes, 'mentor': mentor_obj if 'mentor_obj' in locals() else None})
 
     def post(self, request):
         user_id = request.session.get('user_id')
@@ -424,8 +424,10 @@ class MentorPendingPasses(MentorRequiredMixin, View):
                 exit_pass.save()
                 messages.success(request, f"Pass for {exit_pass.student_id.name} approved.")
             elif action == 'reject':
+                reject_reason = request.POST.get('reject_reason')
                 exit_pass.mentor_status = 'rejected'
                 exit_pass.mentor_id = mentor_obj
+                exit_pass.reject_reason = reject_reason
                 exit_pass.save()
                 messages.success(request, f"Pass for {exit_pass.student_id.name} rejected.")
                 
@@ -435,8 +437,13 @@ class MentorPendingPasses(MentorRequiredMixin, View):
         return redirect('/MentorPendingPasses')
 
 class MntrHome(MentorRequiredMixin, View):
-    def get(self,request):
-        return render(request,'tables/form/mntrhome.html')
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            mentor = mentortable.objects.get(LOGINID_id=user_id)
+        except mentortable.DoesNotExist:
+            mentor = None
+        return render(request, 'tables/form/mntrhome.html', {'mentor': mentor})
 
 class MentorProfileUpdate(LoginRequiredMixin, View):
     def get(self, request):
@@ -732,7 +739,9 @@ class StudentRegister(View):
 
 class StudentNewPass(StudentRequiredMixin, View):
     def get(self, request):
-        return render(request, 'tables/form/student_new_pass.html')
+        user_id = request.session.get('user_id')
+        student_obj = studenttable.objects.get(LOGINID_id=user_id)
+        return render(request, 'tables/form/student_new_pass.html', {'student': student_obj})
 
     def post(self, request):
         user_id = request.session.get('user_id')
@@ -805,8 +814,9 @@ class StudentComplaint(StudentRequiredMixin, View):
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
             complaints = complainttable.objects.filter(student_id=student_obj).order_by('-id')
         except studenttable.DoesNotExist:
+            student_obj = None
             complaints = []
-        return render(request, 'tables/form/student_complaint.html', {'complaints': complaints})
+        return render(request, 'tables/form/student_complaint.html', {'student': student_obj, 'complaints': complaints})
 
     def post(self, request):
         user_id = request.session.get('user_id')
@@ -841,7 +851,7 @@ class StudentMyPasses(StudentRequiredMixin, View):
             passes = exitpasstable.objects.filter(student_id=student_obj).order_by('-id')
         except studenttable.DoesNotExist:
             passes = []
-        return render(request, 'tables/form/student_my_passes.html', {'passes': passes})
+        return render(request, 'tables/form/student_my_passes.html', {'passes': passes, 'student': student_obj if 'student_obj' in locals() else None})
 
 class StudentHome(StudentRequiredMixin, View):
     def get(self, request):
@@ -2209,7 +2219,8 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
             {
                 'students': students,
                 'mentor_name': mentor_obj.name,
-                'class_names': class_names
+                'class_names': class_names,
+                'mentor': mentor_obj
             }
         )
 
@@ -2270,7 +2281,13 @@ class SecurityGroupPass(SecurityRequiredMixin, View):
         
         result.sort(key=lambda x: x['time'] if x['time'] else "", reverse=True)
             
-        return render(request, 'tables/form/security_group_passes.html', {'groups': result})
+        user_id = request.session.get('user_id')
+        try:
+            security_guard = securitytable.objects.get(LOGINID_id=user_id)
+        except securitytable.DoesNotExist:
+            security_guard = None
+            
+        return render(request, 'tables/form/security_group_passes.html', {'groups': result, 'security': security_guard})
 
     def post(self, request):
         pass_ids_str = request.POST.get('pass_ids', '')

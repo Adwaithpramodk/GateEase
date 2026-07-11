@@ -249,21 +249,25 @@ class LoginPage(View):
 
             if response:
                 # 30 days in seconds
+                import datetime
                 max_age_seconds = 30 * 24 * 60 * 60
+                expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=max_age_seconds)
                 
                 response.set_cookie(
                     'access_token',
                     str(refresh.access_token),
                     httponly=True,
                     samesite='Lax',
-                    max_age=max_age_seconds
+                    max_age=max_age_seconds,
+                    expires=expires
                 )
                 response.set_cookie(
                     'refresh_token',
                     str(refresh),
                     httponly=True,
                     samesite='Lax',
-                    max_age=max_age_seconds
+                    max_age=max_age_seconds,
+                    expires=expires
                 )
                 # Keep session for messages framework but not auth
                 request.session.cycle_key() 

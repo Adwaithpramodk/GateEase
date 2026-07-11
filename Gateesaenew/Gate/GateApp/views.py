@@ -48,6 +48,36 @@ class LoginRequiredMixin:
             return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
+class StudentRequiredMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not request.session.get('user_id'):
+            messages.error(request, "Login Required")
+            return redirect('/')
+        if request.session.get('usertype') != 'Student':
+             messages.error(request, "Unauthorized Access: Students Only")
+             return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
+
+class MentorRequiredMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not request.session.get('user_id'):
+            messages.error(request, "Login Required")
+            return redirect('/')
+        if request.session.get('usertype') != 'mentor':
+             messages.error(request, "Unauthorized Access: Mentors Only")
+             return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
+
+class SecurityRequiredMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not request.session.get('user_id'):
+            messages.error(request, "Login Required")
+            return redirect('/')
+        if request.session.get('usertype') != 'security':
+             messages.error(request, "Unauthorized Access: Security Only")
+             return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
+
 class Logout(View):
     def get(self, request):
         request.session.flush()
@@ -86,6 +116,12 @@ class LoginPage(View):
                 elif obj.usertype=='mentor':
                     messages.success(request, "Login Successful")
                     return redirect('/MntrHome')
+                elif obj.usertype=='Student':
+                    messages.success(request, "Login Successful")
+                    return redirect('/StudentHome')
+                elif obj.usertype=='security':
+                    messages.success(request, "Login Successful")
+                    return redirect('/SecurityHome')
                 else:
                      messages.error(request, "Login Unsuccessful")
                      return redirect('/')
@@ -106,6 +142,12 @@ class LoginPage(View):
                 elif obj.usertype=='mentor':
                     messages.success(request, "Login Successful (Security Updated)")
                     return redirect('/MntrHome')
+                elif obj.usertype=='Student':
+                    messages.success(request, "Login Successful (Security Updated)")
+                    return redirect('/StudentHome')
+                elif obj.usertype=='security':
+                    messages.success(request, "Login Successful (Security Updated)")
+                    return redirect('/SecurityHome')
                 else:
                      messages.error(request, "Login Unsuccessful")
                      return redirect('/')
@@ -347,15 +389,63 @@ class HomePage(LoginRequiredMixin,AdminRequiredMixin,View):
     def get(self,request):
         return render(request,'tables/form/homepage.html')
 
-class MntrHome(LoginRequiredMixin, View):
+class MentorPendingPasses(MentorRequiredMixin, View):
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
+            assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
+            pending_passes = exitpasstable.objects.filter(
+                mentor_status='pending',
+                student_id__classs__id__in=assigned_classes
+            ).order_by('-created_at')
+        except mentortable.DoesNotExist:
+            pending_passes = []
+        return render(request, 'tables/form/mentor_pending_passes.html', {'passes': pending_passes})
+
+    def post(self, request):
+        user_id = request.session.get('user_id')
+        pass_id = request.POST.get('pass_id')
+        action = request.POST.get('action')
+        
+        try:
+            mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
+            assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
+            
+            exit_pass = exitpasstable.objects.get(
+                id=pass_id, 
+                mentor_status='pending',
+                student_id__classs__id__in=assigned_classes
+            )
+            
+            if action == 'approve':
+                exit_pass.mentor_status = 'approved'
+                exit_pass.mentor_id = mentor_obj
+                exit_pass.save()
+                messages.success(request, f"Pass for {exit_pass.student_id.name} approved.")
+            elif action == 'reject':
+                exit_pass.mentor_status = 'rejected'
+                exit_pass.mentor_id = mentor_obj
+                exit_pass.save()
+                messages.success(request, f"Pass for {exit_pass.student_id.name} rejected.")
+                
+        except (mentortable.DoesNotExist, exitpasstable.DoesNotExist):
+            messages.error(request, "Pass not found or unauthorized.")
+            
+        return redirect('/MentorPendingPasses')
+
+class MntrHome(MentorRequiredMixin, View):
     def get(self,request):
         return render(request,'tables/form/mntrhome.html')
 
 class MentorProfileUpdate(LoginRequiredMixin, View):
     def get(self, request):
         l_id = request.session.get('user_id')
-        mentor = mentortable.objects.get(LOGINID_id=l_id)
-        return render(request, 'tables/form/mentor_profile.html', {'mentor': mentor})
+        try:
+            mentor = mentortable.objects.get(LOGINID_id=l_id)
+            return render(request, 'tables/form/mntr_profile.html', {'mentor': mentor})
+        except mentortable.DoesNotExist:
+            return redirect('/login')
         
     def post(self, request):
         l_id = request.session.get('user_id')
@@ -586,6 +676,217 @@ class Rejectpassadmin(AdminRequiredMixin, View):
         obj.save()
         messages.warning(request, "Pass Rejected")
         return redirect('/Pass')
+
+class StudentRegister(View):
+    def get(self, request):
+        classes = classstable.objects.all()
+        return render(request, 'tables/form/student_register.html', {'classes': classes})
+
+    def post(self, request):
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        admn_no = request.POST.get('admn_no')
+        phone = request.POST.get('phone')
+        class_id = request.POST.get('class_id')
+        password = request.POST.get('password')
+
+        if not all([name, email, admn_no, phone, class_id, password]):
+            messages.error(request, "All fields are required!")
+            return redirect('/StudentRegister')
+            
+        if len(password) < 8:
+            messages.error(request, "Password must be at least 8 characters!")
+            return redirect('/StudentRegister')
+
+        if Logintable.objects.filter(username=email).exists() or studenttable.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered!")
+            return redirect('/StudentRegister')
+
+        if studenttable.objects.filter(admn_no=admn_no).exists():
+            messages.error(request, "Admission Number already registered!")
+            return redirect('/StudentRegister')
+
+        try:
+            class_obj = classstable.objects.get(id=class_id)
+            hashed_pw = make_password(password)
+            
+            login_obj = Logintable.objects.create(
+                username=email,
+                password=hashed_pw,
+                usertype='pending'
+            )
+            
+            studenttable.objects.create(
+                name=name,
+                email=email,
+                admn_no=admn_no,
+                phone=phone,
+                classs=class_obj,
+                LOGINID=login_obj
+            )
+            messages.success(request, "Registration successful! Please wait for approval.")
+            return redirect('/')
+        except Exception as e:
+            messages.error(request, f"Registration failed: {str(e)}")
+            return redirect('/StudentRegister')
+
+class StudentNewPass(StudentRequiredMixin, View):
+    def get(self, request):
+        return render(request, 'tables/form/student_new_pass.html')
+
+    def post(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            student_obj = studenttable.objects.get(LOGINID_id=user_id)
+        except studenttable.DoesNotExist:
+            messages.error(request, "Student profile not found.")
+            return redirect('/StudentHome')
+
+        reason = request.POST.get('reason', '').strip()
+        time_str = request.POST.get('time', '').strip()
+
+        if not reason:
+            messages.error(request, "Reason is required")
+            return redirect('/StudentNewPass')
+        if len(reason) < 5:
+            messages.error(request, "Reason must be at least 5 characters")
+            return redirect('/StudentNewPass')
+        if len(reason) > 500:
+            messages.error(request, "Reason must be under 500 characters")
+            return redirect('/StudentNewPass')
+        if not time_str:
+            messages.error(request, "Exit time is required")
+            return redirect('/StudentNewPass')
+
+        try:
+            # Parse time from HTML5 time input (HH:MM 24-hour format)
+            # The API expects %I:%M %p, but HTML5 form gives %H:%M
+            time_obj = datetime.datetime.strptime(time_str, '%H:%M').time()
+        except ValueError:
+            messages.error(request, "Invalid time format.")
+            return redirect('/StudentNewPass')
+
+        now_local = timezone.localtime()
+        exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
+        exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
+        
+        if exit_datetime <= now_local:
+            messages.error(request, "Exit time must be in the future")
+            return redirect('/StudentNewPass')
+
+        window_open  = datetime.time(10, 0)
+        window_close = datetime.time(15, 40)
+        current_time = now_local.time()
+        
+        if not (window_open <= current_time <= window_close):
+            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+            return redirect('/StudentNewPass')
+
+        formatted_time = time_obj.strftime('%I:%M %p')
+        
+        try:
+            exitpasstable.objects.create(
+                student_id=student_obj,
+                reason=reason,
+                time=time_obj,
+                mentor_status='pending',
+                security_status='pending'
+            )
+            messages.success(request, "Pass applied successfully!")
+            return redirect('/StudentHome')
+        except Exception as e:
+            messages.error(request, f"Error applying pass: {str(e)}")
+            return redirect('/StudentNewPass')
+
+class StudentComplaint(StudentRequiredMixin, View):
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            student_obj = studenttable.objects.get(LOGINID_id=user_id)
+            complaints = complainttable.objects.filter(student_id=student_obj).order_by('-id')
+        except studenttable.DoesNotExist:
+            complaints = []
+        return render(request, 'tables/form/student_complaint.html', {'complaints': complaints})
+
+    def post(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            student_obj = studenttable.objects.get(LOGINID_id=user_id)
+        except studenttable.DoesNotExist:
+            messages.error(request, "Student profile not found.")
+            return redirect('/StudentHome')
+
+        complaint_text = request.POST.get('complaint', '').strip()
+        if not complaint_text:
+            messages.error(request, "Complaint text cannot be empty.")
+            return redirect('/StudentComplaint')
+            
+        try:
+            complainttable.objects.create(
+                student_id=student_obj,
+                complaint=complaint_text,
+                date=timezone.now().date()
+            )
+            messages.success(request, "Complaint submitted successfully!")
+            return redirect('/StudentComplaint')
+        except Exception as e:
+            messages.error(request, f"Error submitting complaint: {str(e)}")
+            return redirect('/StudentComplaint')
+
+class StudentMyPasses(StudentRequiredMixin, View):
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            student_obj = studenttable.objects.get(LOGINID_id=user_id)
+            passes = exitpasstable.objects.filter(student_id=student_obj).order_by('-id')
+        except studenttable.DoesNotExist:
+            passes = []
+        return render(request, 'tables/form/student_my_passes.html', {'passes': passes})
+
+class StudentHome(StudentRequiredMixin, View):
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            student = studenttable.objects.get(LOGINID_id=user_id)
+            # Fetch recent passes
+            recent_passes = exitpasstable.objects.filter(student_id=student).order_by('-id')[:5]
+        except studenttable.DoesNotExist:
+            student = None
+            recent_passes = []
+        return render(request, 'tables/form/student_home.html', {'student': student, 'recent_passes': recent_passes})
+
+class SecurityScanPass(SecurityRequiredMixin, View):
+    def post(self, request):
+        pass_id = request.POST.get('pass_id')
+        try:
+            exit_pass = exitpasstable.objects.get(id=pass_id)
+            
+            if exit_pass.mentor_status != 'approved':
+                messages.error(request, f"Pass {pass_id} is not approved by mentor!")
+            elif exit_pass.security_status == 'scanned':
+                messages.error(request, f"Pass {pass_id} has already been scanned!")
+            else:
+                exit_pass.security_status = 'scanned'
+                exit_pass.scanned_at = timezone.now()
+                exit_pass.save()
+                messages.success(request, f"Pass {pass_id} scanned successfully for {exit_pass.student_id.name}!")
+        except exitpasstable.DoesNotExist:
+            messages.error(request, "Invalid QR Code: Pass not found.")
+            
+        return redirect('/SecurityHome')
+
+class SecurityHome(SecurityRequiredMixin, View):
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            security_guard = securitytable.objects.get(LOGINID_id=user_id)
+            # Fetch recently scanned passes
+            recent_scans = exitpasstable.objects.filter(security_status='scanned').order_by('-id')[:10]
+        except securitytable.DoesNotExist:
+            security_guard = None
+            recent_scans = []
+        return render(request, 'tables/form/security_home.html', {'security': security_guard, 'recent_scans': recent_scans})
+
 
 #/////////////////////////////////////////////////////API/////////////////////////////////////////////
 from django.conf import settings
@@ -1911,3 +2212,81 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
                 'class_names': class_names
             }
         )
+
+class SecurityGroupPass(SecurityRequiredMixin, View):
+    def get(self, request):
+        today = timezone.localtime().date()
+        passes = exitpasstable.objects.filter(
+            created_at__date=today, 
+            reason='Group Pass', 
+            security_status='pending',
+            mentor_status='approved'
+        ).select_related('student_id', 'mentor_id', 'student_id__classs')
+        
+        from collections import defaultdict
+        groups = defaultdict(list)
+        
+        for p in passes:
+            key = (p.mentor_id, p.approved_at)
+            groups[key].append(p)
+            
+        result = []
+        for (mentor, approved_at), pass_list in groups.items():
+            if not pass_list: continue
+            
+            classes = set()
+            students = []
+            pass_ids = []
+            
+            for p in pass_list:
+                cname = p.student_id.classs.class_name if p.student_id.classs else "Unknown"
+                classes.add(cname)
+                students.append(p.student_id.name)
+                pass_ids.append(str(p.id))
+            
+            display_students = ", ".join(students)
+            
+            if len(classes) == 1:
+                cname = list(classes)[0]
+                try:
+                    cls_obj = pass_list[0].student_id.classs
+                    if cls_obj:
+                        total_in_class = studenttable.objects.filter(classs=cls_obj).count()
+                        if len(students) == total_in_class and total_in_class > 0:
+                            display_students = "All Students"
+                except:
+                    pass
+
+            local_dt = timezone.localtime(approved_at) if approved_at else None
+
+            result.append({
+                'mentor_name': mentor.name if mentor else "Unknown",
+                'class_names': ", ".join(classes),
+                'student_names': display_students,
+                'time': local_dt.strftime('%I:%M %p') if local_dt else "",
+                'date': local_dt.strftime('%d-%m-%Y') if local_dt else "",
+                'pass_ids': ",".join(pass_ids)
+            })
+        
+        result.sort(key=lambda x: x['time'] if x['time'] else "", reverse=True)
+            
+        return render(request, 'tables/form/security_group_passes.html', {'groups': result})
+
+    def post(self, request):
+        pass_ids_str = request.POST.get('pass_ids', '')
+        if pass_ids_str:
+            pass_ids = [pid for pid in pass_ids_str.split(',') if pid]
+            current_time = timezone.localtime()
+            count = 0
+            for pid in pass_ids:
+                try:
+                    obj = exitpasstable.objects.get(id=pid)
+                    if obj.security_status != 'scanned':
+                        obj.security_status = 'scanned'
+                        obj.scanned_at = current_time
+                        obj.save()
+                        count += 1
+                except exitpasstable.DoesNotExist:
+                    pass
+            messages.success(request, f"{count} passes scanned successfully.")
+        return redirect('/SecurityGroupPass')

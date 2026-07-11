@@ -21,7 +21,6 @@ from .views import *
 urlpatterns = [
     path('sw.js', TemplateView.as_view(template_name='sw.js', content_type='application/javascript'), name='sw.js'),
     path('manifest.json', TemplateView.as_view(template_name='manifest.json', content_type='application/json'), name='manifest.json'),
-    path('student-app/', TemplateView.as_view(template_name='student_app.html'), name='student_app'),
     path('', LandingPage.as_view(), name='landing'),
     path('privacy/', PrivacyPolicy.as_view(), name='privacy'),
     path('login/', LoginPage.as_view(), name='LoginPage'),
@@ -58,6 +57,19 @@ urlpatterns = [
     path('MntrHome',MntrHome.as_view(),name='MntrHome'),
     path('VerifyStudentMentor',VerifyStudentMentor.as_view(),name='verify_student_mentor'),
     path('MentorProfileUpdate',MentorProfileUpdate.as_view(),name='mentor_profile_update'),
+    path('MentorPendingPasses',MentorPendingPasses.as_view(),name='MentorPendingPasses'),
+    path('StudentHome', StudentHome.as_view(), name='StudentHome'),
+    path('StudentNewPass', StudentNewPass.as_view(), name='StudentNewPass'),
+    path('StudentComplaint', StudentComplaint.as_view(), name='StudentComplaint'),
+    path('StudentMyPasses', StudentMyPasses.as_view(), name='StudentMyPasses'),
+    
+    # === SECURITY PORTAL ===
+    path('SecurityHome', SecurityHome.as_view(), name="SecurityHome"),
+    path('SecurityScanPass', SecurityScanPass.as_view(), name="SecurityScanPass"),
+    path('SecurityGroupPass', SecurityGroupPass.as_view(), name="SecurityGroupPass"),
+
+    # ==========================
+    path('StudentRegister', StudentRegister.as_view(), name='StudentRegister'),
 
 
 ########################API#############################

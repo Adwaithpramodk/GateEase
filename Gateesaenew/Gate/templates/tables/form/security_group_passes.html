@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Passes - GateEase</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue: #2563eb;
+            --blue-hover: #1d4ed8;
+            --blue-light: #eff6ff;
+            --dark: #0f172a;
+            --ink: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --radius: 12px;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            z-index: 50;
+            height: 60px;
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+        .logo span { color: var(--blue); }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .security-badge {
+            background: var(--blue-light);
+            color: var(--blue);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .logout-btn {
+            color: var(--muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .logout-btn:hover { color: var(--danger); }
+
+        /* LAYOUT */
+        .layout-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 1.5rem 2rem;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 2rem;
+        }
+
+        /* SIDEBAR */
+        .sidebar { position: sticky; top: 80px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: var(--muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: var(--white); color: var(--blue); }
+        .nav-item.active { background: var(--blue); color: var(--white); }
+
+        /* MAIN */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+        }
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0;
+        }
+
+        /* CARDS */
+        .group-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .group-info h3 {
+            margin: 0 0 0.25rem;
+            font-size: 1.1rem;
+            color: var(--dark);
+        }
+        .group-details {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+        .btn-scan {
+            background: var(--success);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-scan:hover { background: #059669; }
+
+        .msg-success { background-color: #ecfdf5; color: #065f46; border-left: 4px solid #10b981; }
+        .msg-error { background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">Gate<span>Ease</span></a>
+            <div class="nav-right">
+                <span class="security-badge">Security Guard</span>
+                <a href="/Logout" class="logout-btn">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div id="django-messages-container" style="position: fixed; top: 90px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 350px;">
+        {% for message in messages %}
+        <div class="django-message toast {% if 'success' in message.tags or 'info' in message.tags %}msg-success{% else %}msg-error{% endif %}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 14px; font-weight: 500;">
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="/SecurityHome" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Recent Scans
+                </a>
+                <a href="/SecurityGroupPass" class="nav-item active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    Group Passes
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Pending Group Passes</h1>
+                    <p style="color: var(--muted); margin-top: 0.5rem;">Mark group passes as scanned</p>
+                </div>
+            </div>
+
+            <div class="passes-list">
+                {% if groups %}
+                    {% for group in groups %}
+                    <div class="group-card">
+                        <div class="group-info">
+                            <h3>{{ group.class_names }} - {{ group.student_names }}</h3>
+                            <div class="group-details">
+                                <div>Approved By: <strong>{{ group.mentor_name }}</strong></div>
+                                <div>Approved At: {{ group.date }} {{ group.time }}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <form method="POST" action="/SecurityGroupPass">
+                                {% csrf_token %}
+                                <input type="hidden" name="pass_ids" value="{{ group.pass_ids }}">
+                                <button type="submit" class="btn-scan">Mark Scanned</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; color: var(--muted); border: 1px dashed var(--border);">
+                        No pending group passes for today.
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -809,7 +809,7 @@ class StudentRegister(View):
         email = request.POST.get('email')
         admn_no = request.POST.get('admn_no')
         phone = request.POST.get('phone')
-        class_id = request.POST.get('class_id')
+        class_id = request.POST.get('classs') # Changed to match HTML form name="classs"
         password = request.POST.get('password')
 
         if not all([name, email, admn_no, phone, class_id, password]):

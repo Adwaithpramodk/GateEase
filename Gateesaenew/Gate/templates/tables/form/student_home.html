@@ -16,6 +16,96 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        /* App-Style Blue Card CSS */
+        .blue-profile-card {
+            background-color: #2557D6;
+            border-radius: 28px;
+            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.2), 0 4px 6px -4px rgba(30, 58, 138, 0.1);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
+            margin-bottom: 32px;
+        }
+        .bpc-circle {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .bpc-circle-1 {
+            top: -96px; right: -48px; width: 288px; height: 288px;
+        }
+        .bpc-circle-2 {
+            top: -32px; right: -16px; width: 160px; height: 160px;
+        }
+        .bpc-circle-3 {
+            bottom: -64px; left: -48px; width: 224px; height: 224px;
+        }
+        .bpc-img-container {
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        .bpc-img {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 2px;
+        }
+        .bpc-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 2px;
+            background-clip: content-box;
+        }
+        .bpc-content {
+            position: relative;
+            z-index: 10;
+            flex: 1;
+        }
+        .bpc-greeting {
+            color: #dbeafe;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            letter-spacing: 0.025em;
+        }
+        .bpc-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.025em;
+            margin-bottom: 10px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .bpc-badge {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-weight: 500;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
@@ -43,26 +133,26 @@
     <main class="flex-1 w-full max-w-3xl mx-auto p-4 content-area md:p-6 lg:p-8">
         
         <!-- App-Style Blue Profile Card -->
-        <div class="mb-8 mt-2 relative overflow-hidden bg-[#2557D6] rounded-[28px] shadow-lg shadow-blue-900/20 p-6 flex items-center gap-5">
+        <div class="blue-profile-card">
             <!-- Decorative background circles -->
-            <div class="absolute -top-24 -right-12 w-72 h-72 bg-white/5 rounded-full pointer-events-none"></div>
-            <div class="absolute -top-8 -right-4 w-40 h-40 bg-white/5 rounded-full pointer-events-none"></div>
-            <div class="absolute -bottom-16 -left-12 w-56 h-56 bg-white/5 rounded-full pointer-events-none"></div>
+            <div class="bpc-circle bpc-circle-1"></div>
+            <div class="bpc-circle bpc-circle-2"></div>
+            <div class="bpc-circle bpc-circle-3"></div>
             
-            <div class="relative shrink-0 z-10">
+            <div class="bpc-img-container">
                 {% if student.Photo %}
-                    <img src="{{ student.Photo.url }}" alt="Profile" class="w-14 h-14 rounded-full object-cover border-[2px] border-white/30 p-0.5">
+                    <img src="{{ student.Photo.url }}" alt="Profile" class="bpc-img">
                 {% else %}
-                    <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-xl border-[2px] border-white/30 p-0.5 bg-clip-content">
+                    <div class="bpc-avatar">
                         {{ student.name|default:"S"|make_list|first|upper }}
                     </div>
                 {% endif %}
             </div>
             
-            <div class="relative flex-1 z-10">
-                <p class="text-blue-100 text-sm font-medium mb-1 tracking-wide">Hey there! 👋</p>
-                <h1 class="text-2xl font-bold text-white tracking-tight mb-2.5 drop-shadow-sm">{{ student.name|default:"Student" }}</h1>
-                <div class="inline-block bg-white/10 border border-white/20 text-white text-xs sm:text-sm px-4 py-1.5 rounded-full backdrop-blur-md font-medium">
+            <div class="bpc-content">
+                <p class="bpc-greeting">Hey there! 👋</p>
+                <h1 class="bpc-name">{{ student.name|default:"Student" }}</h1>
+                <div class="bpc-badge">
                     {{ student.classs.class_name|default:"No Batch Assigned" }}
                 </div>
             </div>

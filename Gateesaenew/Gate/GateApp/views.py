@@ -251,23 +251,20 @@ class LoginPage(View):
                 # 30 days in seconds
                 import datetime
                 max_age_seconds = 30 * 24 * 60 * 60
-                expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=max_age_seconds)
                 
                 response.set_cookie(
                     'access_token',
                     str(refresh.access_token),
                     httponly=True,
                     samesite='Lax',
-                    max_age=max_age_seconds,
-                    expires=expires
+                    max_age=max_age_seconds
                 )
                 response.set_cookie(
                     'refresh_token',
                     str(refresh),
                     httponly=True,
                     samesite='Lax',
-                    max_age=max_age_seconds,
-                    expires=expires
+                    max_age=max_age_seconds
                 )
                 # Keep session for messages framework but not auth
                 request.session.cycle_key() 
@@ -279,7 +276,7 @@ class LoginPage(View):
                  return redirect('/')
         except Exception as e:
             logger.exception("LoginPage error")
-            messages.error(request, "Login Error")
+            messages.error(request, f"Login Error")
             return redirect('/')
 
 from django.core.paginator import Paginator

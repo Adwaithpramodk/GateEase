@@ -55,8 +55,8 @@ class classstable(models.Model):
 
 class studenttable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
-    email=models.CharField(max_length=100,null=True,blank=True)
-    admn_no=models.IntegerField(null=True,blank=True)
+    email=models.CharField(max_length=100,null=True,blank=True,db_index=True)
+    admn_no=models.IntegerField(null=True,blank=True,db_index=True)
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     
@@ -90,11 +90,10 @@ class studenttable(models.Model):
     def get_assigned_mentor(self):
         if not self.classs:
             return None
-        
         try:
             assignment = class_assigntable.objects.filter(class_id=self.classs).first()
             return assignment.mentor_id if assignment else None
-        except:
+        except Exception:
             return None
     
     def __str__(self):
@@ -117,13 +116,13 @@ class exitpasstable(models.Model):
     reason=models.TextField(max_length=100,null=True,blank=True)
     time=models.TimeField(null=True,blank=True)
     mentor_status=models.CharField(max_length=100, null=True, blank=True, db_index=True)
-    security_status=models.CharField(max_length=100,null=True,blank=True)
-    created_at=models.DateTimeField(auto_now_add=True)
+    security_status=models.CharField(max_length=100,null=True,blank=True,db_index=True)
+    created_at=models.DateTimeField(auto_now_add=True,db_index=True)
     approved_at=models.DateTimeField(null=True,blank=True)
     scanned_at=models.DateTimeField(null=True,blank=True)
     qrcode = models.ImageField(upload_to='qrcodes/', null=True, blank=True)
     reject_reason = models.TextField(null=True, blank=True)
-    is_group_pass = models.BooleanField(default=False)
+    is_group_pass = models.BooleanField(default=False, db_index=True)
 
 
 class complainttable(models.Model):

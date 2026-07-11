@@ -5,7 +5,7 @@ from rest_framework import serializers
 class LoginSerializer(ModelSerializer):
     class Meta:
         model=Logintable
-        fields='__all__'
+        fields = ['id', 'username', 'usertype']  # Never expose the password hash
 
 class DepartmentSerializer(ModelSerializer):
     class Meta:
@@ -36,13 +36,13 @@ class StudentSerializer1(ModelSerializer):
     def get_dept(self, obj):
         try:
             return obj.classs.department_id.name
-        except:
+        except Exception:
             return "No Department"
 
     def get_stu_class(self, obj):
         try:
             return obj.classs.class_name
-        except:
+        except Exception:
             return "No Class"
 
 class MentorSerializer(ModelSerializer):
@@ -61,16 +61,12 @@ class ExitpassSerializer(serializers.ModelSerializer):
     def get_classs(self, obj):
         try:
             return obj.student_id.classs.class_name
-        except:
+        except Exception:
             return "No Class"
 
     class Meta:
         model = exitpasstable
-        fields = '__all__' 
-        # [    'id','reason','time','mentor_status','security_status',
-        #     'created_at','approved_at','scanned_at',
-        #     'qrcode','reject_reason','name','classs'
-        # ]
+        fields = '__all__'
 class ExitpassSerializer1(serializers.ModelSerializer):
     name = serializers.CharField(source='student_id.name', read_only=True)
     time = serializers.TimeField(format='%I:%M %p')

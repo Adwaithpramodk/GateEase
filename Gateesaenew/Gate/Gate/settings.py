@@ -35,6 +35,16 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dummy-key-for-local-develo
 # Defaults to False for security. Set DEBUG=True in your local .env
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
+# Fail fast if SECRET_KEY is not properly set in production
+if not DEBUG:
+    _secret = os.getenv('SECRET_KEY', '')
+    if not _secret or 'insecure' in _secret or 'dummy' in _secret:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            "SECRET_KEY is not set or is using the insecure default value. "
+            "Set a real SECRET_KEY in your .env file before running in production."
+        )
+
 
 # ALLOWED_HOSTS should be a list of strings. We read a comma-separated string from .env
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
@@ -62,6 +72,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'GateApp.middleware.JWTWebAuthMiddleware',
+    'GateApp.middleware.RateLimitMiddleware',
 ]
 
 # ── HTTPS & PRODUCTION SECURITY SETTINGS ──────────────────────────────────────
@@ -108,6 +120,14 @@ import dj_database_url
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
 
+# Cache configuration for Rate Limiting
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -148,7 +168,9 @@ STATICFILES_DIRS=[os.path.join(BASE_DIR,'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-CSRF_TRUSTED_ORIGINS = [ ]
+CSRF_TRUSTED_ORIGINS = [
+    os.getenv('CSRF_TRUSTED_ORIGIN', 'https://gateeasee.pythonanywhere.com'),
+]
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
@@ -199,3 +221,10 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'gateeaseapp@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# ── Session & Cookie Settings ──────────────────────────────────────────────────
+# Force sessions to persist across browser/app restarts for 30 days
+SESSION_COOKIE_AGE = 2592000  # 30 days in seconds
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_NAME = 'gateease_session'

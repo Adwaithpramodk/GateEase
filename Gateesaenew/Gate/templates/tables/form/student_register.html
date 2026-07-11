@@ -151,7 +151,7 @@
             <p>Register as a student on GateEase</p>
         </div>
 
-        <form action="/StudentRegister" method="POST" enctype="multipart/form-data">
+        <form action="/StudentRegister" method="POST">
             {% csrf_token %}
             
             <div class="form-row">
@@ -185,10 +185,7 @@
                 </select>
             </div>
             
-            <div class="form-group">
-                <label for="photo" class="form-label">Profile Photo <span style="font-weight: 400; color: #94a3b8;">(Optional)</span></label>
-                <input type="file" id="photo" name="photo" accept="image/*" class="input-field" style="padding: 6px;">
-            </div>
+            
             
             <div class="form-row">
                 <div class="form-col" style="margin-right: 8px;">

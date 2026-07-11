@@ -1,4 +1,7 @@
 import datetime
+import logging
+import secrets
+import csv
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -7,13 +10,12 @@ from django.http import HttpResponse
 from .serializer import *
 from .models import *
 from .forms import *
-from django.http import HttpResponse
-from django.views import View
 from django.template.loader import get_template
 from xhtml2pdf import pisa
-from .models import exitpasstable
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import transaction
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -30,12 +32,13 @@ class PrivacyPolicy(View):
 class AdminRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         # Check if user is logged in
-        if not request.session.get('user_id'):
+        if not getattr(request, 'jwt_user_id', None) and not request.session.get('user_id'):
             messages.error(request, "Login Required")
             return redirect('/')
         
         # Check if user is admin
-        if request.session.get('usertype') != 'admin':
+        usertype = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
+        if usertype != 'admin':
              messages.error(request, "Unauthorized Access: Admins Only")
              return redirect('/')
         
@@ -43,37 +46,43 @@ class AdminRequiredMixin:
 #login required for all pages
 class LoginRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('user_id'):
+        if not getattr(request, 'jwt_user_id', None) and not request.session.get('user_id'):
             messages.error(request, "Login Required")
             return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
 class StudentRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('user_id'):
+        if not getattr(request, 'jwt_user_id', None) and not request.session.get('user_id'):
             messages.error(request, "Login Required")
             return redirect('/')
-        if request.session.get('usertype') != 'Student':
+        
+        usertype = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
+        if usertype != 'Student':
              messages.error(request, "Unauthorized Access: Students Only")
              return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
 class MentorRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('user_id'):
+        if not getattr(request, 'jwt_user_id', None) and not request.session.get('user_id'):
             messages.error(request, "Login Required")
             return redirect('/')
-        if request.session.get('usertype') != 'mentor':
+            
+        usertype = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
+        if usertype != 'mentor':
              messages.error(request, "Unauthorized Access: Mentors Only")
              return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
 class SecurityRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('user_id'):
+        if not getattr(request, 'jwt_user_id', None) and not request.session.get('user_id'):
             messages.error(request, "Login Required")
             return redirect('/')
-        if request.session.get('usertype') != 'security':
+            
+        usertype = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
+        if usertype != 'security':
              messages.error(request, "Unauthorized Access: Security Only")
              return redirect('/')
         return super().dispatch(request, *args, **kwargs)
@@ -82,7 +91,10 @@ class Logout(View):
     def get(self, request):
         request.session.flush()
         messages.success(request, "Logged out successfully")
-        return redirect('/login/')
+        response = redirect('/login/')
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        return response
 
 #login page for admin
 class ForgotPasswordWeb(View):
@@ -108,7 +120,7 @@ class ForgotPasswordWeb(View):
             return redirect('/ForgotPassword')
             
         import random
-        otp = str(random.randint(100000, 999999))
+        otp = str(secrets.randbelow(900000) + 100000)
         PasswordResetOTP.objects.create(email=email, otp=otp)
         
         try:
@@ -123,8 +135,7 @@ class ForgotPasswordWeb(View):
             messages.success(request, "OTP sent successfully. Please check your email.")
             return redirect('/ResetPassword')
         except Exception as e:
-            print(f"Mail Error: {e} | OTP generated was: {otp}")
-            # Still allow them to reset password by redirecting to the OTP page
+            logger.error("Mail Error in ForgotPasswordWeb: %s", e)
             request.session['reset_email'] = email
             messages.info(request, "Email failed to send, but you can continue (Check server logs for OTP).")
             return redirect('/ResetPassword')
@@ -203,62 +214,65 @@ class LoginPage(View):
             obj = Logintable.objects.filter(username=username).first()
             #checking password
             if obj and check_password(password, obj.password):
-                request.session.cycle_key() # Prevent session fixation
-                request.session['user_id']=obj.id
-                request.session['usertype']=obj.usertype #storing usertype
-                
-                if obj.usertype=='admin':
-                    messages.success(request, "Login Successful")
-                    return redirect('/HomePage')
-                elif obj.usertype=='mentor':
-                    messages.success(request, "Login Successful")
-                    return redirect('/MntrHome')
-                elif obj.usertype=='Student':
-                    messages.success(request, "Login Successful")
-                    return redirect('/StudentHome')
-                elif obj.usertype=='security':
-                    messages.success(request, "Login Successful")
-                    return redirect('/SecurityHome')
-                else:
-                     messages.error(request, "Login Unsuccessful")
-                     return redirect('/')
-            
-            #if password is not hashed
+                pass
             elif obj and obj.password == password:
                 #hashing the password
                 obj.password = make_password(password)
                 obj.save()
-                
-                request.session.cycle_key() # Prevent session fixation
-                request.session['user_id']=obj.id
-                request.session['usertype']=obj.usertype
-                
-                if obj.usertype=='admin':
-                    messages.success(request, "Login Successful (Security Updated)")
-                    return redirect('/HomePage')
-                elif obj.usertype=='mentor':
-                    messages.success(request, "Login Successful (Security Updated)")
-                    return redirect('/MntrHome')
-                elif obj.usertype=='Student':
-                    messages.success(request, "Login Successful (Security Updated)")
-                    return redirect('/StudentHome')
-                elif obj.usertype=='security':
-                    messages.success(request, "Login Successful (Security Updated)")
-                    return redirect('/SecurityHome')
-                else:
-                     messages.error(request, "Login Unsuccessful")
-                     return redirect('/')
-                     
+            else:
+                messages.error(request, "Login Unsuccessful")
+                return redirect('/')
+
+            # If password is correct, generate JWT
+            from rest_framework_simplejwt.tokens import RefreshToken
+            refresh = RefreshToken()
+            refresh['login_id'] = obj.id
+            refresh['usertype'] = obj.usertype
+            refresh['username'] = obj.username
+
+            response = None
+            if obj.usertype == 'admin':
+                messages.success(request, "Login Successful")
+                response = redirect('/HomePage')
+            elif obj.usertype == 'mentor':
+                messages.success(request, "Login Successful")
+                response = redirect('/MntrHome')
+            elif obj.usertype == 'Student':
+                messages.success(request, "Login Successful")
+                response = redirect('/StudentHome')
+            elif obj.usertype == 'security':
+                messages.success(request, "Login Successful")
+                response = redirect('/SecurityHome')
+            else:
+                messages.error(request, "Login Unsuccessful")
+                return redirect('/')
+
+            if response:
+                response.set_cookie(
+                    'access_token',
+                    str(refresh.access_token),
+                    httponly=True,
+                    samesite='Lax'
+                )
+                response.set_cookie(
+                    'refresh_token',
+                    str(refresh),
+                    httponly=True,
+                    samesite='Lax'
+                )
+                # Keep session for messages framework but not auth
+                request.session.cycle_key() 
+                request.session['user_id'] = obj.id 
+                request.session['usertype'] = obj.usertype
+                return response
             else:
                  messages.error(request, "Login Failed: Invalid Credentials")
                  return redirect('/')
         except Exception as e:
-             print(e)
-             messages.error(request, "Login Error")
-             return redirect('/')
+            logger.exception("LoginPage error")
+            messages.error(request, "Login Error")
+            return redirect('/')
 
-from django.views import View
-from django.shortcuts import render
 from django.core.paginator import Paginator
 from .models import studenttable
 class VerifyStudent(LoginRequiredMixin, View):
@@ -611,8 +625,8 @@ class AddMentor(AdminRequiredMixin, View):
                  messages.error(request, f"Form Invalid: {errors}")
                  return redirect('/AddMentor')
         except Exception as e:
-            print(f"Error in AddMentor: {e}")
-            messages.error(request, f"Server Error: {str(e)}")
+            logger.exception("Error in AddMentor")
+            messages.error(request, "Server Error. Please try again.")
             return redirect('/AddMentor')
 
 class EditMentor(AdminRequiredMixin, View):
@@ -698,12 +712,10 @@ class AddSecurity(AdminRequiredMixin, View):
 
                 with transaction.atomic():
                     m=scr.save(commit=False)
-                    # SECURE: Hash password before saving
                     hashed_pwd = make_password(password)
                     l=Logintable.objects.create(username=m.email,password=hashed_pwd,usertype='security')
                     m.LOGINID=l
                     m.save()
-                    print(f"DEBUG: Saved Security {m.id} linked to Login {l.id}")
 
                 messages.success(request, "Security registration successful")
                 return redirect('/ManageSecurity')
@@ -712,8 +724,8 @@ class AddSecurity(AdminRequiredMixin, View):
                  messages.error(request, f"Form Invalid: {errors}")
                  return redirect('/AddSecurity')
         except Exception as e:
-            print(f"Error in AddSecurity: {e}")
-            messages.error(request, f"Server Error: {str(e)}")
+            logger.exception("Error in AddSecurity")
+            messages.error(request, "Server Error. Please try again.")
             return redirect('/AddSecurity')
 
 class AddClass(AdminRequiredMixin, View):
@@ -784,7 +796,7 @@ class Rejectpassadmin(AdminRequiredMixin, View):
 class StudentRegister(View):
     def get(self, request):
         classes = classstable.objects.all()
-        return render(request, 'tables/form/student_register.html', {'classes': classes})
+        return render(request, 'tables/form/student_register.html', {'obj': classes})
 
     def post(self, request):
         name = request.POST.get('name')
@@ -1020,7 +1032,6 @@ from GateApp.throttles import (
 from django.core.mail import send_mail
 from django.shortcuts import redirect
 from django.contrib import messages
-
 # -- JWT Auth Mixin --------------------------------------------------------------
 
 class IsTokenAuthenticated(BasePermission):
@@ -1052,14 +1063,9 @@ class QuietJWTAuthentication(JWTAuthentication):
         return self.get_user(validated_token), validated_token
 
     def get_user(self, validated_token):
-        # We try to get the Django User if it exists, but we don't fail if it doesn't.
-        # This is because we use a custom Logintable.
         try:
-            # Try finding by the login_id claim we injected
             login_id = validated_token.get('login_id')
             if login_id:
-                # We return a simple object that satisfies is_authenticated
-                # This prevents IsAuthenticated/IsTokenAuthenticated from failing
                 class JWTUser:
                     def __init__(self, id):
                         self.id = id
@@ -1069,12 +1075,14 @@ class QuietJWTAuthentication(JWTAuthentication):
                 return JWTUser(login_id)
             return super().get_user(validated_token)
         except Exception as e:
-            print(f"DEBUG: QuietAuth Fallback for token: {e}")
+            logger.debug("QuietJWTAuthentication fallback: %s", e)
             class AnonymousUser:
                 is_authenticated = True
                 is_active = True
                 def __str__(self): return "JWTUser"
             return AnonymousUser()
+
+
 
 class JWTAuthMixin:
     authentication_classes = [QuietJWTAuthentication]
@@ -1082,24 +1090,15 @@ class JWTAuthMixin:
     throttle_classes = [AuthenticatedAPIThrottle]
 
     def dispatch(self, request, *args, **kwargs):
-        # Debug logging to check for header stripping issues on production
-        auth_header = request.headers.get('Authorization')
-        print(f"DEBUG: Incoming Auth Header: {auth_header[:20] if auth_header else 'None'}...")
         return super().dispatch(request, *args, **kwargs)
 
 
 class PingAPI(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    """Health-check endpoint. Restricted to authenticated requests only."""
+    permission_classes = [IsTokenAuthenticated]
+    authentication_classes = [QuietJWTAuthentication]
     def get(self, request):
-        return Response({
-            "status": "online",
-            "headers": {k: v for k, v in request.headers.items() if k.lower() in ['authorization', 'x-authorization', 'user-agent']},
-            "auth_status": {
-                "has_auth": bool(request.auth),
-                "user": str(request.user),
-            }
-        })
+        return Response({"status": "online"})
 
 #user registration api for student (public -- no token required, rate limited)
 class UserReg_api(APIView):
@@ -1109,18 +1108,14 @@ class UserReg_api(APIView):
     def get(self, request):
         classes = classstable.objects.all()
         class_serializer = ClassSerializer(classes, many=True)
-        print("---------", class_serializer.data)
         return Response(class_serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        print('####################################################', request.data)
-
         user_serial = StudentSerializer(data=request.data)
         login_serial = LoginSerializer(data=request.data)
 
         data_valid = user_serial.is_valid()
         login_valid = login_serial.is_valid()
-        print(data_valid, login_valid)
 
         if data_valid and login_valid:
             email = request.data.get('email')
@@ -1161,8 +1156,6 @@ class LoginpageAPI(APIView):
     authentication_classes = []
     throttle_classes = [LoginRateThrottle]
     def post(self, request):
-        print("-------------------", request.data)
-
         username = request.data.get("username")
         password = request.data.get("password")
 
@@ -1180,24 +1173,20 @@ class LoginpageAPI(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # Reject non-verified accounts before issuing any token
         if t_user.usertype in ('pending', 'Rejected'):
             return Response(
                 {"message": "Account not verified. Contact admin.", "usertype": t_user.usertype},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Generate JWT tokens. We embed login_id and usertype as custom claims
-        # since Logintable is NOT Django's built-in User model.
         refresh = RefreshToken()
         refresh['login_id'] = t_user.id
-        refresh['user_id'] = t_user.id # Standard claim for library compatibility
+        refresh['user_id'] = t_user.id
         refresh['usertype'] = t_user.usertype
         
-        # Explicitly set claims on access token to ensure visibility in JWTAuthMixin
         access = refresh.access_token
         access['login_id'] = t_user.id
-        access['user_id'] = t_user.id # Standard claim
+        access['user_id'] = t_user.id
         access['usertype'] = t_user.usertype
 
         response_dict = {
@@ -1208,7 +1197,7 @@ class LoginpageAPI(APIView):
             "refresh": str(refresh),
         }
 
-        print("-----login details--------->", {"login_id": t_user.id, "usertype": t_user.usertype})
+        logger.info("Login successful for login_id=%s usertype=%s", t_user.id, t_user.usertype)
         return Response(response_dict, status=status.HTTP_200_OK)
 
 
@@ -1224,7 +1213,6 @@ class ApplypassAPI(JWTAuthMixin, APIView):
         student_obj = studenttable.objects.get(LOGINID_id=lid)
         obj = exitpasstable.objects.filter(student_id_id=student_obj).order_by('-id')
         serializer = ExitpassSerializer(obj,many=True)
-        print("---------", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request, lid):
@@ -1340,10 +1328,7 @@ class ApplypassAPI(JWTAuthMixin, APIView):
             )
 
         except Exception as e:
-            print(f"ERROR in ApplypassAPI: {str(e)}")
-            print(f"Error type: {type(e).__name__}")
-            import traceback
-            traceback.print_exc()
+            logger.exception("ERROR in ApplypassAPI: %s", type(e).__name__)
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
@@ -1365,14 +1350,13 @@ class StudentInfo_api(JWTAuthMixin, APIView):
                 
             student_obj = studenttable.objects.get(LOGINID_id=lid)
             serializer = StudentSerializer1(student_obj)
-            print(f"DEBUG: StudentInfo_api sending data: {serializer.data}")
             return Response(serializer.data, status=status.HTTP_200_OK)
             
         except studenttable.DoesNotExist:
-            print(f"DEBUG: Student not found for LOGINID_id={lid}")
+            logger.warning("StudentInfo_api: Student not found for LOGINID_id=%s", lid)
             return Response({'error': 'Student profile not found'}, status=404)
         except Exception as e:
-            print(f"DEBUG: StudentInfo_api Error: {str(e)}")
+            logger.exception("StudentInfo_api Error")
             return Response({'error': str(e)}, status=500)
     
 
@@ -1388,7 +1372,6 @@ class ViewcomplaintAPI(JWTAuthMixin, APIView):
 
         if complaint_serial.is_valid():
             complaint_serial.save(student_id = user)
-            print(complaint_serial.data)
             return Response({'status':'Complaint sent Successfully'},status=status.HTTP_201_CREATED)
         else:
             return Response({'status':'Complaint sending Failed','errors': complaint_serial.errors},status=status.HTTP_400_BAD_REQUEST)
@@ -1415,7 +1398,6 @@ class ExitPassTimelineAPI(JWTAuthMixin, APIView):
                 )
 
             serializer = ExitpassSerializer(exit_pass)
-            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -1431,7 +1413,6 @@ class Mentorinfo_api(JWTAuthMixin, APIView):
             return Response({'error': 'Unauthorized'}, status=403)
         mentor_obj = mentortable.objects.get(LOGINID_id=lid)
         serializer = MentorSerializer(mentor_obj)
-        print("---------", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 #mentor dashboard statistics api (optimized for performance)
@@ -1475,7 +1456,7 @@ class MentorDashboardStatsAPI(JWTAuthMixin, APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
-            print(f"Error in MentorDashboardStatsAPI: {e}")
+            logger.exception("Error in MentorDashboardStatsAPI")
             return Response(
                 {"error": "Failed to fetch statistics"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1490,9 +1471,8 @@ class Pendingpass_api(JWTAuthMixin, APIView):
 
         mentor_obj = mentortable.objects.get(LOGINID_id=lid)
         assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
-        pending = exitpasstable.objects.filter(mentor_status='pending', student_id__classs__id__in=assigned_classes)#if pending and student is in assigned class
+        pending = exitpasstable.objects.filter(mentor_status='pending', student_id__classs__id__in=assigned_classes)
         pending_serial = ExitpassSerializer(pending,many=True)
-        print("---------", pending_serial.data)
         return Response(pending_serial.data,status=status.HTTP_200_OK)
 
 
@@ -1506,8 +1486,7 @@ class ApproveExitPassAPI(JWTAuthMixin, APIView):
             return Response({'error': 'Unauthorized'}, status=403)
         pass_id = request.data.get("pass_id")
         role = request.data.get("role")
-        mentor_id=request.data.get('loginid')
-        print("----------", request.data)
+        mentor_id = request.data.get('loginid')
         mentor_obj = mentortable.objects.get(LOGINID_id=mentor_id)
         if not pass_id or not role:
             return Response({"error": "pass_id and role required"}, status=400)
@@ -1555,7 +1534,6 @@ class RejectExitPassAPI(JWTAuthMixin, APIView):
         role = request.data.get("role")
         reason = request.data.get("reason")
         mentor_id = request.data.get('loginid')
-        print("----------", request.data)
 
         try:
             exit_pass = exitpasstable.objects.get(id=pass_id)
@@ -1636,7 +1614,6 @@ class StudentListAPI(JWTAuthMixin, APIView):
                 'student_count': len(student_list),
                 'students': student_list
             })
-        print(result)
         return Response(result, status=status.HTTP_200_OK)
 
 #group pass api for mentor
@@ -1788,9 +1765,7 @@ class MentorExitReportAPI(JWTAuthMixin, APIView):
             })
 
         except Exception as e:
-            print(f"Error in MentorExitReportAPI: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.exception("Error in MentorExitReportAPI")
             return Response({'error': str(e)}, status=500)
 
 #generate qr code for exit pass 15mins delayed
@@ -1851,20 +1826,19 @@ class GenerateQRCodeAPI(JWTAuthMixin, APIView):
             }, status=200)
         
         # Generate QR code
-        student = exit_pass.student_id
+        import hmac
+        import hashlib
+        from django.conf import settings
+        
+        signature = hmac.new(
+            settings.SECRET_KEY.encode(),
+            str(exit_pass.id).encode(),
+            hashlib.sha256
+        ).hexdigest()
+
         qr_data = {
             "pass_id": exit_pass.id,
-            "name": student.name,
-            "email": student.email,
-            "admn_no": student.admn_no,
-            "phone": student.phone,
-            "class": str(student.classs.class_name),
-            "security_status": exit_pass.security_status,
-            "reason": exit_pass.reason,
-            "time": exit_pass.time.strftime("%I:%M %p"),
-            "approved_at": str(exit_pass.approved_at),
-            "created_at": str(exit_pass.created_at),
-            "mentor": exit_pass.mentor_id.name if exit_pass.mentor_id else "Unknown",
+            "signature": signature
         }
         
         qr = qrcode.make(json.dumps(qr_data))
@@ -1909,7 +1883,6 @@ class Securityinfo_api(JWTAuthMixin, APIView):
             return Response({'error': 'Unauthorized'}, status=403)
         security_obj = securitytable.objects.get(LOGINID_id=lid)
         serializer = SecuritySerializer(security_obj)
-        print("---------", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 #get all passes for mentor analytics api
@@ -1917,7 +1890,6 @@ class getallpasses(JWTAuthMixin, APIView):
     def get(self, request, lid):
         if str(lid) != str(request.auth.get('login_id')):
             return Response({'error': 'Unauthorized'}, status=403)
-        # Filter passes for the last 24 hours
         threshold = timezone.now() - datetime.timedelta(hours=24)
         security_obj = exitpasstable.objects.filter(
             mentor_id__LOGINID_id=lid,
@@ -1925,7 +1897,6 @@ class getallpasses(JWTAuthMixin, APIView):
         ).order_by('-created_at')
         
         serializer = ExitpassSerializer1(security_obj,many=True)
-        print("-----hhhhhh----", serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 #forget password api
@@ -1953,10 +1924,8 @@ class ForgetPassword(APIView):
              return Response({"error": "Email not registered"}, status=404)
 
         # 2. Generate 6-digit OTP
-        import random
-        otp = str(random.randint(100000, 999999))
+        otp = str(secrets.randbelow(900000) + 100000)
         
-        # 3. Save to DB
         PasswordResetOTP.objects.create(email=email, otp=otp)
         
         # 4. Send Email
@@ -1970,7 +1939,7 @@ class ForgetPassword(APIView):
             )
             return Response({"message": "OTP sent successfully"}, status=200)
         except Exception as e:
-            print("Mail Error:", e)
+            logger.error("Mail Error in ForgetPassword API: %s", e)
             return Response({"error": "Failed to send email"}, status=500)
 
 #reset password api
@@ -2030,8 +1999,36 @@ class AcceptPass(JWTAuthMixin, APIView):
     def post(self, request):
         if request.auth.get('usertype') != 'security':
             return Response({'error': 'Unauthorized'}, status=403)
-        print(request.data)    
-        obj = exitpasstable.objects.get(id=request.data.get('pass_id'))
+        
+        pass_id = request.data.get('pass_id')
+        provided_signature = request.data.get('signature')
+        
+        if not pass_id:
+            return Response({'error': 'pass_id required'}, status=400)
+            
+        import hmac
+        import hashlib
+        from django.conf import settings
+        
+        # Verify Signature (prevent spoofing)
+        if provided_signature:
+            expected_signature = hmac.new(
+                settings.SECRET_KEY.encode(),
+                str(pass_id).encode(),
+                hashlib.sha256
+            ).hexdigest()
+            if not hmac.compare_digest(provided_signature, expected_signature):
+                return Response({'error': 'Invalid QR Code Signature'}, status=403)
+        else:
+            # If no signature is provided, we can either block it or allow it for backwards compatibility
+            # Since the requirement is to protect it, we should enforce it.
+            return Response({'error': 'Signature required for QR scanning'}, status=403)
+
+        try:
+            obj = exitpasstable.objects.get(id=pass_id)
+        except exitpasstable.DoesNotExist:
+            return Response({'error': 'Pass not found'}, status=404)
+            
         obj.security_status = 'scanned'
         obj.scanned_at = timezone.now()
         obj.save()
@@ -2041,8 +2038,33 @@ class RejectPass(JWTAuthMixin, APIView):
     def post(self, request):
         if request.auth.get('usertype') != 'security':
             return Response({'error': 'Unauthorized'}, status=403)
-        print(request.data)    
-        obj = exitpasstable.objects.get(id=request.data.get('pass_id'))
+            
+        pass_id = request.data.get('pass_id')
+        provided_signature = request.data.get('signature')
+        
+        if not pass_id:
+            return Response({'error': 'pass_id required'}, status=400)
+            
+        import hmac
+        import hashlib
+        from django.conf import settings
+        
+        if provided_signature:
+            expected_signature = hmac.new(
+                settings.SECRET_KEY.encode(),
+                str(pass_id).encode(),
+                hashlib.sha256
+            ).hexdigest()
+            if not hmac.compare_digest(provided_signature, expected_signature):
+                return Response({'error': 'Invalid QR Code Signature'}, status=403)
+        else:
+            return Response({'error': 'Signature required for QR scanning'}, status=403)
+            
+        try:
+            obj = exitpasstable.objects.get(id=pass_id)
+        except exitpasstable.DoesNotExist:
+            return Response({'error': 'Pass not found'}, status=404)
+            
         obj.security_status = 'rejected'
         obj.save()
         return Response(status=status.HTTP_200_OK)
@@ -2093,7 +2115,7 @@ class SecurityGroupPassListAPI(JWTAuthMixin, APIView):
                         total_in_class = studenttable.objects.filter(classs=cls_obj).count()
                         if len(students) == total_in_class and total_in_class > 0:
                             display_students = "All Students"
-                except:
+                except Exception:
                     pass
 
             local_dt = timezone.localtime(approved_at) if approved_at else None
@@ -2277,16 +2299,7 @@ class DeleteDeviceTokenAPI(JWTAuthMixin, APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# HOD role checking
-class MentorRequiredMixin:
-    def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('user_id'):
-            messages.error(request, "Login Required")
-            return redirect('/')
-        if request.session.get('usertype') != 'mentor':
-             messages.error(request, "Unauthorized Access: Mentor Only")
-             return redirect('/')
-        return super().dispatch(request, *args, **kwargs)
+# Duplicate MentorRequiredMixin removed (the authoritative definition is at the top of this file)
 
 class MentorGroupPassCreate(MentorRequiredMixin, View):
     def get(self, request):
@@ -2327,32 +2340,37 @@ class MentorGroupPassCreate(MentorRequiredMixin, View):
             messages.error(request, "Please select at least one student.")
             return redirect('/MentorGroupPassCreate')
         
+        count = 0
         now = timezone.localtime()
         current_time = now.time()
-        
-        count = 0
+        students_to_pass = studenttable.objects.filter(id__in=student_ids)
+        student_map = {s.id: s for s in students_to_pass}
+        passes_to_create = []
         for sid in student_ids:
             try:
-                student = studenttable.objects.get(id=sid)
-                exitpasstable.objects.create(
-                    student_id=student,
-                    mentor_id=mentor_obj,
-                    reason=reason,
-                    time=current_time,
-                    mentor_status='approved',
-                    security_status='pending',
-                    approved_at=now,
-                    is_group_pass=True
-                )
-                count += 1
+                student = student_map.get(int(sid))
+                if student:
+                    passes_to_create.append(exitpasstable(
+                        student_id=student,
+                        mentor_id=mentor_obj,
+                        reason=reason,
+                        time=current_time,
+                        mentor_status='approved',
+                        security_status='pending',
+                        approved_at=now,
+                        is_group_pass=True
+                    ))
+                    count += 1
             except Exception as e:
-                print(f"Error for student {sid}: {e}")
+                logger.warning("Error preparing group pass for student_id=%s: %s", sid, e)
+        if passes_to_create:
+            exitpasstable.objects.bulk_create(passes_to_create)
         
         messages.success(request, f"Group Pass Approved for {count} students.")
         return redirect('/MntrHome')
 
 import csv
-from django.http import HttpResponse
+from collections import defaultdict
 
 class MentorAnalyticsView(MentorRequiredMixin, View):
     def get(self, request):
@@ -2366,21 +2384,27 @@ class MentorAnalyticsView(MentorRequiredMixin, View):
         assigned_classes_ids = [obj.class_id.id for obj in assigned_classes_objs]
         
         students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids)
+        passes = exitpasstable.objects.filter(student_id__in=students_list)
         
-        passes = exitpasstable.objects.filter(student_id__in=students_list).order_by('-created_at')
+        from django.db.models import Count, Q
+        stats = passes.aggregate(
+            total_passes=Count('id'),
+            approved_passes=Count('id', filter=Q(mentor_status='approved')),
+            rejected_passes=Count('id', filter=Q(mentor_status='rejected')),
+            pending_passes=Count('id', filter=Q(mentor_status='pending')),
+        )
         
-        total_passes = passes.count()
-        approved_passes = passes.filter(mentor_status='approved').count()
-        rejected_passes = passes.filter(mentor_status='rejected').count()
-        pending_passes = passes.filter(mentor_status='pending').count()
+        recent_passes = passes.select_related(
+            'student_id', 'student_id__classs'
+        ).order_by('-created_at')[:50]
         
         return render(request, 'tables/form/mentor_analytics.html', {
             'mentor': mentor_obj,
-            'total_passes': total_passes,
-            'approved_passes': approved_passes,
-            'rejected_passes': rejected_passes,
-            'pending_passes': pending_passes,
-            'passes': passes[:50]
+            'total_passes': stats['total_passes'] or 0,
+            'approved_passes': stats['approved_passes'] or 0,
+            'rejected_passes': stats['rejected_passes'] or 0,
+            'pending_passes': stats['pending_passes'] or 0,
+            'passes': recent_passes
         })
 
 class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
@@ -2395,7 +2419,11 @@ class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
         assigned_classes_ids = [obj.class_id.id for obj in assigned_classes_objs]
         
         students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids)
-        passes = exitpasstable.objects.filter(student_id__in=students_list).order_by('-created_at')
+        passes = exitpasstable.objects.filter(
+            student_id__in=students_list
+        ).select_related(
+            'student_id', 'student_id__classs'
+        ).order_by('-created_at')
         
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="mentor_analytics_report.csv"'
@@ -2492,7 +2520,7 @@ class SecurityGroupPass(SecurityRequiredMixin, View):
                         total_in_class = studenttable.objects.filter(classs=cls_obj).count()
                         if len(students) == total_in_class and total_in_class > 0:
                             display_students = "All Students"
-                except:
+                except Exception:
                     pass
 
             local_dt = timezone.localtime(approved_at) if approved_at else None

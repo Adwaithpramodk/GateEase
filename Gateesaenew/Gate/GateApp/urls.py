@@ -21,6 +21,7 @@ from .views import *
 urlpatterns = [
     path('sw.js', TemplateView.as_view(template_name='sw.js', content_type='application/javascript'), name='sw.js'),
     path('manifest.json', TemplateView.as_view(template_name='manifest.json', content_type='application/json'), name='manifest.json'),
+    path('student-app/', TemplateView.as_view(template_name='student_app.html'), name='student_app'),
     path('', LandingPage.as_view(), name='landing'),
     path('privacy/', PrivacyPolicy.as_view(), name='privacy'),
     path('login/', LoginPage.as_view(), name='LoginPage'),

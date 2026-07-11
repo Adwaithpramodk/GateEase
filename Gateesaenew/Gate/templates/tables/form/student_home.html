@@ -17,11 +17,12 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        /* App-Style Blue Card CSS */
+        /* App-Style Profile Card CSS */
         .blue-profile-card {
-            background-color: #2557D6;
+            background-color: #ffffff;
             border-radius: 28px;
-            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.2), 0 4px 6px -4px rgba(30, 58, 138, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
             padding: 24px;
             display: flex;
             align-items: center;
@@ -33,7 +34,7 @@
         }
         .bpc-circle {
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.05);
+            background-color: #f8fafc;
             border-radius: 50%;
             pointer-events: none;
         }
@@ -56,21 +57,21 @@
             height: 56px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid #e2e8f0;
             padding: 2px;
         }
         .bpc-avatar {
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: #e0e7ff;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #4f46e5;
             font-weight: 700;
             font-size: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid #e2e8f0;
             padding: 2px;
             background-clip: content-box;
         }
@@ -80,7 +81,7 @@
             flex: 1;
         }
         .bpc-greeting {
-            color: #dbeafe;
+            color: #64748b;
             font-size: 14px;
             font-weight: 500;
             margin-bottom: 4px;
@@ -89,22 +90,19 @@
         .bpc-name {
             font-size: 24px;
             font-weight: 700;
-            color: white;
+            color: #0f172a;
             letter-spacing: -0.025em;
             margin-bottom: 10px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         .bpc-badge {
             display: inline-block;
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
             font-size: 14px;
             padding: 6px 16px;
             border-radius: 9999px;
             font-weight: 500;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
         }
     </style>
 </head>

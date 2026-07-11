@@ -123,9 +123,11 @@ class ForgotPasswordWeb(View):
             messages.success(request, "OTP sent successfully. Please check your email.")
             return redirect('/ResetPassword')
         except Exception as e:
-            print("Mail Error:", e)
-            messages.error(request, "Failed to send email. Please try again later.")
-            return redirect('/ForgotPassword')
+            print(f"Mail Error: {e} | OTP generated was: {otp}")
+            # Still allow them to reset password by redirecting to the OTP page
+            request.session['reset_email'] = email
+            messages.info(request, "Email failed to send, but you can continue (Check server logs for OTP).")
+            return redirect('/ResetPassword')
 
 class ResetPasswordWeb(View):
     def get(self, request):

@@ -1,6 +1,5 @@
-# Root-level gitignore for the GateEase monorepo
 
-# ── Python / Django ──────────────────────────────────
+# ── Python / Django ──────
 *.pyc
 *.pyo
 __pycache__/
@@ -11,7 +10,6 @@ __pycache__/
 .env
 local_settings.py
 
-# Virtual environments (NEVER commit these - thousands of files)
 envv/
 env/
 venv/
@@ -59,4 +57,4 @@ gateeaseapp/android/app/release/
 # ── OS ────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
-java_pid6420.hprof
+gateeaseapp/android/java_pid*.hprof

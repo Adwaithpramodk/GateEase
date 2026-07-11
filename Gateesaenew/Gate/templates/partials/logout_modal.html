@@ -1,0 +1,133 @@
+<style>
+    .logout-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 999999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    .logout-modal-backdrop.show {
+        display: flex;
+        opacity: 1;
+    }
+    .logout-modal {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 400px;
+        padding: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: scale(0.95) translateY(10px);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        text-align: center;
+        font-family: 'Inter', sans-serif;
+    }
+    .logout-modal-backdrop.show .logout-modal {
+        transform: scale(1) translateY(0);
+    }
+    .logout-icon-container {
+        width: 48px;
+        height: 48px;
+        background-color: #fee2e2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px auto;
+    }
+    .logout-icon-container svg {
+        color: #ef4444;
+    }
+    .logout-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    .logout-desc {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 24px;
+    }
+    .logout-actions {
+        display: flex;
+        gap: 12px;
+    }
+    .logout-btn {
+        flex: 1;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .logout-btn-cancel {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: none;
+    }
+    .logout-btn-cancel:hover {
+        background-color: #e2e8f0;
+    }
+    .logout-btn-confirm {
+        background-color: #ef4444;
+        color: #ffffff;
+        border: none;
+    }
+    .logout-btn-confirm:hover {
+        background-color: #dc2626;
+    }
+</style>
+
+<div class="logout-modal-backdrop" id="logoutModal">
+    <div class="logout-modal">
+        <div class="logout-icon-container">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        </div>
+        <h3 class="logout-title">Sign out of GateEase?</h3>
+        <p class="logout-desc">You will need to sign back in to access your dashboard and passes.</p>
+        <div class="logout-actions">
+            <button class="logout-btn logout-btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+            <a href="/Logout" class="logout-btn logout-btn-confirm">Sign out</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showLogoutModal(event) {
+        if (event) event.preventDefault();
+        const modal = document.getElementById('logoutModal');
+        modal.style.display = 'flex';
+        // Small delay to trigger CSS transition
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
+    }
+
+    function closeLogoutModal() {
+        const modal = document.getElementById('logoutModal');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 200); // Wait for transition
+    }
+
+    // Close on backdrop click
+    document.getElementById('logoutModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeLogoutModal();
+        }
+    });
+</script>

@@ -5,139 +5,210 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GateEase - Student Registration</title>
-    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- PWA Setup -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ffffff">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #0f172a;
+            padding: 20px;
+        }
+        .register-card {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+            border: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .register-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .register-header p {
+            color: #64748b;
+            font-size: 15px;
+        }
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .form-col {
+            flex: 1;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
         .input-field {
             width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e2e8f0;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
             border-radius: 8px;
             font-size: 15px;
-            transition: all 0.2s;
-            outline: none;
-            background-color: #ffffff;
+            color: #1e293b;
+            transition: all 0.2s ease;
+            background-color: #f8fafc;
         }
         .input-field:focus {
+            outline: none;
             border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200.svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+        }
+        input[type="file"]::file-selector-button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            background-color: #eef2ff;
+            color: #4f46e5;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-right: 12px;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background-color: #e0e7ff;
         }
         .btn-primary {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 16px;
             background-color: #4f46e5;
             color: #ffffff;
             border: none;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s ease;
+            margin-top: 8px;
         }
         .btn-primary:hover {
             background-color: #4338ca;
         }
-        /* Custom styling for file input */
-        input[type="file"]::file-selector-button {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            background-color: #e0e7ff;
-            color: #4338ca;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-right: 12px;
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #64748b;
         }
-        input[type="file"]::file-selector-button:hover {
-            background-color: #c7d2fe;
+        .login-footer a {
+            font-weight: 600;
+            color: #4f46e5;
+            text-decoration: none;
+        }
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 480px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
         }
     </style>
 </head>
-<body class="antialiased min-h-screen flex items-center justify-center p-4">
+<body>
 
     {% include 'partials/messages.html' %}
 
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8 my-6">
-        
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Create Account</h1>
-            <p class="text-slate-500 text-sm mt-2">Register as a student on GateEase</p>
+    <div class="register-card">
+        <div class="register-header">
+            <h1>Create Account</h1>
+            <p>Register as a student on GateEase</p>
         </div>
 
-        <form action="/StudentRegister" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <form action="/StudentRegister" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+            <div class="form-row">
+                <div class="form-col" style="margin-right: 8px;">
+                    <label for="name" class="form-label">Full Name</label>
                     <input type="text" id="name" name="name" class="input-field" placeholder="John Doe" required>
                 </div>
-                <div>
-                    <label for="admn_no" class="block text-sm font-medium text-slate-700 mb-1.5">Admission No.</label>
+                <div class="form-col" style="margin-left: 8px;">
+                    <label for="admn_no" class="form-label">Admission No.</label>
                     <input type="number" id="admn_no" name="admn_no" class="input-field" placeholder="123456" required>
                 </div>
             </div>
 
-            <div>
-                <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
                 <input type="email" id="email" name="email" class="input-field" placeholder="john@example.com" required>
             </div>
             
-            <div>
-                <label for="phone" class="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
+            <div class="form-group">
+                <label for="phone" class="form-label">Phone Number</label>
                 <input type="tel" id="phone" name="phone" class="input-field" placeholder="9876543210" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number" required>
             </div>
             
-            <div>
-                <label for="classs" class="block text-sm font-medium text-slate-700 mb-1.5">Batch / Class</label>
-                <div class="relative">
-                    <select id="classs" name="classs" class="input-field appearance-none cursor-pointer" required>
-                        <option value="" disabled selected>Select your class</option>
-                        {% for i in obj %}
-                            <option value="{{ i.id }}">{{ i.class_name }}</option>
-                        {% endfor %}
-                    </select>
-                    <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label for="classs" class="form-label">Batch / Class</label>
+                <select id="classs" name="classs" class="input-field" required>
+                    <option value="" disabled selected>Select your class</option>
+                    {% for i in obj %}
+                        <option value="{{ i.id }}">{{ i.class_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
             
-            <div>
-                <label for="photo" class="block text-sm font-medium text-slate-700 mb-1.5">Profile Photo <span class="text-slate-400 font-normal">(Optional)</span></label>
-                <input type="file" id="photo" name="photo" accept="image/*" class="input-field text-sm text-slate-500 cursor-pointer p-2">
+            <div class="form-group">
+                <label for="photo" class="form-label">Profile Photo <span style="font-weight: 400; color: #94a3b8;">(Optional)</span></label>
+                <input type="file" id="photo" name="photo" accept="image/*" class="input-field" style="padding: 6px;">
             </div>
             
-            <div class="grid grid-cols-2 gap-4 pt-2">
-                <div>
-                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+            <div class="form-row">
+                <div class="form-col" style="margin-right: 8px;">
+                    <label for="password" class="form-label">Password</label>
                     <input type="password" id="password" name="password" class="input-field" placeholder="••••••••" required minlength="6">
                 </div>
-                <div>
-                    <label for="cpassword" class="block text-sm font-medium text-slate-700 mb-1.5">Confirm</label>
+                <div class="form-col" style="margin-left: 8px;">
+                    <label for="cpassword" class="form-label">Confirm</label>
                     <input type="password" id="cpassword" name="cpassword" class="input-field" placeholder="••••••••" required minlength="6">
                 </div>
             </div>
             
-            <div class="pt-4">
-                <button type="submit" class="btn-primary">Register Account</button>
-            </div>
+            <button type="submit" class="btn-primary">Register Account</button>
             
-            <div class="text-center pt-2">
-                <p class="text-sm text-slate-600">
-                    Already have an account? <a href="/login/" class="font-semibold text-indigo-600 hover:text-indigo-500">Sign in</a>
-                </p>
+            <div class="login-footer">
+                Already have an account? <a href="/login/">Sign in</a>
             </div>
         </form>
-
     </div>
 
-    <!-- Password match validation -->
     <script>
         const form = document.querySelector('form');
         const pwd = document.getElementById('password');

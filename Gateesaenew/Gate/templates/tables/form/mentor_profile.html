@@ -128,7 +128,7 @@
             .mentor-id-row {
                 display: grid;
                 grid-template-columns: 70px 1fr;
-                align-items: center;
+                align-items: start;
                 font-size: 13px;
                 margin-bottom: 12px;
             }
@@ -140,6 +140,8 @@
             .mentor-id-value {
                 color: #64748b;
                 font-weight: 500;
+                overflow-wrap: anywhere;
+                word-break: break-word;
             }
         </style>
 
@@ -167,10 +169,7 @@
             </div>
             
             <div class="mentor-id-details">
-                <div class="mentor-id-row">
-                    <div class="mentor-id-label">ID</div>
-                    <div class="mentor-id-value">: {{ mentor.id|stringformat:"04d" }}</div>
-                </div>
+
                 <div class="mentor-id-row">
                     <div class="mentor-id-label">Phone</div>
                     <div class="mentor-id-value">: {{ mentor.phone|default:"Not Provided" }}</div>

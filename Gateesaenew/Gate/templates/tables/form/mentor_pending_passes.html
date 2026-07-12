@@ -31,9 +31,9 @@
         <div class="flex items-center gap-3">
             <span class="text-xs font-semibold tracking-wider text-purple-600 uppercase bg-purple-50 px-2 py-1 rounded-md hidden sm:block">Mentor</span>
             {% if mentor.image %}
-                <img src="{{ mentor.image.url }}" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-purple-100 shadow-sm">
+                <img src="{{ mentor.image.url }}" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-purple-100 shadow-sm">
             {% else %}
-                <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center border-2 border-white shadow-sm">
+                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center border-2 border-white shadow-sm">
                     {{ mentor.name|default:"M"|make_list|first|upper }}
                 </div>
             {% endif %}
@@ -116,7 +116,7 @@
     </main>
 
     <!-- Bottom Navigation Bar (Mobile / Tablet) -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] lg:hidden">
+    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] ">
         <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
             <a href="/MntrHome" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-purple-500 transition-colors">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>

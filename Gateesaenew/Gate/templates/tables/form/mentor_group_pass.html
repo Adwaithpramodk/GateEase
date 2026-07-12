@@ -66,9 +66,9 @@
                                     <div class="text-xs text-slate-500 font-medium truncate">Admn: {{ student.admn_no|default:"N/A" }} &bull; {{ student.get_year_label }}</div>
                                 </div>
                                 {% if student.Photo %}
-                                    <img src="{{ student.Photo.url }}" class="flex-shrink-0 w-10 h-10 rounded-full object-cover border border-slate-200">
+                                    <img src="{{ student.Photo.url }}" class="flex-shrink-0 w-8 h-8 rounded-full object-cover border border-slate-200">
                                 {% else %}
-                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-100 text-slate-400 font-bold flex items-center justify-center border border-slate-200 text-sm">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 text-slate-400 font-bold flex items-center justify-center border border-slate-200 text-sm">
                                         {{ student.name|make_list|first|upper }}
                                     </div>
                                 {% endif %}
@@ -98,7 +98,7 @@
     </main>
 
     <!-- Bottom Navigation Bar (Mobile / Tablet) -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] lg:hidden">
+    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] ">
         <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
             <a href="/MntrHome" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-purple-500 transition-colors">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>

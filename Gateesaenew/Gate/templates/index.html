@@ -1,404 +1,143 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html class="light" lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="GateEase - Enterprise Exit Pass Management System for Educational Institutions">
-    <title>GateEase | Exit Pass Management System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>GateEase</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#191b25",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "secondary-container": "#e1e1ef",
+                        "primary-container": "#4034d5",
+                        "surface-bright": "#faf9f8",
+                        "tertiary-container": "#8f3400",
+                        "primary-fixed": "#e2dfff",
+                        "surface": "#faf9f8",
+                        "error-container": "#ffdad6",
+                        "outline": "#777586",
+                        "on-primary-container": "#c1beff",
+                        "surface-container-highest": "#e3e2e1",
+                        "tertiary-fixed-dim": "#ffb597",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-secondary-container": "#62646f",
+                        "on-primary-fixed": "#0f0069",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#2505bf",
+                        "inverse-primary": "#c3c0ff",
+                        "inverse-surface": "#2f3130",
+                        "surface-variant": "#e3e2e1",
+                        "surface-container-low": "#f4f3f2",
+                        "background": "#faf9f8",
+                        "surface-tint": "#4e44e2",
+                        "on-tertiary-container": "#ffb393",
+                        "on-primary-fixed-variant": "#3424ca",
+                        "on-surface": "#1a1c1c",
+                        "secondary": "#5c5e69",
+                        "tertiary": "#692400",
+                        "outline-variant": "#c7c4d7",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e9e8e7",
+                        "surface-dim": "#dadad9",
+                        "surface-container": "#eeeeed",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "on-secondary-fixed-variant": "#444651",
+                        "inverse-on-surface": "#f1f0f0",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#e1e1ef",
+                        "on-surface-variant": "#464554",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#c5c5d3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "display": ["Plus Jakarta Sans"],
+                        "body": ["Plus Jakarta Sans"],
+                        "label": ["Plus Jakarta Sans"]
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #faf9f8;
+            color: #1a1c1c;
+            overflow-x: hidden;
         }
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #ffffff;
-            color: #1e293b;
-            line-height: 1.6;
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Header */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.98);
-            border-bottom: 1px solid #e2e8f0;
-            z-index: 1000;
-            backdrop-filter: blur(8px);
+        .shadow-zero-gravity {
+            box-shadow:
+                0 2px 8px rgba(26, 28, 28, 0.04),
+                0 16px 32px rgba(26, 28, 28, 0.08),
+                0 32px 64px rgba(26, 28, 28, 0.04);
         }
 
-        .nav-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .shadow-zero-gravity-hover:hover {
+            box-shadow:
+                0 4px 12px rgba(26, 28, 28, 0.06),
+                0 24px 48px rgba(26, 28, 28, 0.12),
+                0 48px 96px rgba(26, 28, 28, 0.06);
+            transform: translateY(-4px);
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #0f172a;
-            letter-spacing: -0.5px;
+        .gradient-primary {
+            background: linear-gradient(135deg, #2505bf 0%, #4034d5 100%);
         }
 
-        .logo span {
-            color: #2563eb;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .nav-link {
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-            color: #0f172a;
-        }
-
-        .btn-login {
-            padding: 0.625rem 1.5rem;
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-login:hover {
-            background: #1d4ed8;
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 10rem 2rem 6rem;
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .hero-content {
-            max-width: 720px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .hero h1 {
-            font-size: clamp(2.5rem, 5vw, 3.75rem);
-            font-weight: 700;
-            line-height: 1.1;
-            color: #0f172a;
-            margin-bottom: 1.5rem;
-            letter-spacing: -1px;
-        }
-
-        .hero p {
-            font-size: 1.25rem;
-            color: #64748b;
-            margin-bottom: 2.5rem;
-            line-height: 1.7;
-        }
-
-        .hero-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .btn-primary {
-            padding: 1rem 2rem;
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.2s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        /* Features Section */
-        .features {
-            padding: 6rem 2rem;
-            background: #f8fafc;
-        }
-
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            max-width: 640px;
-            margin: 0 auto 4rem;
-        }
-
-        .section-label {
-            color: #2563eb;
-            font-weight: 600;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.75rem;
-        }
-
-        .section-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 1rem;
-            letter-spacing: -0.5px;
-        }
-
-        .section-description {
-            font-size: 1.125rem;
-            color: #64748b;
-            line-height: 1.7;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 2rem;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
-        }
-
-        .feature-card:hover {
-            border-color: #cbd5e1;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: #eff6ff;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.25rem;
-            font-size: 1.5rem;
-        }
-
-        .feature-card h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #0f172a;
-            margin-bottom: 0.75rem;
-        }
-
-        .feature-card p {
-            color: #64748b;
-            line-height: 1.7;
-            font-size: 0.95rem;
-        }
-
-        /* How It Works */
-        .how-it-works {
-            padding: 6rem 2rem;
-            background: white;
-        }
-
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 3rem;
-            margin-top: 3rem;
-        }
-
-        .step {
-            text-align: center;
-        }
-
-        .step-number {
-            width: 56px;
-            height: 56px;
-            background: #2563eb;
-            color: white;
+        .ambient-glow {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: #e1e1ef;
+            filter: blur(150px);
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .step h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #0f172a;
-            margin-bottom: 0.75rem;
-        }
-
-        .step p {
-            color: #64748b;
-            line-height: 1.7;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            padding: 6rem 2rem;
-            background: #0f172a;
-            text-align: center;
-        }
-
-        .cta-section h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 1rem;
-        }
-
-        .cta-section p {
-            font-size: 1.25rem;
-            color: #94a3b8;
-            margin-bottom: 2.5rem;
-        }
-
-        .btn-white {
-            padding: 1rem 2rem;
-            background: white;
-            color: #0f172a;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.2s;
-            display: inline-block;
-        }
-
-        .btn-white:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
-        }
-
-        /* Footer */
-        footer {
-            background: #0f172a;
-            padding: 3rem 2rem 2rem;
-            border-top: 1px solid #1e293b;
-        }
-
-        .footer-container {
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-
-        .footer-section h4 {
-            color: white;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-        }
-
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 0.75rem;
-        }
-
-        .footer-links a {
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-
-        .footer-links a:hover {
-            color: white;
-        }
-
-        .footer-bottom {
-            padding-top: 2rem;
-            border-top: 1px solid #1e293b;
-            text-align: center;
-            color: #64748b;
-            font-size: 0.9rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-container {
-                padding: 1rem;
-            }
-
-            .nav-right {
-                gap: 1rem;
-            }
-
-            .nav-link {
-                display: none;
-            }
-
-            .hero {
-                padding: 7rem 1rem 4rem;
-            }
-
-            .features,
-            .how-it-works,
-            .cta-section {
-                padding: 4rem 1rem;
-            }
-
-            .section-title {
-                font-size: 2rem;
-            }
-
-            .cta-section h2 {
-                font-size: 2rem;
-            }
-
-            .features-grid,
-            .steps {
-                grid-template-columns: 1fr;
-            }
+            z-index: -1;
+            opacity: 0.5;
         }
     </style>
-
     <!-- PWA Setup -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1e293b">
@@ -413,156 +152,196 @@
     </script>
 </head>
 
-<body>
-<!-- Django Messages Toast -->
-{% include 'partials/messages.html' %}
-    <!-- Header -->
-    <header>
-        <nav class="nav-container">
-            <div class="logo">Gate<span>Ease</span></div>
-            <div class="nav-right">
-                <button id="installAppBtn" class="btn-login" style="display: none; background: #10b981; border: none; cursor: pointer;">Install App</button>
-                <a href="#features" class="nav-link">Features</a>
-                <a href="#how-it-works" class="nav-link">How It Works</a>
-                <a href="/login/" class="btn-login">Login</a>
+<body class="antialiased min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+    <!-- Django Messages Toast -->
+    {% include 'partials/messages.html' %}
+    <!-- Ambient Background -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div class="ambient-glow -top-[400px] -right-[200px]"></div>
+        <div class="ambient-glow top-[40%] -left-[400px] opacity-30"></div>
+    </div>
+    <!-- TopAppBar -->
+    <header
+        class="sticky top-0 z-50 bg-[#faf9f8]/90 dark:bg-[#1a1c1c]/90 w-full pt-4 md:pt-8 pb-4 shadow-none transition-all duration-300 backdrop-blur-md">
+        <div class="flex items-center justify-between px-6 md:px-16 w-full max-w-screen-2xl mx-auto">
+            <div
+                class="flex items-center gap-2 md:gap-3 cursor-pointer group scale-95 active:scale-90 transition-transform">
+                <span
+                    class="material-symbols-outlined text-[#4338CA] dark:text-[#e1e1ef] text-2xl md:text-3xl group-hover:opacity-80 transition-opacity"
+                    data-icon="door_open">door_open</span>
+                <span
+                    class="font-['Plus_Jakarta_Sans'] font-extrabold tracking-tight text-2xl md:text-4xl text-[#1a1c1c] dark:text-[#faf9f8] italic group-hover:opacity-80 transition-opacity">GateEase</span>
             </div>
-        </nav>
+            <nav class="hidden md:flex items-center gap-12 font-medium text-sm tracking-wide">
+                <a class="text-[#2505bf] dark:text-[#4034d5] hover:opacity-80 transition-opacity font-bold"
+                    href="#features">Features</a>
+                <a class="text-[#777586] hover:opacity-80 transition-opacity" href="#how-it-works">How It Works</a>
+            </nav>
+            <div class="flex items-center gap-4 md:gap-6">
+                <button id="installAppBtn" style="display: none;"
+                    class="hidden sm:block font-bold text-[#10b981] hover:text-[#059669] transition-colors text-sm md:text-base">Install
+                    App</button>
+                <a class="gradient-primary text-on-primary font-bold py-2 px-6 md:py-3 md:px-8 rounded-full shadow-zero-gravity shadow-zero-gravity-hover transition-all duration-300 text-xs md:text-base text-center inline-block"
+                    href="/login/">
+                    Login
+                </a>
+            </div>
+        </div>
     </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Exit Pass Management for Modern Campuses</h1>
-            <p>Streamline student exit approvals with our enterprise-grade digital system. Reduce manual work, increase
-                security, and gain real-time visibility.</p>
-
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features" id="features">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-label">Features</div>
-                <h2 class="section-title">Built for Efficiency</h2>
-                <p class="section-description">Everything you need to manage student exits effectively and securely</p>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card">
-
-                    <h3>Mobile Application</h3>
-                    <p>Native mobile app allowing students to submit exit requests instantly from anywhere on campus.
+    <main class="flex-grow max-w-screen-2xl mx-auto w-full px-6 md:px-16 lg:px-24">
+        <!-- Hero Section -->
+        <section class="py-12 md:py-24 lg:py-32 relative">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                <div class="lg:col-span-8 z-10 lg:pl-12 lg:pr-24">
+                    <div
+                        class="inline-block px-4 py-1.5 rounded-full bg-surface-container-highest text-primary font-bold text-[10px] md:text-xs tracking-widest uppercase mb-6 md:mb-8">
+                        Enterprise Exit Pass Management
+                    </div>
+                    <h1
+                        class="font-extrabold text-[2.5rem] sm:text-[3.5rem] md:text-[4.5rem] lg:text-[5.5rem] leading-[1.05] tracking-tighter text-on-surface mb-6 md:mb-10">
+                        Exit Pass <br class="hidden sm:block" />Management, <span
+                            class="text-transparent bg-clip-text gradient-primary italic">Modernized.</span>
+                    </h1>
+                    <p
+                        class="font-medium text-lg md:text-xl lg:text-2xl text-on-surface-variant leading-relaxed mb-8 md:mb-12 max-w-2xl">
+                        Streamline student exit approvals with our enterprise-grade digital system. Reduce manual work,
+                        increase security, and gain real-time visibility.
                     </p>
+                    <div class="flex flex-col sm:flex-row gap-4 md:gap-6 items-stretch sm:items-center">
+                        <a href="/login/"
+                            class="gradient-primary text-on-primary font-bold py-3.5 px-8 md:py-4 md:px-10 rounded-full text-base md:text-lg shadow-zero-gravity shadow-zero-gravity-hover transition-all duration-300 flex items-center justify-center gap-3 inline-flex">
+                            Authorize Entry
+                            <span class="material-symbols-outlined text-xl md:text-2xl"
+                                data-icon="arrow_forward">arrow_forward</span>
+                        </a>
+                        <a href="mailto:gateeaseapp@gmail.com"
+                            class="bg-surface-container-highest text-primary font-bold py-3.5 px-8 md:py-4 md:px-10 rounded-full text-base md:text-lg hover:bg-surface-container-high transition-colors inline-block text-center flex-grow sm:flex-grow-0">
+                            Request a Demo
+                        </a>
+                    </div>
                 </div>
-
-                <div class="feature-card">
-
-                    <h3>Multi-Level Approval</h3>
-                    <p>Configurable approval workflows with automated routing through mentors and security personnel.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-
-                    <h3>QR Code Verification</h3>
-                    <p>Secure, tamper-proof QR codes for instant verification at campus exit points.</p>
-                </div>
-
-                <div class="feature-card">
-
-                    <h3>Analytics & Reporting</h3>
-                    <p>Comprehensive dashboards with insights into exit patterns, timing, and approval metrics.</p>
-                </div>
-
-                <div class="feature-card">
-
-                    <h3>Real-Time Notifications</h3>
-                    <p>Push notifications keep all stakeholders informed of request status changes instantly.</p>
-                </div>
-
-                <div class="feature-card">
-
-                    <h3>Fast Processing</h3>
-                    <p>Average approval time under 2 minutes with automated workflows and instant notifications.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="how-it-works" id="how-it-works">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-label">Process</div>
-                <h2 class="section-title">How It Works</h2>
-                <p class="section-description">Simple, efficient workflow from request to approval</p>
-            </div>
-
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Submit Request</h3>
-                    <p>Students submit exit pass requests through the mobile app with reason and time.</p>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Mentor Approval</h3>
-                    <p>Assigned mentors receive notifications and approve or reject requests instantly.</p>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Security Clearance</h3>
-                    <p>Security personnel verify and grant final clearance for approved requests.</p>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <h3>Exit Verification</h3>
-                    <p>Students present QR code at gate for quick, contactless verification and exit.</p>
+                <!-- Abstract Visual -->
+                <div class="lg:col-span-4 relative h-[450px] sm:h-[550px] lg:h-[600px] w-full">
+                    <div
+                        class="absolute inset-0 bg-inverse-surface rounded-xl shadow-zero-gravity sm:transform sm:rotate-3 sm:origin-bottom-right transition-transform hover:rotate-1 duration-700 overflow-hidden flex flex-col justify-between p-6 md:p-8 border border-outline-variant/15">
+                        <div class="flex justify-between items-start text-inverse-on-surface opacity-70">
+                            <span class="material-symbols-outlined" data-icon="fingerprint">fingerprint</span>
+                            <span class="font-medium text-[10px] md:text-xs tracking-widest uppercase">Secured
+                                Area</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="h-1 w-12 bg-primary rounded-full"></div>
+                            <h3 class="font-extrabold text-2xl md:text-3xl text-inverse-on-surface">Access<br />Granted
+                            </h3>
+                            <div
+                                class="w-full sm:w-3/4 h-24 bg-surface-container-lowest/10 rounded backdrop-blur-sm mt-8 border border-white/5 relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+                                <div class="p-4 flex items-center gap-4 h-full">
+                                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-surface-container-lowest/20">
+                                    </div>
+                                    <div class="space-y-2 flex-grow">
+                                        <div class="h-2 bg-surface-container-lowest/30 rounded w-1/2"></div>
+                                        <div class="h-2 bg-surface-container-lowest/20 rounded w-3/4"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="container">
-            <h2>Ready to modernize your campus?</h2>
-            <p>Join leading institutions using GateEase for exit management</p>
-        </div>
-    </section>
-
+        </section>
+        <!-- Features Section -->
+        <section class="py-16 md:py-24 lg:py-32 relative z-10">
+            <div class="mb-16 md:mb-24 lg:pl-24">
+                <h2
+                    class="font-extrabold text-3xl sm:text-[2.5rem] md:text-[3.5rem] tracking-tight text-on-surface max-w-2xl leading-tight">
+                    Architectural precision for physical security.
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
+                <!-- Feature 1 -->
+                <div
+                    class="md:col-span-8 bg-surface-container-lowest rounded-xl p-8 md:p-12 shadow-zero-gravity shadow-zero-gravity-hover transition-all duration-500 flex flex-col justify-between group overflow-hidden relative border border-outline-variant/15">
+                    <div
+                        class="absolute -right-20 -top-20 w-48 h-48 md:w-64 md:h-64 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-700">
+                    </div>
+                    <div>
+                        <span class="material-symbols-outlined text-3xl md:text-4xl text-primary mb-6 block"
+                            data-icon="qr_code_scanner">qr_code_scanner</span>
+                        <h3 class="font-extrabold text-2xl md:text-3xl text-on-surface mb-4">QR Code Verification</h3>
+                        <p class="font-medium text-on-surface-variant text-base md:text-lg max-w-md">Secure,
+                            tamper-proof QR codes for instant verification at campus exit points.</p>
+                    </div>
+                    <div class="mt-8 md:mt-12 h-32 md:h-40 w-full rounded bg-surface-container-low overflow-hidden relative"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC0oDVi7Vu0QkiYjRSet4HzrtiMvRssPOkYDSAor027lMFy07axjE5voDotGLyilxrYqlMeiigWqYLSOCtWepJPzTjwRNjEp_OAySw74zbYrnqgC3JBe_8Kpv2H2iOiBMHct7qE5j5Yc7IwoXYBgcawESzvtVsddjzQkMYbmcsHAGhe-2S--u1hQDHbmiZ0PYFt0OGkuJ-ceLTUuCmTh0GGfG59qKlZSqzo8cRUg22ZECAuOZg5gQQJVxG84Han7GzuNeUtlC5Ziwo6=s2048'); background-size: cover; background-position: center;">
+                    </div>
+                </div>
+                <!-- Feature 2 -->
+                <div
+                    class="md:col-span-4 bg-primary-container rounded-xl p-8 md:p-12 shadow-zero-gravity shadow-zero-gravity-hover transition-all duration-500 flex flex-col justify-between text-on-primary group border border-outline-variant/15">
+                    <div>
+                        <span
+                            class="material-symbols-outlined text-3xl md:text-4xl text-on-primary-container mb-6 block"
+                            data-icon="account_tree">account_tree</span>
+                        <h3 class="font-extrabold text-2xl md:text-3xl mb-4">Multi-Level Approval</h3>
+                        <p class="font-medium text-on-primary-container text-base md:text-lg">Configurable workflows
+                            with automated routing through mentors and security personnel.</p>
+                    </div>
+                    <div class="mt-8 md:mt-12">
+                        <a href="/privacy/"
+                            class="bg-surface-container-lowest text-primary font-bold py-3 px-6 rounded-full w-full hover:bg-surface-container-high transition-colors text-center shadow-sm text-sm md:text-base inline-block block">
+                            View Standards
+                        </a>
+                    </div>
+                </div>
+                <!-- Feature 3 -->
+                <div
+                    class="md:col-span-5 md:col-start-2 bg-surface-container-low rounded-xl p-8 md:p-10 shadow-sm hover:shadow-zero-gravity transition-all duration-500 border border-outline-variant/15 group">
+                    <span
+                        class="material-symbols-outlined text-3xl md:text-4xl text-primary mb-6 block group-hover:scale-110 transition-transform origin-left"
+                        data-icon="monitoring">monitoring</span>
+                    <h3 class="font-extrabold text-xl md:text-2xl text-on-surface mb-3">Analytics & Reporting</h3>
+                    <p class="font-medium text-on-surface-variant text-sm md:text-base">Comprehensive dashboards with
+                        insights into exit patterns, timing, and approval metrics.</p>
+                </div>
+                <!-- Feature 4 -->
+                <div
+                    class="md:col-span-6 bg-surface-container-lowest rounded-xl p-8 md:p-10 shadow-zero-gravity shadow-zero-gravity-hover transition-all duration-500 border border-outline-variant/15 group">
+                    <span class="material-symbols-outlined text-3xl md:text-4xl text-secondary mb-6 block"
+                        data-icon="smartphone">smartphone</span>
+                    <h3 class="font-extrabold text-xl md:text-2xl text-on-surface mb-3">Mobile Application</h3>
+                    <p class="font-medium text-on-surface-variant text-sm md:text-base mb-6">Native mobile app allowing
+                        students to submit exit requests instantly from anywhere.</p>
+                    <div class="flex items-end gap-2 h-12 md:h-16 w-full opacity-60">
+                        <div class="w-1/6 bg-secondary-container h-1/3 rounded-t"></div>
+                        <div class="w-1/6 bg-secondary-container h-2/3 rounded-t"></div>
+                        <div class="w-1/6 bg-primary h-full rounded-t"></div>
+                        <div class="w-1/6 bg-secondary-container h-1/2 rounded-t"></div>
+                        <div class="w-1/6 bg-secondary-container h-3/4 rounded-t"></div>
+                        <div class="w-1/6 bg-secondary-container h-1/4 rounded-t"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
     <!-- Footer -->
-    <footer>
-        <div class="footer-container">
-            <div class="footer-grid">
-                <div class="footer-section">
-                    <h4>Product</h4>
-                    <ul class="footer-links">
-                        <li><a href="#features">Features</a></li>
-                        <li><a href="#how-it-works">How It Works</a></li>
-                        <li><a href="/login/">Admin Portal</a></li>
-                        <li><a href="/privacy/">Privacy Policy</a></li>
-                    </ul>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Support</h4>
-                    <ul class="footer-links">
-                        <li><a href="mailto:gateeaseapp@gmail.com">Contact Support</a></li>
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">Help Center</a></li>
-                    </ul>
-                </div>
-
+    <footer class="bg-transparent w-full mt-auto py-8 md:py-12">
+        <div
+            class="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start px-6 md:px-16 w-full max-w-screen-2xl mx-auto border-t border-outline-variant/20 pt-8 md:pt-12 text-center md:text-left">
+            <div class="flex-grow">
+                <span
+                    class="font-['Plus_Jakarta_Sans'] font-medium text-[10px] md:text-xs uppercase tracking-widest text-[#4338CA] dark:text-[#e1e1ef]">
+                    © 2026 GateEase.
+                </span>
             </div>
-
-            <div class="footer-bottom">
-                <p>&copy; 2026 GateEase. All rights reserved. Smart Exit Pass Management System.</p>
-            </div>
+            <nav class="flex flex-wrap justify-center gap-6 md:gap-8">
+                <a class="font-['Plus_Jakarta_Sans'] font-medium text-[10px] md:text-xs uppercase tracking-widest text-[#777586] hover:text-[#2505bf] transition-colors cursor-pointer"
+                    href="/login/">Admin Portal</a>
+                <a class="font-['Plus_Jakarta_Sans'] font-medium text-[10px] md:text-xs uppercase tracking-widest text-[#777586] hover:text-[#2505bf] transition-colors cursor-pointer"
+                    href="/privacy/">Privacy Policy</a>
+                <a class="font-['Plus_Jakarta_Sans'] font-medium text-[10px] md:text-xs uppercase tracking-widest text-[#777586] hover:text-[#2505bf] transition-colors cursor-pointer"
+                    href="mailto:gateeaseapp@gmail.com">Contact Support</a>
+            </nav>
         </div>
     </footer>
     <script>
@@ -575,10 +354,10 @@
             // Stash the event so it can be triggered later.
             deferredPrompt = e;
             // Update UI notify the user they can install the PWA
-            if(installBtn) installBtn.style.display = 'inline-block';
+            if (installBtn) installBtn.style.display = 'inline-block';
         });
 
-        if(installBtn) {
+        if (installBtn) {
             installBtn.addEventListener('click', async () => {
                 if (deferredPrompt) {
                     // Show the install prompt
@@ -597,9 +376,7 @@
 
         window.addEventListener('appinstalled', () => {
             // Hide the app-provided install promotion
-            if(installBtn) installBtn.style.display = 'none';
-            console.log('PWA was installed');
-            deferredPrompt = null;
+            if (installBtn) installBtn.style.display = 'none';
         });
     </script>
 </body>

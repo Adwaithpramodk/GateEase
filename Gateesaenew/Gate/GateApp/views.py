@@ -75,6 +75,18 @@ class MentorRequiredMixin:
              return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
+class AdminOrMentorRequiredMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not getattr(request, 'jwt_user_id', None) and not request.session.get('user_id'):
+            messages.error(request, "Login Required")
+            return redirect('/')
+            
+        usertype = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
+        if usertype not in ['admin', 'mentor']:
+             messages.error(request, "Unauthorized Access: Admins or Mentors Only")
+             return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
+
 class SecurityRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         if not getattr(request, 'jwt_user_id', None) and not request.session.get('user_id'):
@@ -294,7 +306,7 @@ class VerifyStudent(LoginRequiredMixin, View):
             {'students': students}
         )
 
-class EditStudent(AdminRequiredMixin, View):
+class EditStudent(AdminOrMentorRequiredMixin, View):
     def get(self, request, id):
         student = get_object_or_404(studenttable, id=id)
         form = EditStudentForm(instance=student)
@@ -309,7 +321,7 @@ class EditStudent(AdminRequiredMixin, View):
             return redirect('/VerifyStudent')
         return render(request, 'tables/form/edit_student.html', {'form': form, 'student': student})
     
-class AcceptStudent(AdminRequiredMixin, View):
+class AcceptStudent(AdminOrMentorRequiredMixin, View):
     def get(self,request, lid):
         login_obj=Logintable.objects.get(id=lid)
         login_obj.usertype='Student'
@@ -317,7 +329,7 @@ class AcceptStudent(AdminRequiredMixin, View):
         messages.success(request, "Student Accepted successfully")
         return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
  
-class RejectStudent(AdminRequiredMixin, View):
+class RejectStudent(AdminOrMentorRequiredMixin, View):
     def get(self,request, lid):
         login_obj=Logintable.objects.get(id=lid)
         login_obj.usertype='Rejected'
@@ -325,7 +337,7 @@ class RejectStudent(AdminRequiredMixin, View):
         messages.warning(request, "Student Rejected")
         return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
     
-class DeleteStudent(AdminRequiredMixin, View):
+class DeleteStudent(AdminOrMentorRequiredMixin, View):
     def get(self,request,id):
         referer = request.META.get('HTTP_REFERER', '/VerifyStudent')
         try:
@@ -341,7 +353,7 @@ class DeleteStudent(AdminRequiredMixin, View):
              messages.error(request, "Error Deleting Student")
              return redirect(referer)
 
-class UploadImage(AdminRequiredMixin, View):
+class UploadImage(AdminOrMentorRequiredMixin, View):
     def post(self, request, s_id):
         Photo = request.FILES.get('image')
         student_obj = studenttable.objects.get(id=s_id)

@@ -1,7 +1,7 @@
 Django==4.2.0
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
-xhtml2pdf==0.2.13
+xhtml2pdf>=0.2.16
 firebase-admin==6.5.0
 Pillow==10.3.0
 gunicorn==20.1.0

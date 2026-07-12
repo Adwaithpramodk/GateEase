@@ -215,12 +215,12 @@ class LoginPage(View):
         # Server-side Validation
         if not username or not password:
             messages.error(request, "Login Failed: Email and Password are required!")
-            return redirect('/login/')
+            return render(request, 'tables/form/login.html')
             
         import re
         if not re.match(r"[^@]+@[^@]+\.[^@]+", username):
             messages.error(request, "Login Failed: Please provide a valid email address!")
-            return redirect('/login/')
+            return render(request, 'tables/form/login.html')
         try:
             #searching username
             obj = Logintable.objects.filter(username=username).first()
@@ -233,7 +233,7 @@ class LoginPage(View):
                 obj.save()
             else:
                 messages.error(request, "Login Unsuccessful")
-                return redirect('/')
+                return render(request, 'tables/form/login.html')
 
             # If password is correct, generate JWT
             from rest_framework_simplejwt.tokens import RefreshToken
@@ -257,7 +257,7 @@ class LoginPage(View):
                 response = redirect('/SecurityHome')
             else:
                 messages.error(request, "Login Unsuccessful")
-                return redirect('/')
+                return render(request, 'tables/form/login.html')
 
             if response:
                 # 30 days in seconds
@@ -285,11 +285,11 @@ class LoginPage(View):
                 return response
             else:
                  messages.error(request, "Login Failed: Invalid Credentials")
-                 return redirect('/')
+                 return render(request, 'tables/form/login.html')
         except Exception as e:
             logger.exception("LoginPage error")
             messages.error(request, f"Login Error")
-            return redirect('/')
+            return render(request, 'tables/form/login.html')
 
 from django.core.paginator import Paginator
 from .models import studenttable
@@ -859,7 +859,7 @@ class StudentRegister(View):
                 LOGINID=login_obj
             )
             messages.success(request, "Registration successful! Please wait for approval.")
-            return redirect('/')
+            return redirect('login/')
         except Exception as e:
             messages.error(request, f"Registration failed: {str(e)}")
             return redirect('/StudentRegister')

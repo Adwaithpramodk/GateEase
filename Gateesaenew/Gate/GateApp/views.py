@@ -310,16 +310,20 @@ class EditStudent(AdminOrMentorRequiredMixin, View):
     def get(self, request, id):
         student = get_object_or_404(studenttable, id=id)
         form = EditStudentForm(instance=student)
-        return render(request, 'tables/form/edit_student.html', {'form': form, 'student': student})
+        user_type = request.session.get('usertype')
+        back_url = '/VerifyStudent' if user_type == 'admin' else '/VerifyStudentMentor'
+        return render(request, 'tables/form/edit_student.html', {'form': form, 'student': student, 'back_url': back_url})
 
     def post(self, request, id):
         student = get_object_or_404(studenttable, id=id)
         form = EditStudentForm(request.POST, instance=student)
+        user_type = request.session.get('usertype')
+        back_url = '/VerifyStudent' if user_type == 'admin' else '/VerifyStudentMentor'
         if form.is_valid():
             form.save()
             messages.success(request, "Student Updated Successfully")
-            return redirect('/VerifyStudent')
-        return render(request, 'tables/form/edit_student.html', {'form': form, 'student': student})
+            return redirect(back_url)
+        return render(request, 'tables/form/edit_student.html', {'form': form, 'student': student, 'back_url': back_url})
     
 class AcceptStudent(AdminOrMentorRequiredMixin, View):
     def get(self,request, lid):

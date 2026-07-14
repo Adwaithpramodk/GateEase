@@ -189,8 +189,15 @@
 
     <!-- Result Modal -->
     <div id="scanResultModal" class="fixed inset-0 bg-slate-900/90 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-3xl w-full max-w-sm p-8 pb-10 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col items-center text-center" id="scanResultModalContent">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-8 pb-10 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col items-center text-center relative" id="scanResultModalContent">
             
+            <!-- Close (X) Button -->
+            <button onclick="location.reload()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+
             <div id="sr-icon-success" class="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-6 mt-2 hidden shrink-0">
                 <svg class="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
             </div>
@@ -209,7 +216,7 @@
             </div>
             
             <button onclick="location.reload()" id="sr-btn" class="w-full bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 active:scale-[0.98]">
-                Continue
+                OK
             </button>
         </div>
     </div>

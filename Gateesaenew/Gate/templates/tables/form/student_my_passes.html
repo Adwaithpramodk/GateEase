@@ -184,6 +184,7 @@
     <script>
         let qrcode = null;
         let clockInterval = null;
+        let statusInterval = null;
 
         function updateClock() {
             const clockEl = document.getElementById('secure-clock');
@@ -192,7 +193,7 @@
             clockEl.textContent = now.toLocaleTimeString('en-US', { hour12: false });
         }
 
-        function showQRCode(passId) {
+        function showQRCode(token) {
             const modal = document.getElementById('qrModal');
             const modalContent = document.getElementById('qrModalContent');
             
@@ -206,11 +207,24 @@
             modalContent.classList.remove('scale-95');
             
             const qrContainer = document.getElementById("qrcode-container");
-            qrContainer.innerHTML = `<img src="/WebGenerateQRCode/${passId}" class="w-[220px] h-[220px] mx-auto block" alt="Secure QR Code">`;
+            qrContainer.innerHTML = `<img src="/WebGenerateQRCode/${token}" class="w-[220px] h-[220px] mx-auto block" alt="Secure QR Code">`;
 
             // Start clock
             updateClock();
             clockInterval = setInterval(updateClock, 1000);
+            
+            // Poll for status changes while QR is open
+            statusInterval = setInterval(() => {
+                fetch(`/WebCheckPassStatus/${token}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.security_status === 'scanned') {
+                        // The guard just scanned the pass, so reload to update the UI instantly
+                        location.reload();
+                    }
+                })
+                .catch(err => console.error(err));
+            }, 3000); // Check every 3 seconds
         }
 
         function closeQRCode() {
@@ -220,9 +234,8 @@
             modal.classList.add('opacity-0');
             modalContent.classList.add('scale-95');
             
-            if (clockInterval) {
-                clearInterval(clockInterval);
-            }
+            if (clockInterval) clearInterval(clockInterval);
+            if (statusInterval) clearInterval(statusInterval);
             
             setTimeout(() => {
                 modal.classList.add('hidden');

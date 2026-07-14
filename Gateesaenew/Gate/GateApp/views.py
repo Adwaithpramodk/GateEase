@@ -907,6 +907,18 @@ class StudentNewPass(StudentRequiredMixin, View):
             return redirect('/StudentNewPass')
 
         now_local = timezone.localtime()
+        
+        # ── Limit of 2 passes per hour ──
+        one_hour_ago = now_local - datetime.timedelta(hours=1)
+        recent_passes_count = exitpasstable.objects.filter(
+            student_id=student_obj,
+            created_at__gte=one_hour_ago
+        ).count()
+        
+        if recent_passes_count >= 2:
+            messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
+            return redirect('/StudentNewPass')
+
         exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
         exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
         
@@ -1017,6 +1029,17 @@ class WebGenerateQRCode(StudentRequiredMixin, View):
             return HttpResponse(buffer.getvalue(), content_type="image/png")
         except exitpasstable.DoesNotExist:
             return HttpResponse("Not Found", status=404)
+
+class WebCheckPassStatus(StudentRequiredMixin, View):
+    def get(self, request, token):
+        pass_id = decrypt_pass_id(token)
+        if not pass_id:
+            return JsonResponse({'error': 'Invalid token'}, status=400)
+        try:
+            exit_pass = exitpasstable.objects.get(id=pass_id, student_id__LOGINID_id=request.session.get('user_id'))
+            return JsonResponse({'security_status': exit_pass.security_status})
+        except exitpasstable.DoesNotExist:
+            return JsonResponse({'error': 'Not found'}, status=404)
 
 class WebGetPassDetails(SecurityRequiredMixin, View):
     def post(self, request):
@@ -1347,6 +1370,17 @@ class ApplypassAPI(JWTAuthMixin, APIView):
             exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
             if exit_datetime <= now_local:
                 return Response({"error": "Exit time must be in the future"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ── Limit of 2 passes per hour ──
+            student_obj = studenttable.objects.get(LOGINID_id=lid)
+            one_hour_ago = now_local - datetime.timedelta(hours=1)
+            recent_passes_count = exitpasstable.objects.filter(
+                student_id=student_obj,
+                created_at__gte=one_hour_ago
+            ).count()
+
+            if recent_passes_count >= 2:
+                return Response({"error": "You can only apply for 2 passes per hour. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
             # ── Enforce application time window: 10:00 AM – 3:40 PM (IST) ──
             # window_open  = datetime.time(10, 0)   # 10:00 AM

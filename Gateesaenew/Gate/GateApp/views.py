@@ -1126,8 +1126,12 @@ class SecurityHome(SecurityRequiredMixin, View):
         user_id = request.session.get('user_id')
         try:
             security_guard = securitytable.objects.get(LOGINID_id=user_id)
-            # Fetch recently scanned passes
-            recent_scans = exitpasstable.objects.filter(security_status='scanned').order_by('-id')[:10]
+            # Fetch recently scanned passes for today
+            today_start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+            recent_scans = exitpasstable.objects.filter(
+                security_status='scanned', 
+                scanned_at__gte=today_start
+            ).order_by('-id')[:10]
         except securitytable.DoesNotExist:
             security_guard = None
             recent_scans = []

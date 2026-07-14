@@ -139,8 +139,7 @@
                 <div class="p-5 flex justify-between items-center hover:bg-slate-50 transition-colors">
                     <div>
                         <h3 class="font-bold text-slate-900 text-lg">{{ pass.student_id.name }}</h3>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">{{
-                            pass.scanned_at|date:"M d, Y • H:i A" }}</p>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">{{ pass.scanned_at|date:"M d, Y • H:i A" }}</p>
                     </div>
                     <span
                         class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm border border-blue-200">
@@ -293,9 +292,8 @@
     </div>
     </div>
 
-    <!-- Result Modal -->
     <div id="scanResultModal"
-        class="fixed inset-0 bg-slate-900/90 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        class="fixed inset-0 bg-slate-900/90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300" style="z-index: 60;">
         <div class="bg-white rounded-3xl w-full max-w-sm p-8 pb-10 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col items-center text-center relative"
             id="scanResultModalContent">
 
@@ -534,41 +532,43 @@
                     closeDetailsModal();
                     Swal.close(); // Close any loading spinners
 
-                    const modal = document.getElementById('scanResultModal');
-                    const modalContent = document.getElementById('scanResultModalContent');
-                    const title = document.getElementById('sr-title');
-                    const message = document.getElementById('sr-message');
-                    const btn = document.getElementById('sr-btn');
+                    setTimeout(() => {
+                        const modal = document.getElementById('scanResultModal');
+                        const modalContent = document.getElementById('scanResultModalContent');
+                        const title = document.getElementById('sr-title');
+                        const message = document.getElementById('sr-message');
+                        const btn = document.getElementById('sr-btn');
+                        
+                        document.getElementById('sr-icon-success').classList.add('hidden');
+                        document.getElementById('sr-icon-warning').classList.add('hidden');
+                        document.getElementById('sr-icon-error').classList.add('hidden');
 
-                    document.getElementById('sr-icon-success').classList.add('hidden');
-                    document.getElementById('sr-icon-warning').classList.add('hidden');
-                    document.getElementById('sr-icon-error').classList.add('hidden');
-
-                    if (data.success) {
-                        document.getElementById('sr-icon-success').classList.remove('hidden');
-                        title.innerText = 'Success!';
-                        message.innerText = data.message;
-                        btn.className = 'w-full bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200 active:scale-[0.98]';
-                        btn.innerText = 'OK';
-                    } else if (data.is_warning) {
-                        document.getElementById('sr-icon-warning').classList.remove('hidden');
-                        title.innerText = 'Warning!';
-                        message.innerText = data.message;
-                        btn.className = 'w-full bg-amber-500 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-amber-600 transition-colors shadow-md shadow-amber-200 active:scale-[0.98]';
-                        btn.innerText = 'OK';
-                    } else {
-                        document.getElementById('sr-icon-error').classList.remove('hidden');
-                        title.innerText = 'Error!';
-                        message.innerText = data.message;
-                        btn.className = 'w-full bg-rose-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-rose-700 transition-colors shadow-md shadow-rose-200 active:scale-[0.98]';
-                        btn.innerText = 'OK';
-                    }
-                    
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-                    void modal.offsetWidth;
-                    modal.classList.remove('opacity-0');
-                    modalContent.classList.remove('scale-95');
+                        if (data.success) {
+                            document.getElementById('sr-icon-success').classList.remove('hidden');
+                            title.innerText = 'Success!';
+                            message.innerText = data.message;
+                            btn.className = 'w-full bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200 active:scale-[0.98]';
+                            btn.innerText = 'OK';
+                        } else if (data.is_warning) {
+                            document.getElementById('sr-icon-warning').classList.remove('hidden');
+                            title.innerText = 'Warning!';
+                            message.innerText = data.message;
+                            btn.className = 'w-full bg-amber-500 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-amber-600 transition-colors shadow-md shadow-amber-200 active:scale-[0.98]';
+                            btn.innerText = 'OK';
+                        } else {
+                            document.getElementById('sr-icon-error').classList.remove('hidden');
+                            title.innerText = 'Error!';
+                            message.innerText = data.message;
+                            btn.className = 'w-full bg-rose-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-rose-700 transition-colors shadow-md shadow-rose-200 active:scale-[0.98]';
+                            btn.innerText = 'OK';
+                        }
+                        
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                        void modal.offsetWidth;
+                        modal.classList.remove('opacity-0');
+                        modalContent.classList.remove('scale-95');
+                    }, 300);
                 })
                 .catch(error => {
                     Swal.fire({ title: 'Error!', text: 'Action failed.', icon: 'error', confirmButtonColor: '#4f46e5' });

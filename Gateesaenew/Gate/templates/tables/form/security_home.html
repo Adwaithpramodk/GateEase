@@ -546,19 +546,16 @@
                             document.getElementById('sr-icon-success').classList.remove('hidden');
                             title.innerText = 'Success!';
                             message.innerText = data.message;
-                            btn.className = 'w-full bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200 active:scale-[0.98]';
                             btn.innerText = 'OK';
                         } else if (data.is_warning) {
                             document.getElementById('sr-icon-warning').classList.remove('hidden');
                             title.innerText = 'Warning!';
                             message.innerText = data.message;
-                            btn.className = 'w-full bg-amber-500 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-amber-600 transition-colors shadow-md shadow-amber-200 active:scale-[0.98]';
                             btn.innerText = 'OK';
                         } else {
                             document.getElementById('sr-icon-error').classList.remove('hidden');
                             title.innerText = 'Error!';
                             message.innerText = data.message;
-                            btn.className = 'w-full bg-rose-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-rose-700 transition-colors shadow-md shadow-rose-200 active:scale-[0.98]';
                             btn.innerText = 'OK';
                         }
                         

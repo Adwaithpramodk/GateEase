@@ -2455,13 +2455,20 @@ class MentorGroupPassCreate(MentorRequiredMixin, View):
         assigned_classes_ids = [obj.class_id.id for obj in assigned_classes_objs]
         class_names = ", ".join([obj.class_id.class_name for obj in assigned_classes_objs])
         
-        students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids).order_by('name')
+        students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids).select_related('classs_id').order_by('classs_id__class_name', 'name')
+        
+        grouped_students = {}
+        for student in students_list:
+            c_name = student.classs_id.class_name if student.classs_id else "No Class"
+            if c_name not in grouped_students:
+                grouped_students[c_name] = []
+            grouped_students[c_name].append(student)
 
         return render(
             request,
             'tables/form/mentor_group_pass.html',
             {
-                'students': students_list,
+                'grouped_students': grouped_students,
                 'mentor_name': mentor_obj.name,
                 'class_names': class_names,
                 'mentor': mentor_obj

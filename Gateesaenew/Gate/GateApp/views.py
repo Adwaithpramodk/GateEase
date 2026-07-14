@@ -909,15 +909,15 @@ class StudentNewPass(StudentRequiredMixin, View):
         now_local = timezone.localtime()
         
         # ── Limit of 2 passes per hour ──
-        # one_hour_ago = now_local - datetime.timedelta(hours=1)
-        # recent_passes_count = exitpasstable.objects.filter(
-        #     student_id=student_obj,
-        #     created_at__gte=one_hour_ago
-        # ).count()
-        # 
-        # if recent_passes_count >= 2:
-        #     messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
-        #     return redirect('/StudentNewPass')
+        one_hour_ago = now_local - datetime.timedelta(hours=1)
+        recent_passes_count = exitpasstable.objects.filter(
+            student_id=student_obj,
+            created_at__gte=one_hour_ago
+        ).count()
+        
+        if recent_passes_count >= 2:
+            messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
+            return redirect('/StudentNewPass')
 
         exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
         exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
@@ -926,13 +926,13 @@ class StudentNewPass(StudentRequiredMixin, View):
             messages.error(request, "Exit time must be in the future")
             return redirect('/StudentNewPass')
 
-        # window_open  = datetime.time(10, 0)
-        # window_close = datetime.time(15, 40)
-        # current_time = now_local.time()
-        # 
-        # if not (window_open <= current_time <= window_close):
-        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-        #     return redirect('/StudentNewPass')
+        window_open  = datetime.time(10, 0)
+        window_close = datetime.time(15, 40)
+        current_time = now_local.time()
+        
+        if not (window_open <= current_time <= window_close):
+            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+            return redirect('/StudentNewPass')
 
         formatted_time = time_obj.strftime('%I:%M %p')
         
@@ -1376,25 +1376,25 @@ class ApplypassAPI(JWTAuthMixin, APIView):
                 return Response({"error": "Exit time must be in the future"}, status=status.HTTP_400_BAD_REQUEST)
 
             # ── Limit of 2 passes per hour ──
-            # student_obj = studenttable.objects.get(LOGINID_id=lid)
-            # one_hour_ago = now_local - datetime.timedelta(hours=1)
-            # recent_passes_count = exitpasstable.objects.filter(
-            #     student_id=student_obj,
-            #     created_at__gte=one_hour_ago
-            # ).count()
-            #
-            # if recent_passes_count >= 2:
-            #     return Response({"error": "You can only apply for 2 passes per hour. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            student_obj = studenttable.objects.get(LOGINID_id=lid)
+            one_hour_ago = now_local - datetime.timedelta(hours=1)
+            recent_passes_count = exitpasstable.objects.filter(
+                student_id=student_obj,
+                created_at__gte=one_hour_ago
+            ).count()
+            
+            if recent_passes_count >= 2:
+                return Response({"error": "You can only apply for 2 passes per hour. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
             # ── Enforce application time window: 10:00 AM – 3:40 PM (IST) ──
-            # window_open  = datetime.time(10, 0)   # 10:00 AM
-            # window_close = datetime.time(15, 40)  # 3:40 PM
-            # current_time = now_local.time()
-            # if not (window_open <= current_time <= window_close):
-            #     return Response(
-            #         {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
+            window_open  = datetime.time(10, 0)   # 10:00 AM
+            window_close = datetime.time(15, 40)  # 3:40 PM
+            current_time = now_local.time()
+            if not (window_open <= current_time <= window_close):
+                return Response(
+                    {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             student_obj = studenttable.objects.get(LOGINID_id=lid)
 

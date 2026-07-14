@@ -120,6 +120,7 @@ class exitpasstable(models.Model):
     created_at=models.DateTimeField(auto_now_add=True,db_index=True)
     approved_at=models.DateTimeField(null=True,blank=True)
     scanned_at=models.DateTimeField(null=True,blank=True)
+    scanned_by=models.ForeignKey('securitytable', on_delete=models.SET_NULL, null=True, blank=True, related_name='scanned_passes')  # Audit trail
     qrcode = models.ImageField(upload_to='qrcodes/', null=True, blank=True)
     reject_reason = models.TextField(null=True, blank=True)
     is_group_pass = models.BooleanField(default=False, db_index=True)

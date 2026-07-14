@@ -914,13 +914,13 @@ class StudentNewPass(StudentRequiredMixin, View):
             messages.error(request, "Exit time must be in the future")
             return redirect('/StudentNewPass')
 
-        window_open  = datetime.time(10, 0)
-        window_close = datetime.time(15, 40)
-        current_time = now_local.time()
-        
-        if not (window_open <= current_time <= window_close):
-            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-            return redirect('/StudentNewPass')
+        # window_open  = datetime.time(10, 0)
+        # window_close = datetime.time(15, 40)
+        # current_time = now_local.time()
+        # 
+        # if not (window_open <= current_time <= window_close):
+        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+        #     return redirect('/StudentNewPass')
 
         formatted_time = time_obj.strftime('%I:%M %p')
         
@@ -980,6 +980,9 @@ class StudentMyPasses(StudentRequiredMixin, View):
         try:
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
             passes = exitpasstable.objects.filter(student_id=student_obj).order_by('-id')
+            from GateApp.encryption import encrypt_pass_id
+            for p in passes:
+                p.encrypted_token = encrypt_pass_id(p.id)
         except studenttable.DoesNotExist:
             passes = []
         return render(request, 'tables/form/student_my_passes.html', {'passes': passes, 'student': student_obj if 'student_obj' in locals() else None})
@@ -996,25 +999,104 @@ class StudentHome(StudentRequiredMixin, View):
             recent_passes = []
         return render(request, 'tables/form/student_home.html', {'student': student, 'recent_passes': recent_passes})
 
-class SecurityScanPass(SecurityRequiredMixin, View):
+from django.http import JsonResponse
+from GateApp.encryption import encrypt_pass_id, decrypt_pass_id
+import qrcode
+from io import BytesIO
+
+class WebGenerateQRCode(StudentRequiredMixin, View):
+    def get(self, request, token):
+        pass_id = decrypt_pass_id(token)
+        if not pass_id:
+            return HttpResponse("Invalid Token", status=400)
+        try:
+            exit_pass = exitpasstable.objects.get(id=pass_id, student_id__LOGINID_id=request.session.get('user_id'))
+            qr = qrcode.make(token)
+            buffer = BytesIO()
+            qr.save(buffer, format="PNG")
+            return HttpResponse(buffer.getvalue(), content_type="image/png")
+        except exitpasstable.DoesNotExist:
+            return HttpResponse("Not Found", status=404)
+
+class WebGetPassDetails(SecurityRequiredMixin, View):
     def post(self, request):
-        pass_id = request.POST.get('pass_id')
+        token = request.POST.get('token')
+        if not token:
+            return JsonResponse({'success': False, 'message': 'No token provided'})
+
+        # Simple rate limiting: max 30 scans per minute per guard session
+        from django.core.cache import cache
+        guard_key = f'scan_rate_{request.session.session_key}'
+        scan_count = cache.get(guard_key, 0)
+        if scan_count > 30:
+            return JsonResponse({'success': False, 'message': 'Too many scan attempts. Please wait a moment.'})
+        cache.set(guard_key, scan_count + 1, timeout=60)
+
+        pass_id = decrypt_pass_id(token)
+        if not pass_id:
+            return JsonResponse({'success': False, 'message': 'Invalid, forged, or expired QR Code'})
         try:
             exit_pass = exitpasstable.objects.get(id=pass_id)
-            
-            if exit_pass.mentor_status != 'approved':
-                messages.error(request, f"Pass {pass_id} is not approved by mentor!")
-            elif exit_pass.security_status == 'scanned':
-                messages.error(request, f"Pass {pass_id} has already been scanned!")
-            else:
-                exit_pass.security_status = 'scanned'
-                exit_pass.scanned_at = timezone.now()
-                exit_pass.save()
-                messages.success(request, f"Pass {pass_id} scanned successfully for {exit_pass.student_id.name}!")
+            mentor_name = exit_pass.mentor_id.name if exit_pass.mentor_id else 'Unknown'
+            return JsonResponse({
+                'success': True,
+                'pass_token': token,           # Return the token, NOT the raw integer pass_id
+                'student_name': exit_pass.student_id.name,
+                'student_photo': exit_pass.student_id.Photo.url if exit_pass.student_id.Photo else None,
+                'mentor_name': mentor_name,
+                'time': exit_pass.time.strftime('%I:%M %p') if exit_pass.time else '',
+                'date': exit_pass.created_at.strftime('%Y-%m-%d') if exit_pass.created_at else '',
+                'mentor_status': exit_pass.mentor_status,
+                'security_status': exit_pass.security_status,
+            })
         except exitpasstable.DoesNotExist:
-            messages.error(request, "Invalid QR Code: Pass not found.")
-            
-        return redirect('/SecurityHome')
+            return JsonResponse({'success': False, 'message': 'Pass not found'})
+
+class SecurityScanPass(SecurityRequiredMixin, View):
+    def post(self, request):
+        # Accept the encrypted token, NOT a raw pass_id integer
+        token = request.POST.get('token')
+        action = request.POST.get('action', 'approve')
+
+        if not token:
+            return JsonResponse({'success': False, 'message': 'No token provided'})
+
+        # Validate and decrypt — this enforces TTL and tamper-check in one step
+        pass_id = decrypt_pass_id(token)
+        if not pass_id:
+            return JsonResponse({'success': False, 'message': 'Invalid, forged, or expired QR Code. Please re-scan.'})
+
+        try:
+            exit_pass = exitpasstable.objects.get(id=pass_id)
+
+            # Identify the acting guard for the audit trail
+            user_id = request.session.get('user_id')
+            try:
+                from GateApp.models import securitytable
+                guard = securitytable.objects.get(LOGINID_id=user_id)
+            except securitytable.DoesNotExist:
+                guard = None
+
+            if exit_pass.mentor_status != 'approved':
+                return JsonResponse({'success': False, 'message': 'Pass is not approved by mentor!'})
+            elif exit_pass.security_status == 'scanned':
+                return JsonResponse({'success': False, 'is_warning': True, 'message': 'Warning: Pass has already been scanned!'})
+            else:
+                if action == 'approve':
+                    exit_pass.security_status = 'scanned'
+                    exit_pass.scanned_at = timezone.now()
+                    exit_pass.scanned_by = guard  # Audit trail: record which guard approved
+                    exit_pass.save()
+                    return JsonResponse({'success': True, 'message': f'Pass scanned successfully for {exit_pass.student_id.name}! Student can now leave the campus.'})
+                elif action == 'reject':
+                    exit_pass.security_status = 'rejected'
+                    exit_pass.scanned_by = guard  # Audit trail: record which guard rejected
+                    exit_pass.save()
+                    return JsonResponse({'success': True, 'message': f'Pass rejected for {exit_pass.student_id.name}.'})
+
+                return JsonResponse({'success': False, 'message': 'Invalid action'})
+        except exitpasstable.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Invalid QR Code: Pass not found.'})
 
 class SecurityHome(SecurityRequiredMixin, View):
     def get(self, request):
@@ -1267,14 +1349,14 @@ class ApplypassAPI(JWTAuthMixin, APIView):
                 return Response({"error": "Exit time must be in the future"}, status=status.HTTP_400_BAD_REQUEST)
 
             # ── Enforce application time window: 10:00 AM – 3:40 PM (IST) ──
-            window_open  = datetime.time(10, 0)   # 10:00 AM
-            window_close = datetime.time(15, 40)  # 3:40 PM
-            current_time = now_local.time()
-            if not (window_open <= current_time <= window_close):
-                return Response(
-                    {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # window_open  = datetime.time(10, 0)   # 10:00 AM
+            # window_close = datetime.time(15, 40)  # 3:40 PM
+            # current_time = now_local.time()
+            # if not (window_open <= current_time <= window_close):
+            #     return Response(
+            #         {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
 
             student_obj = studenttable.objects.get(LOGINID_id=lid)
 

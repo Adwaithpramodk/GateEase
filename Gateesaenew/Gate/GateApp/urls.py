@@ -67,10 +67,12 @@ urlpatterns = [
     path('StudentNewPass', StudentNewPass.as_view(), name='StudentNewPass'),
     path('StudentComplaint', StudentComplaint.as_view(), name='StudentComplaint'),
     path('StudentMyPasses', StudentMyPasses.as_view(), name='StudentMyPasses'),
+    path('WebGenerateQRCode/<str:token>', WebGenerateQRCode.as_view(), name='WebGenerateQRCode'),
     
     # === SECURITY PORTAL ===
     path('SecurityHome', SecurityHome.as_view(), name="SecurityHome"),
     path('SecurityScanPass', SecurityScanPass.as_view(), name="SecurityScanPass"),
+    path('WebGetPassDetails', WebGetPassDetails.as_view(), name="WebGetPassDetails"),
     path('SecurityGroupPass', SecurityGroupPass.as_view(), name="SecurityGroupPass"),
 
     # ==========================

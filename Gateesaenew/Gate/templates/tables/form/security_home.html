@@ -24,9 +24,9 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Toast Messages Container -->
+    <!-- SweetAlert Messages Container (Kept for loading spinners) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {% include 'partials/messages.html' %}
-
     <!-- Top App Bar -->
     <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-2">
@@ -136,15 +136,105 @@
         </div>
     </div>
 
-    <!-- Hidden Form to submit scanned pass -->
-    <form id="scanForm" method="POST" action="/SecurityScanPass" class="hidden">
-        {% csrf_token %}
-        <input type="hidden" name="pass_id" id="pass_id_input">
-    </form>
+    <!-- Pass Details Modal -->
+    <div id="passDetailsModal" class="fixed inset-0 bg-slate-900/90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="passDetailsModalContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-800">Pass Details</h3>
+                <button onclick="closeDetailsModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <!-- Content Area -->
+            <div id="passDetailsContent" class="space-y-4">
+                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <img id="pd-photo" src="" alt="Student" class="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 shadow-sm hidden">
+                    <div id="pd-photo-placeholder" class="w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center border-2 border-white shadow-sm text-xl hidden">S</div>
+                    <div>
+                        <h4 id="pd-name" class="font-bold text-slate-900 text-lg">Student Name</h4>
+                        <p id="pd-time" class="text-sm text-slate-500 font-medium">Time & Date</p>
+                    </div>
+                </div>
+                
+                <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+                    <p class="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-1">Approved By</p>
+                    <p id="pd-mentor" class="font-semibold text-indigo-900">Mentor Name</p>
+                </div>
+                
+                <!-- Warning state -->
+                <div id="pd-warning" class="hidden p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-6 h-6 text-amber-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <div>
+                            <h4 class="font-bold text-amber-800">Attention Needed</h4>
+                            <p id="pd-warning-text" class="text-sm text-amber-700 mt-1">This pass has already been scanned.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div id="pd-actions" class="mt-8 flex gap-3">
+                <button onclick="submitScanAction('reject')" class="flex-1 bg-white border-2 border-rose-100 text-rose-600 font-bold py-3.5 px-4 rounded-xl hover:bg-rose-50 transition-colors active:scale-[0.98]">
+                    Reject
+                </button>
+                <button onclick="submitScanAction('approve')" class="flex-[2] bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 active:scale-[0.98]">
+                    Approve Pass
+                </button>
+            </div>
+        </div>
+        </div>
+    </div>
 
+    <!-- Result Modal -->
+    <div id="scanResultModal" class="fixed inset-0 bg-slate-900/90 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-8 pb-10 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col items-center text-center" id="scanResultModalContent">
+            
+            <div id="sr-icon-success" class="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-6 mt-2 hidden shrink-0">
+                <svg class="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            
+            <div id="sr-icon-warning" class="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mb-6 mt-2 hidden shrink-0">
+                <svg class="w-10 h-10 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+
+            <div id="sr-icon-error" class="w-20 h-20 rounded-full bg-rose-100 flex items-center justify-center mb-6 mt-2 hidden shrink-0">
+                <svg class="w-10 h-10 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center w-full mb-8">
+                <h3 id="sr-title" class="text-2xl font-bold text-slate-800 mb-2">Title</h3>
+                <p id="sr-message" class="text-slate-500 font-medium">Message</p>
+            </div>
+            
+            <button onclick="location.reload()" id="sr-btn" class="w-full bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 active:scale-[0.98]">
+                Continue
+            </button>
+        </div>
+    </div>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
         let html5QrCode;
+        let currentScannedToken = null;
+        let currentPassToken = null;  // Stores the encrypted token, never the raw ID
+
+        // CSRF Token Helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
 
         function openScanner() {
             const modal = document.getElementById('qrModal');
@@ -153,10 +243,7 @@
             
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
-            // Trigger reflow
             void modal.offsetWidth;
-            
             modal.classList.remove('opacity-0');
             modalContent.classList.remove('scale-95');
             loading.style.display = 'flex';
@@ -165,18 +252,13 @@
                 html5QrCode = new Html5Qrcode("reader");
             }
             
-            // Slightly lower resolution for faster startup
             html5QrCode.start(
                 { facingMode: "environment" }, 
-                {
-                    fps: 10,
-                    qrbox: { width: 200, height: 200 }
-                },
+                { fps: 10, qrbox: { width: 200, height: 200 } },
                 onScanSuccess,
                 onScanFailure
-            ).then(() => {
-                loading.style.display = 'none';
-            }).catch(err => {
+            ).then(() => { loading.style.display = 'none'; })
+            .catch(err => {
                 console.error("Error starting scanner", err);
                 loading.style.display = 'none';
                 alert("Could not access back camera. Please ensure permissions are granted.");
@@ -186,29 +268,165 @@
         function closeScanner() {
             const modal = document.getElementById('qrModal');
             const modalContent = document.getElementById('qrModalContent');
-            
             modal.classList.add('opacity-0');
             modalContent.classList.add('scale-95');
-            
             setTimeout(() => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
                 if (html5QrCode) {
-                    html5QrCode.stop().catch(err => console.error("Error stopping scanner", err));
+                    html5QrCode.stop().catch(err => {});
                 }
+            }, 300);
+        }
+        
+        function closeDetailsModal() {
+            const modal = document.getElementById('passDetailsModal');
+            const modalContent = document.getElementById('passDetailsModalContent');
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }, 300);
         }
 
         function onScanSuccess(decodedText, decodedResult) {
             closeScanner();
-            try {
-                let data = JSON.parse(decodedText);
-                document.getElementById('pass_id_input').value = data.pass_id || decodedText;
-            } catch(e) {
-                // If not JSON, use raw text
-                document.getElementById('pass_id_input').value = decodedText;
+            currentScannedToken = decodedText;
+            
+            // Show loading state
+            Swal.fire({
+                title: 'Verifying QR Code...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            
+            fetch('/WebGetPassDetails', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrftoken
+                },
+                body: new URLSearchParams({ 'token': decodedText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.close();
+                if (data.success) {
+                    showPassDetails(data);
+                } else {
+                    Swal.fire({ title: 'Error!', text: data.message, icon: 'error', confirmButtonColor: '#4f46e5' });
+                }
+            })
+            .catch(error => {
+                Swal.close();
+                Swal.fire({ title: 'Error!', text: 'Failed to verify QR Code.', icon: 'error', confirmButtonColor: '#4f46e5' });
+            });
+        }
+        
+        function showPassDetails(data) {
+            currentPassToken = data.pass_token;  // Store encrypted token, not raw ID
+            
+            document.getElementById('pd-name').innerText = data.student_name;
+            document.getElementById('pd-time').innerText = data.date + ' at ' + data.time;
+            document.getElementById('pd-mentor').innerText = data.mentor_name;
+            
+            const photoEl = document.getElementById('pd-photo');
+            const placeholderEl = document.getElementById('pd-photo-placeholder');
+            if (data.student_photo) {
+                photoEl.src = data.student_photo;
+                photoEl.classList.remove('hidden');
+                placeholderEl.classList.add('hidden');
+            } else {
+                photoEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+                placeholderEl.innerText = data.student_name.charAt(0).toUpperCase();
             }
-            document.getElementById('scanForm').submit();
+            
+            const warningEl = document.getElementById('pd-warning');
+            const warningText = document.getElementById('pd-warning-text');
+            const actionsEl = document.getElementById('pd-actions');
+            
+            if (data.security_status === 'scanned' || data.security_status === 'rejected') {
+                warningEl.classList.remove('hidden');
+                warningText.innerText = `This pass has already been ${data.security_status}.`;
+                actionsEl.classList.add('hidden');
+            } else if (data.mentor_status !== 'approved') {
+                warningEl.classList.remove('hidden');
+                warningText.innerText = "This pass is not approved by mentor yet.";
+                actionsEl.classList.add('hidden');
+            } else {
+                warningEl.classList.add('hidden');
+                actionsEl.classList.remove('hidden');
+            }
+            
+            const modal = document.getElementById('passDetailsModal');
+            const modalContent = document.getElementById('passDetailsModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+        }
+        
+        function submitScanAction(action) {
+            if (!currentPassToken) return;
+            
+            Swal.fire({
+                title: 'Processing...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            
+            fetch('/SecurityScanPass', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrftoken
+                },
+                body: new URLSearchParams({ 'token': currentPassToken, 'action': action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                closeDetailsModal();
+                Swal.close(); // Close any loading spinners
+                
+                const modal = document.getElementById('scanResultModal');
+                const modalContent = document.getElementById('scanResultModalContent');
+                const title = document.getElementById('sr-title');
+                const message = document.getElementById('sr-message');
+                const btn = document.getElementById('sr-btn');
+                
+                document.getElementById('sr-icon-success').classList.add('hidden');
+                document.getElementById('sr-icon-warning').classList.add('hidden');
+                document.getElementById('sr-icon-error').classList.add('hidden');
+
+                if (data.success) {
+                    document.getElementById('sr-icon-success').classList.remove('hidden');
+                    title.innerText = 'Success!';
+                    message.innerText = data.message;
+                    btn.className = 'w-full bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200 active:scale-[0.98]';
+                } else if (data.is_warning) {
+                    document.getElementById('sr-icon-warning').classList.remove('hidden');
+                    title.innerText = 'Warning!';
+                    message.innerText = data.message;
+                    btn.className = 'w-full bg-amber-500 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-amber-600 transition-colors shadow-md shadow-amber-200 active:scale-[0.98]';
+                } else {
+                    document.getElementById('sr-icon-error').classList.remove('hidden');
+                    title.innerText = 'Error!';
+                    message.innerText = data.message;
+                    btn.className = 'w-full bg-rose-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-rose-700 transition-colors shadow-md shadow-rose-200 active:scale-[0.98]';
+                }
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                void modal.offsetWidth;
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            })
+            .catch(error => {
+                Swal.fire({ title: 'Error!', text: 'Action failed.', icon: 'error', confirmButtonColor: '#4f46e5' });
+            });
         }
 
         function onScanFailure(error) {

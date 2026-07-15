@@ -175,10 +175,12 @@
                     {% endif %}
                 </div>
 
-                {% if pass.mentor_status == 'rejected' and pass.reject_reason %}
+                {% if pass.mentor_status == 'rejected' or pass.mentor_status == 'revoked' %}
+                {% if pass.reject_reason %}
                 <div class="mt-4 bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg text-sm text-red-800">
                     <strong class="font-bold">Reason:</strong> {{ pass.reject_reason }}
                 </div>
+                {% endif %}
                 {% endif %}
 
                 {% if pass.security_status == 'scanned' %}

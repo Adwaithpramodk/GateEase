@@ -63,6 +63,7 @@ urlpatterns = [
     path('MentorAnalytics',MentorAnalyticsView.as_view(),name='MentorAnalytics'),
     path('MentorAnalyticsExportCSV',MentorAnalyticsExportCSVView.as_view(),name='MentorAnalyticsExportCSV'),
     path('MentorPendingPasses',MentorPendingPasses.as_view(),name='MentorPendingPasses'),
+    path('MentorApprovedPasses',MentorApprovedPasses.as_view(),name='MentorApprovedPasses'),
     path('StudentHome', StudentHome.as_view(), name='StudentHome'),
     path('StudentNewPass', StudentNewPass.as_view(), name='StudentNewPass'),
     path('StudentComplaint', StudentComplaint.as_view(), name='StudentComplaint'),

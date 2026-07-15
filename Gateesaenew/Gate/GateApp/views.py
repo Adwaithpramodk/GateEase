@@ -569,6 +569,51 @@ class MentorPendingPasses(MentorRequiredMixin, View):
             
         return redirect('/MentorPendingPasses')
 
+class MentorApprovedPasses(MentorRequiredMixin, View):
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        try:
+            mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
+            assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
+            
+            # Show passes that are approved by mentor but not yet scanned or cancelled
+            approved_passes = exitpasstable.objects.filter(
+                mentor_status='approved',
+                security_status='pending',
+                student_id__classs__id__in=assigned_classes
+            ).order_by('-approved_at')
+        except mentortable.DoesNotExist:
+            approved_passes = []
+        return render(request, 'tables/form/mentor_approved_passes.html', {'passes': approved_passes, 'mentor': mentor_obj if 'mentor_obj' in locals() else None})
+
+    def post(self, request):
+        user_id = request.session.get('user_id')
+        pass_id = request.POST.get('pass_id')
+        action = request.POST.get('action')
+        
+        try:
+            mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
+            assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
+            
+            exit_pass = exitpasstable.objects.get(
+                id=pass_id, 
+                mentor_status='approved',
+                security_status='pending',
+                student_id__classs__id__in=assigned_classes
+            )
+            
+            if action == 'revoke':
+                revoke_reason = request.POST.get('revoke_reason', 'Revoked by mentor')
+                exit_pass.mentor_status = 'revoked'
+                exit_pass.reject_reason = revoke_reason
+                exit_pass.save()
+                messages.success(request, f"Pass for {exit_pass.student_id.name} has been revoked.")
+                
+        except (mentortable.DoesNotExist, exitpasstable.DoesNotExist):
+            messages.error(request, "Pass not found or unauthorized.")
+            
+        return redirect('/MentorApprovedPasses')
+
 class MntrHome(MentorRequiredMixin, View):
     def get(self, request):
         user_id = request.session.get('user_id')
@@ -999,6 +1044,26 @@ class StudentMyPasses(StudentRequiredMixin, View):
             passes = []
         return render(request, 'tables/form/student_my_passes.html', {'passes': passes, 'student': student_obj if 'student_obj' in locals() else None})
 
+    def post(self, request):
+        user_id = request.session.get('user_id')
+        pass_id = request.POST.get('pass_id')
+        
+        try:
+            student_obj = studenttable.objects.get(LOGINID_id=user_id)
+            exit_pass = exitpasstable.objects.get(id=pass_id, student_id=student_obj)
+            
+            if exit_pass.security_status == 'pending' and exit_pass.mentor_status in ['pending', 'approved']:
+                exit_pass.mentor_status = 'cancelled'
+                exit_pass.save()
+                messages.success(request, "Pass cancelled successfully.")
+            else:
+                messages.error(request, "This pass cannot be cancelled.")
+                
+        except (studenttable.DoesNotExist, exitpasstable.DoesNotExist):
+            messages.error(request, "Pass not found or unauthorized.")
+            
+        return redirect('/StudentMyPasses')
+
 class StudentHome(StudentRequiredMixin, View):
     def get(self, request):
         user_id = request.session.get('user_id')
@@ -1061,6 +1126,13 @@ class WebGetPassDetails(SecurityRequiredMixin, View):
         try:
             exit_pass = exitpasstable.objects.get(id=pass_id)
             mentor_name = exit_pass.mentor_id.name if exit_pass.mentor_id else 'Unknown'
+            
+            message = 'Success'
+            if exit_pass.mentor_status == 'cancelled':
+                return JsonResponse({'success': False, 'message': 'Pass was cancelled by the student.'})
+            elif exit_pass.mentor_status == 'revoked':
+                return JsonResponse({'success': False, 'message': f'Pass Revoked by Mentor: {exit_pass.reject_reason}'})
+            
             return JsonResponse({
                 'success': True,
                 'pass_token': token,           # Return the token, NOT the raw integer pass_id
@@ -1100,7 +1172,11 @@ class SecurityScanPass(SecurityRequiredMixin, View):
             except securitytable.DoesNotExist:
                 guard = None
 
-            if exit_pass.mentor_status != 'approved':
+            if exit_pass.mentor_status == 'cancelled':
+                return JsonResponse({'success': False, 'message': 'Pass was cancelled by the student.'})
+            elif exit_pass.mentor_status == 'revoked':
+                return JsonResponse({'success': False, 'message': f'Pass Revoked by Mentor: {exit_pass.reject_reason}'})
+            elif exit_pass.mentor_status != 'approved':
                 return JsonResponse({'success': False, 'message': 'Pass is not approved by mentor!'})
             elif exit_pass.security_status == 'scanned':
                 return JsonResponse({'success': False, 'is_warning': True, 'message': 'Warning: Pass has already been scanned!'})
@@ -1387,28 +1463,28 @@ class ApplypassAPI(JWTAuthMixin, APIView):
                 return Response({"error": "You can only apply for 2 passes per hour. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
             # ── Enforce application time window: 10:00 AM – 3:40 PM (IST) ──
-            window_open  = datetime.time(10, 0)   # 10:00 AM
-            window_close = datetime.time(15, 40)  # 3:40 PM
-            current_time = now_local.time()
-            if not (window_open <= current_time <= window_close):
-                return Response(
-                    {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # window_open  = datetime.time(10, 0)   # 10:00 AM
+            # window_close = datetime.time(15, 40)  # 3:40 PM
+            # current_time = now_local.time()
+            # if not (window_open <= current_time <= window_close):
+            #     return Response(
+            #         {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
 
-            student_obj = studenttable.objects.get(LOGINID_id=lid)
+            # student_obj = studenttable.objects.get(LOGINID_id=lid)
 
-            # ── Enforce daily pass limit: max 3 per student per day ──
-            today_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
-            passes_today = exitpasstable.objects.filter(
-                student_id=student_obj,
-                created_at__gte=today_start
-            ).count()
-            if passes_today >= 3:
-                return Response(
-                    {"error": "You have reached the maximum of 3 pass applications for today"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # # ── Enforce daily pass limit: max 3 per student per day ──
+            # today_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+            # passes_today = exitpasstable.objects.filter(
+            #     student_id=student_obj,
+            #     created_at__gte=today_start
+            # ).count()
+            # if passes_today >= 3:
+            #     return Response(
+            #         {"error": "You have reached the maximum of 3 pass applications for today"},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
 
             # Create exit pass
             exit_pass = exitpasstable.objects.create(

@@ -1038,8 +1038,23 @@ class StudentMyPasses(StudentRequiredMixin, View):
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
             passes = exitpasstable.objects.filter(student_id=student_obj).order_by('-id')
             from GateApp.encryption import encrypt_pass_id
+            from django.utils import timezone
+            import datetime
+            now_local = timezone.localtime(timezone.now())
             for p in passes:
                 p.encrypted_token = encrypt_pass_id(p.id)
+                try:
+                    pass_date = timezone.localtime(p.created_at).date()
+                    exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, p.time), timezone.get_current_timezone())
+                    show_qr_time = exit_dt - datetime.timedelta(minutes=15)
+                    p.is_qr_visible = now_local >= show_qr_time
+                    if now_local > exit_dt and p.security_status == 'pending':
+                        p.is_expired = True
+                    else:
+                        p.is_expired = False
+                except Exception:
+                    p.is_qr_visible = True
+                    p.is_expired = False
         except studenttable.DoesNotExist:
             passes = []
         return render(request, 'tables/form/student_my_passes.html', {'passes': passes, 'student': student_obj if 'student_obj' in locals() else None})
@@ -1052,7 +1067,7 @@ class StudentMyPasses(StudentRequiredMixin, View):
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
             exit_pass = exitpasstable.objects.get(id=pass_id, student_id=student_obj)
             
-            if exit_pass.security_status == 'pending' and exit_pass.mentor_status in ['pending', 'approved']:
+            if exit_pass.security_status == 'pending' and exit_pass.mentor_status == 'pending':
                 exit_pass.mentor_status = 'cancelled'
                 exit_pass.save()
                 messages.success(request, "Pass cancelled successfully.")
@@ -1125,6 +1140,18 @@ class WebGetPassDetails(SecurityRequiredMixin, View):
             return JsonResponse({'success': False, 'message': 'Invalid, forged, or expired QR Code'})
         try:
             exit_pass = exitpasstable.objects.get(id=pass_id)
+            
+            try:
+                from django.utils import timezone
+                import datetime
+                now_local = timezone.localtime(timezone.now())
+                pass_date = timezone.localtime(exit_pass.created_at).date()
+                exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, exit_pass.time), timezone.get_current_timezone())
+                if now_local > exit_dt and exit_pass.security_status == 'pending':
+                    return JsonResponse({'success': False, 'message': 'This pass has expired.'})
+            except Exception:
+                pass
+                
             mentor_name = exit_pass.mentor_id.name if exit_pass.mentor_id else 'Unknown'
             
             message = 'Success'
@@ -1171,6 +1198,17 @@ class SecurityScanPass(SecurityRequiredMixin, View):
                 guard = securitytable.objects.get(LOGINID_id=user_id)
             except securitytable.DoesNotExist:
                 guard = None
+
+            try:
+                from django.utils import timezone
+                import datetime
+                now_local = timezone.localtime(timezone.now())
+                pass_date = timezone.localtime(exit_pass.created_at).date()
+                exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, exit_pass.time), timezone.get_current_timezone())
+                if now_local > exit_dt and exit_pass.security_status == 'pending':
+                    return JsonResponse({'success': False, 'message': 'This pass has expired.'})
+            except Exception:
+                pass
 
             if exit_pass.mentor_status == 'cancelled':
                 return JsonResponse({'success': False, 'message': 'Pass was cancelled by the student.'})

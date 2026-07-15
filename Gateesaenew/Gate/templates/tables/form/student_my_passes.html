@@ -128,7 +128,7 @@
                     <h3 class="font-bold text-slate-900 text-lg leading-tight mb-2">{{ pass.reason }}</h3>
                     <p class="text-sm font-semibold mb-1" style="color: #4f46e5;">Approved by {{
                         pass.mentor_id.name|default:"Mentor" }}</p>
-                    <p class="text-xs text-slate-500">{{ pass.created_at|date:"M d, Y" }} at {{ pass.time|time:"H:i" }}
+                    <p class="text-xs text-slate-500">{{ pass.created_at|date:"M d, Y" }} at {{ pass.time|time:"g:i A" }}
                     </p>
                 </div>
             </div>
@@ -137,8 +137,7 @@
                 <div class="flex justify-between items-start mb-3">
                     <div class="pr-10">
                         <h3 class="font-bold text-slate-900 text-lg leading-tight">{{ pass.reason }}</h3>
-                        <p class="text-sm text-slate-500 mt-1">{{ pass.created_at|date:"M d, Y" }} at {{
-                            pass.time|time:"H:i" }}</p>
+                        <p class="text-sm text-slate-500 mt-1">{{ pass.created_at|date:"M d, Y" }} at {{ pass.time|time:"g:i A" }}</p>
                     </div>
                 </div>
 

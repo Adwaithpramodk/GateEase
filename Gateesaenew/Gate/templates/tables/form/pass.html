@@ -210,6 +210,23 @@
             color: #4338ca;
             border-color: #d1d5db;
         }
+
+        .search-box {
+            padding: 10px 14px 10px 38px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+            min-width: 200px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
     </style>
 
     <!-- PWA Setup -->
@@ -238,8 +255,19 @@
         <div class="header" style="justify-content: flex-end;">
 
             <div class="controls">
+                <!-- Search bar -->
+                <form method="get" style="display:flex; gap:8px; align-items:center;">
+                    {% if selected_month %}<input type="hidden" name="month" value="{{ selected_month }}">{% endif %}
+                    <input type="text" name="q" value="{{ q }}" placeholder="Search student, reason, dept…" class="search-box">
+                    <button type="submit" class="export-btn" style="white-space:nowrap;">Search</button>
+                    {% if q %}
+                    <a href="/Pass{% if selected_month %}?month={{ selected_month }}{% endif %}" class="export-btn" style="background:#6b7280;">Clear</a>
+                    {% endif %}
+                </form>
+
                 <!-- Month filter -->
                 <form method="get">
+                    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
                     <select name="month" onchange="this.form.submit()">
                         <option value="">All Months</option>
                         {% for m in months %}

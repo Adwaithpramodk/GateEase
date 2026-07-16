@@ -27,6 +27,7 @@ urlpatterns = [
     path('ForgotPassword', ForgotPasswordWeb.as_view(), name='ForgotPassword'),
     path('ResetPassword', ResetPasswordWeb.as_view(), name='ResetPassword'),
    path('VerifyStudent',VerifyStudent.as_view(),name='verify_student'),
+   path('AdminAddStudent',AdminAddStudent.as_view(),name='admin_add_student'),
    path('Logout',Logout.as_view(),name='logout'),
    path('EditStudent/<int:id>',EditStudent.as_view(),name='edit_student'),
    path('AcceptStudent/<int:lid>',AcceptStudent.as_view(),name='AcceptStudent'),

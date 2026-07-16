@@ -184,7 +184,11 @@
                 </div>
                 <div class="form-col">
                     <label for="admn_no" class="form-label">Admission No.</label>
-                    <input type="number" id="admn_no" name="admn_no" class="input-field" placeholder="123456" required>
+                    <input type="text" id="admn_no" name="admn_no" class="input-field"
+                           placeholder="e.g. 5467"
+                           pattern="[0-9]{4}" minlength="4" maxlength="4"
+                           title="Must be exactly 4 digits (e.g. 5467)"
+                           inputmode="numeric" required>
                 </div>
             </div>
 

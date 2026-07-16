@@ -172,7 +172,12 @@ class EditStudentForm(ModelForm):
             }),
             "admn_no": forms.TextInput(attrs={
                 "required": True,
-                "placeholder": "Admission number",
+                "placeholder": "e.g. 5467",
+                "pattern": "[0-9]{4}",
+                "minlength": 4,
+                "maxlength": 4,
+                "title": "Must be exactly 4 digits (e.g. 5467)",
+                "inputmode": "numeric",
             }),
             "classs": forms.Select(attrs={
                 "required": True,
@@ -192,7 +197,7 @@ class EditStudentForm(ModelForm):
         return int(phone)
 
     def clean_admn_no(self):
-        admn_no = self.cleaned_data.get("admn_no")
-        if admn_no < 1000:
-            raise forms.ValidationError("Admission number must be at least 4 digits")
-        return admn_no
+        admn_no = str(self.cleaned_data.get("admn_no", "")).strip()
+        if not admn_no.isdigit() or len(admn_no) != 4:
+            raise forms.ValidationError("Admission number must be exactly 4 digits (e.g. 5467)")
+        return int(admn_no)

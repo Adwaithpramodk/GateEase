@@ -271,6 +271,57 @@
             color: #4338ca;
             border-color: #d1d5db;
         }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .search-add-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            padding: 9px 14px 9px 38px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+            min-width: 240px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+        }
+
+        .btn-add-student {
+            padding: 9px 18px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+
+        .btn-add-student:hover {
+            background: var(--primary-hover);
+        }
     </style>
 
     <!-- PWA Setup -->
@@ -294,7 +345,20 @@
 
     <div class="container">
         <a href="/HomePage" class="back-btn">&larr; Back to Dashboard</a>
-        <h2>Verify Students</h2>
+
+        <div class="page-header">
+            <h2>Verify Students</h2>
+            <div class="search-add-row">
+                <form method="get" style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" name="q" value="{{ q }}" placeholder="Search by name, email, class, admn no…" class="search-box">
+                    <button type="submit" class="btn" style="background:#6366f1;color:#fff;border:none;padding:9px 14px;">Search</button>
+                    {% if q %}
+                    <a href="/VerifyStudent" class="btn" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;">Clear</a>
+                    {% endif %}
+                </form>
+                <a href="/AdminAddStudent" class="btn-add-student">+ Add Student</a>
+            </div>
+        </div>
 
         <div class="card">
             <div class="table-wrapper">
@@ -372,7 +436,7 @@
                 </table>
                 <div class="pagination">
                     {% if students.has_previous %}
-                    <a href="?page={{ students.previous_page_number }}">Previous</a>
+                    <a href="?page={{ students.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">Previous</a>
                     {% endif %}
 
                     <span class="current">
@@ -380,7 +444,7 @@
                     </span>
 
                     {% if students.has_next %}
-                    <a href="?page={{ students.next_page_number }}">Next</a>
+                    <a href="?page={{ students.next_page_number }}{% if q %}&q={{ q }}{% endif %}">Next</a>
                     {% endif %}
                 </div>
 

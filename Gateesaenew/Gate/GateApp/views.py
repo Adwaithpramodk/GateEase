@@ -14,6 +14,7 @@ from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import transaction
+from django.db import models as models
 
 logger = logging.getLogger(__name__)
 
@@ -295,16 +296,72 @@ from django.core.paginator import Paginator
 from .models import studenttable
 class VerifyStudent(LoginRequiredMixin, View):
     def get(self, request):
+        q = request.GET.get('q', '').strip()
         students_list = studenttable.objects.all().order_by('-id')
-
+        if q:
+            students_list = students_list.filter(
+                models.Q(name__icontains=q) |
+                models.Q(email__icontains=q) |
+                models.Q(admn_no__icontains=q) |
+                models.Q(classs__class_name__icontains=q)
+            )
         paginator = Paginator(students_list, 10)
         page_number = request.GET.get('page')
         students = paginator.get_page(page_number)
         return render(
             request,
             'tables/form/verify_student.html',
-            {'students': students}
+            {'students': students, 'q': q}
         )
+
+class AdminAddStudent(AdminRequiredMixin, View):
+    """Allow admin to directly add a student without waiting for self-registration."""
+    def get(self, request):
+        classes = classstable.objects.all().order_by('class_name')
+        return render(request, 'tables/form/admin_add_student.html', {'classes': classes})
+
+    def post(self, request):
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        admn_no = request.POST.get('admn_no', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        class_id = request.POST.get('classs', '').strip()
+        password = request.POST.get('password', '').strip()
+
+        if not all([name, email, admn_no, phone, class_id, password]):
+            messages.error(request, 'All fields are required.')
+            return redirect('/AdminAddStudent')
+        if not admn_no.isdigit() or len(admn_no) != 4:
+            messages.error(request, 'Admission number must be exactly 4 digits (e.g. 5467).')
+            return redirect('/AdminAddStudent')
+        if len(password) < 8:
+            messages.error(request, 'Password must be at least 8 characters.')
+            return redirect('/AdminAddStudent')
+        if Logintable.objects.filter(username=email).exists() or studenttable.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered.')
+            return redirect('/AdminAddStudent')
+        if studenttable.objects.filter(admn_no=admn_no).exists():
+            messages.error(request, 'Admission number already registered.')
+            return redirect('/AdminAddStudent')
+        try:
+            class_obj = classstable.objects.get(id=class_id)
+            with transaction.atomic():
+                login_obj = Logintable.objects.create(
+                    username=email,
+                    password=make_password(password),
+                    usertype='Student'  # Admin-created accounts are immediately active
+                )
+                studenttable.objects.create(
+                    name=name, email=email, admn_no=admn_no,
+                    phone=phone, classs=class_obj, LOGINID=login_obj
+                )
+            messages.success(request, f'Student "{name}" added successfully and is immediately active.')
+            return redirect('/VerifyStudent')
+        except classstable.DoesNotExist:
+            messages.error(request, 'Selected class not found.')
+        except Exception as e:
+            messages.error(request, f'Error adding student: {str(e)}')
+        return redirect('/AdminAddStudent')
 
 class EditStudent(AdminOrMentorRequiredMixin, View):
     def get(self, request, id):
@@ -397,18 +454,26 @@ class Pass(AdminRequiredMixin, View):
         exitpasstable.objects.filter(mentor_status='pending', created_at__lt=threshold).delete()
 
         month = request.GET.get('month')
+        q = request.GET.get('q', '').strip()
 
         exitpasses = exitpasstable.objects.all().order_by('-created_at')
 
         if month:
             exitpasses = exitpasses.filter(created_at__month=month)
+        if q:
+            exitpasses = exitpasses.filter(
+                models.Q(student_id__name__icontains=q) |
+                models.Q(reason__icontains=q) |
+                models.Q(student_id__classs__department_id__name__icontains=q)
+            )
 
         months = range(1, 13)
 
         return render(request, 'tables/form/pass.html', {
             'exitpasses': exitpasses,
             'months': months,
-            'selected_month': int(month) if month else None
+            'selected_month': int(month) if month else None,
+            'q': q,
         })
     
 class ExportPassPDF(AdminRequiredMixin, View):
@@ -518,9 +583,29 @@ class DeleteAssignDept(AdminRequiredMixin, View):
         messages.success(request, "Deleted successfully")
         return redirect('/AssignDepartment') 
 #homepage login required
-class HomePage(LoginRequiredMixin,AdminRequiredMixin,View):
-    def get(self,request):
-        return render(request,'tables/form/homepage.html')
+class HomePage(LoginRequiredMixin, AdminRequiredMixin, View):
+    def get(self, request):
+        from django.db.models import Count
+        total_passes = exitpasstable.objects.count()
+        pending_passes = exitpasstable.objects.filter(mentor_status='pending').count()
+        approved_passes = exitpasstable.objects.filter(mentor_status='approved').count()
+        rejected_passes = exitpasstable.objects.filter(
+            models.Q(mentor_status='rejected') | models.Q(mentor_status='revoked')
+        ).count()
+        scanned_passes = exitpasstable.objects.filter(security_status='scanned').count()
+        pending_students = studenttable.objects.filter(LOGINID__usertype='pending').count()
+        total_students = studenttable.objects.filter(LOGINID__usertype='Student').count()
+        total_mentors = mentortable.objects.count()
+        return render(request, 'tables/form/homepage.html', {
+            'total_passes': total_passes,
+            'pending_passes': pending_passes,
+            'approved_passes': approved_passes,
+            'rejected_passes': rejected_passes,
+            'scanned_passes': scanned_passes,
+            'pending_students': pending_students,
+            'total_students': total_students,
+            'total_mentors': total_mentors,
+        })
 
 class MentorPendingPasses(MentorRequiredMixin, View):
     def get(self, request):
@@ -652,9 +737,16 @@ class MentorProfileUpdate(LoginRequiredMixin, View):
         return redirect('/MntrHome')
 
 class ManageMentor(AdminRequiredMixin, View):
-    def get(self,request):
-        mentor=mentortable.objects.all().order_by('-id')
-        return render(request, 'tables/form/mng_mntr.html',{'mentors':mentor})
+    def get(self, request):
+        q = request.GET.get('q', '').strip()
+        mentor = mentortable.objects.all().order_by('-id')
+        if q:
+            mentor = mentor.filter(
+                models.Q(name__icontains=q) |
+                models.Q(email__icontains=q) |
+                models.Q(department__name__icontains=q)
+            )
+        return render(request, 'tables/form/mng_mntr.html', {'mentors': mentor, 'q': q})
 
 class AddMentor(AdminRequiredMixin, View):
     def get(self, request):
@@ -876,7 +968,11 @@ class StudentRegister(View):
         if not all([name, email, admn_no, phone, class_id, password]):
             messages.error(request, "All fields are required!")
             return redirect('/StudentRegister')
-            
+
+        if not str(admn_no).isdigit() or len(str(admn_no)) != 4:
+            messages.error(request, "Admission number must be exactly 4 digits (e.g. 5467).")
+            return redirect('/StudentRegister')
+
         if len(password) < 8:
             messages.error(request, "Password must be at least 8 characters!")
             return redirect('/StudentRegister')
@@ -1374,6 +1470,9 @@ class UserReg_api(APIView):
 
             if studenttable.objects.filter(admn_no=admn_no).exists():
                 return Response({"message": "Admission Number already registered"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not str(admn_no).isdigit() or len(str(admn_no)) != 4:
+                return Response({"message": "Admission number must be exactly 4 digits"}, status=status.HTTP_400_BAD_REQUEST)
 
             password = request.data.get('password')
             if not password or len(password) < 8:

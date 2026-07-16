@@ -203,11 +203,13 @@
                             </span>
                             
                             <!-- Security Status Badge -->
+                            {% if pass.mentor_status != 'rejected' and pass.mentor_status != 'revoked' and pass.mentor_status != 'cancelled' %}
                             <span class="px-2.5 py-1 text-xs font-semibold rounded-md flex items-center gap-1
                                 {% if pass.security_status == 'scanned' %}bg-blue-50 text-blue-700
                                 {% else %}bg-slate-100 text-slate-600{% endif %}">
                                 Gate: {{ pass.security_status|title }}
                             </span>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}

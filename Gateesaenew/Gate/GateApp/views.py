@@ -297,7 +297,7 @@ class VerifyStudent(LoginRequiredMixin, View):
     def get(self, request):
         students_list = studenttable.objects.all().order_by('-id')
 
-        paginator = Paginator(students_list, 15)
+        paginator = Paginator(students_list, 10)
         page_number = request.GET.get('page')
         students = paginator.get_page(page_number)
         return render(
@@ -953,33 +953,33 @@ class StudentNewPass(StudentRequiredMixin, View):
 
         now_local = timezone.localtime()
         
-        # ── Limit of 2 passes per hour ──
-        one_hour_ago = now_local - datetime.timedelta(hours=1)
-        recent_passes_count = exitpasstable.objects.filter(
-            student_id=student_obj,
-            created_at__gte=one_hour_ago
-        ).count()
+        # # ── Limit of 2 passes per hour ──
+        # one_hour_ago = now_local - datetime.timedelta(hours=1)
+        # recent_passes_count = exitpasstable.objects.filter(
+        #     student_id=student_obj,
+        #     created_at__gte=one_hour_ago
+        # ).count()
         
-        if recent_passes_count >= 2:
-            messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
-            return redirect('/StudentNewPass')
+        # if recent_passes_count >= 2:
+        #     messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
+        #     return redirect('/StudentNewPass')
 
-        exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
-        exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
+        # exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
+        # exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
         
-        if exit_datetime <= now_local:
-            messages.error(request, "Exit time must be in the future")
-            return redirect('/StudentNewPass')
+        # if exit_datetime <= now_local:
+        #     messages.error(request, "Exit time must be in the future")
+        #     return redirect('/StudentNewPass')
 
-        window_open  = datetime.time(10, 0)
-        window_close = datetime.time(15, 40)
-        current_time = now_local.time()
+        # window_open  = datetime.time(10, 0)
+        # window_close = datetime.time(15, 40)
+        # current_time = now_local.time()
         
-        if not (window_open <= current_time <= window_close):
-            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-            return redirect('/StudentNewPass')
+        # if not (window_open <= current_time <= window_close):
+        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+        #     return redirect('/StudentNewPass')
 
-        formatted_time = time_obj.strftime('%I:%M %p')
+        # formatted_time = time_obj.strftime('%I:%M %p')
         
         try:
             exitpasstable.objects.create(
@@ -1048,7 +1048,7 @@ class StudentMyPasses(StudentRequiredMixin, View):
                     exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, p.time), timezone.get_current_timezone())
                     show_qr_time = exit_dt - datetime.timedelta(minutes=15)
                     p.is_qr_visible = now_local >= show_qr_time
-                    if now_local > exit_dt and p.security_status == 'pending':
+                    if now_local >= exit_dt + datetime.timedelta(minutes=1) and p.security_status == 'pending':
                         p.is_expired = True
                     else:
                         p.is_expired = False
@@ -1147,7 +1147,7 @@ class WebGetPassDetails(SecurityRequiredMixin, View):
                 now_local = timezone.localtime(timezone.now())
                 pass_date = timezone.localtime(exit_pass.created_at).date()
                 exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, exit_pass.time), timezone.get_current_timezone())
-                if now_local > exit_dt and exit_pass.security_status == 'pending':
+                if now_local >= exit_dt + datetime.timedelta(minutes=1) and exit_pass.security_status == 'pending':
                     return JsonResponse({'success': False, 'message': 'This pass has expired.'})
             except Exception:
                 pass
@@ -1205,7 +1205,7 @@ class SecurityScanPass(SecurityRequiredMixin, View):
                 now_local = timezone.localtime(timezone.now())
                 pass_date = timezone.localtime(exit_pass.created_at).date()
                 exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, exit_pass.time), timezone.get_current_timezone())
-                if now_local > exit_dt and exit_pass.security_status == 'pending':
+                if now_local >= exit_dt + datetime.timedelta(minutes=1) and exit_pass.security_status == 'pending':
                     return JsonResponse({'success': False, 'message': 'This pass has expired.'})
             except Exception:
                 pass
@@ -2727,7 +2727,7 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
         # Filter students strictly by the mentor's assigned classes
         students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids).order_by('-id')
 
-        paginator = Paginator(students_list, 15)
+        paginator = Paginator(students_list, 10)
         page_number = request.GET.get('page')
         students = paginator.get_page(page_number)
         

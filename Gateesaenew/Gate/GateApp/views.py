@@ -456,7 +456,7 @@ class Pass(AdminRequiredMixin, View):
         month = request.GET.get('month')
         q = request.GET.get('q', '').strip()
 
-        exitpasses = exitpasstable.objects.all().order_by('-created_at')
+        exitpasses = exitpasstable.objects.select_related('student_id__classs__department_id', 'mentor_id').all().order_by('-created_at')
 
         if month:
             exitpasses = exitpasses.filter(created_at__month=month)
@@ -1140,28 +1140,40 @@ class StudentMyPasses(StudentRequiredMixin, View):
         user_id = request.session.get('user_id')
         try:
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
-            passes = exitpasstable.objects.filter(student_id=student_obj).order_by('-id')
+            passes_list = exitpasstable.objects.filter(student_id=student_obj).select_related('mentor_id').order_by('-id')
+            
+            # Pagination
+            paginator = Paginator(passes_list, 15)
+            page_number = request.GET.get('page')
+            passes = paginator.get_page(page_number)
+            
             from GateApp.encryption import encrypt_pass_id
             from django.utils import timezone
             import datetime
             now_local = timezone.localtime(timezone.now())
             for p in passes:
-                p.encrypted_token = encrypt_pass_id(p.id)
                 try:
                     pass_date = timezone.localtime(p.created_at).date()
                     exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, p.time), timezone.get_current_timezone())
                     show_qr_time = exit_dt - datetime.timedelta(minutes=15)
                     p.is_qr_visible = now_local >= show_qr_time
-                    if now_local >= exit_dt + datetime.timedelta(minutes=1) and p.security_status == 'pending':
+                    if now_local >= exit_dt + datetime.timedelta(minutes=15) and p.security_status == 'pending':
                         p.is_expired = True
                     else:
                         p.is_expired = False
                 except Exception:
                     p.is_qr_visible = True
                     p.is_expired = False
+                
+                # Only encrypt if the pass is not expired and hasn't been scanned/rejected
+                if not p.is_expired and p.security_status == 'pending' and p.mentor_status in ['pending', 'approved']:
+                    p.encrypted_token = encrypt_pass_id(p.id)
+                else:
+                    p.encrypted_token = None
+                    
         except studenttable.DoesNotExist:
             passes = []
-        return render(request, 'tables/form/student_my_passes.html', {'passes': passes, 'student': student_obj if 'student_obj' in locals() else None})
+        return render(request, 'tables/form/student_my_passes.html', {'passes': passes, 'page_obj': passes if passes else None, 'student': student_obj if 'student_obj' in locals() else None})
 
     def post(self, request):
         user_id = request.session.get('user_id')
@@ -1189,9 +1201,9 @@ class StudentHome(StudentRequiredMixin, View):
         try:
             student = studenttable.objects.get(LOGINID_id=user_id)
             # Fetch recent passes
-            recent_passes = exitpasstable.objects.filter(student_id=student).order_by('-id')[:5]
+            recent_passes = exitpasstable.objects.filter(student_id=student).select_related('mentor_id').order_by('-id')[:5]
             # Fetch latest/current pass explicitly
-            current_pass = exitpasstable.objects.filter(student_id=student).order_by('-id').first()
+            current_pass = exitpasstable.objects.filter(student_id=student).select_related('mentor_id').order_by('-id').first()
         except studenttable.DoesNotExist:
             student = None
             recent_passes = []
@@ -1254,7 +1266,7 @@ class WebGetPassDetails(SecurityRequiredMixin, View):
                 now_local = timezone.localtime(timezone.now())
                 pass_date = timezone.localtime(exit_pass.created_at).date()
                 exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, exit_pass.time), timezone.get_current_timezone())
-                if now_local >= exit_dt + datetime.timedelta(minutes=1) and exit_pass.security_status == 'pending':
+                if now_local >= exit_dt + datetime.timedelta(minutes=15) and exit_pass.security_status == 'pending':
                     return JsonResponse({'success': False, 'message': 'This pass has expired.'})
             except Exception:
                 pass
@@ -1312,7 +1324,7 @@ class SecurityScanPass(SecurityRequiredMixin, View):
                 now_local = timezone.localtime(timezone.now())
                 pass_date = timezone.localtime(exit_pass.created_at).date()
                 exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, exit_pass.time), timezone.get_current_timezone())
-                if now_local >= exit_dt + datetime.timedelta(minutes=1) and exit_pass.security_status == 'pending':
+                if now_local >= exit_dt + datetime.timedelta(minutes=15) and exit_pass.security_status == 'pending':
                     return JsonResponse({'success': False, 'message': 'This pass has expired.'})
             except Exception:
                 pass

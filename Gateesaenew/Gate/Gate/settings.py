@@ -231,3 +231,7 @@ SESSION_COOKIE_AGE = 2592000  # 30 days in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_NAME = 'gateease_session'
+
+# Optimize Session Engine for faster Login/Logout
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'

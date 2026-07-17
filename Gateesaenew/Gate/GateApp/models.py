@@ -1,4 +1,19 @@
 from django.db import models
+from io import BytesIO
+from PIL import Image
+from django.core.files import File
+
+def compress_image(image, quality=70, max_size=(800, 800)):
+    if not image:
+        return image
+    im = Image.open(image)
+    if im.mode != 'RGB':
+        im = im.convert('RGB')
+    im.thumbnail(max_size)
+    im_io = BytesIO()
+    im.save(im_io, 'JPEG', quality=quality)
+    new_image = File(im_io, name=image.name.split('.')[0] + '.jpg')
+    return new_image
 
 class Logintable(models.Model):
     username=models.CharField(max_length=100, null=True, blank=True, db_index=True) 
@@ -99,6 +114,18 @@ class studenttable(models.Model):
     def __str__(self):
         batch_name = self.classs.class_name if self.classs else "No Batch"
         return f"{self.name} ({batch_name})"
+        
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old_instance = studenttable.objects.get(pk=self.pk)
+                if old_instance.Photo != self.Photo and self.Photo:
+                    self.Photo = compress_image(self.Photo)
+            except studenttable.DoesNotExist:
+                pass
+        elif self.Photo:
+            self.Photo = compress_image(self.Photo)
+        super().save(*args, **kwargs)
 
 
 class mentortable(models.Model):
@@ -108,6 +135,18 @@ class mentortable(models.Model):
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     department=models.ForeignKey(departmenttable,on_delete=models.CASCADE,null=True,blank=True)
     image = models.ImageField(upload_to='profile_photos/mentors/', null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old_instance = mentortable.objects.get(pk=self.pk)
+                if old_instance.image != self.image and self.image:
+                    self.image = compress_image(self.image)
+            except mentortable.DoesNotExist:
+                pass
+        elif self.image:
+            self.image = compress_image(self.image)
+        super().save(*args, **kwargs)
 
 
 class exitpasstable(models.Model):
@@ -138,6 +177,18 @@ class securitytable(models.Model):
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     Photo = models.ImageField(upload_to='profile_photos/security/', null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old_instance = securitytable.objects.get(pk=self.pk)
+                if old_instance.Photo != self.Photo and self.Photo:
+                    self.Photo = compress_image(self.Photo)
+            except securitytable.DoesNotExist:
+                pass
+        elif self.Photo:
+            self.Photo = compress_image(self.Photo)
+        super().save(*args, **kwargs)
 
 
 class class_assigntable(models.Model):

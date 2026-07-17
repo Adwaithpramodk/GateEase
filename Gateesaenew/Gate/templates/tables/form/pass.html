@@ -323,10 +323,32 @@
                             </div>
                         </td>
                     </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 20px;">No exit passes found.</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        {% if page_obj.has_other_pages %}
+        <div style="display: flex; justify-content: center; margin-top: 20px; gap: 5px;">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="export-btn" style="background:#4f46e5; text-decoration:none;">&laquo; First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="export-btn" style="background:#4f46e5; text-decoration:none;">Previous</a>
+            {% endif %}
+
+            <span style="padding: 10px; font-weight: 500;">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="export-btn" style="background:#4f46e5; text-decoration:none;">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="export-btn" style="background:#4f46e5; text-decoration:none;">Last &raquo;</a>
+            {% endif %}
+        </div>
+        {% endif %}
 
     </div>
 

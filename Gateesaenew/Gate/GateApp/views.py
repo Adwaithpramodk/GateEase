@@ -467,13 +467,19 @@ class Pass(AdminRequiredMixin, View):
                 models.Q(student_id__classs__department_id__name__icontains=q)
             )
 
+        # Pagination
+        paginator = Paginator(exitpasses, 15) # Show 15 passes per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
         months = range(1, 13)
 
         return render(request, 'tables/form/pass.html', {
-            'exitpasses': exitpasses,
+            'exitpasses': page_obj,  # Using page_obj for the template
             'months': months,
             'selected_month': int(month) if month else None,
             'q': q,
+            'page_obj': page_obj, # Pass page_obj explicitly for pagination controls
         })
     
 class ExportPassPDF(AdminRequiredMixin, View):

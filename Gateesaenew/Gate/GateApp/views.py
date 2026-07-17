@@ -1051,33 +1051,33 @@ class StudentNewPass(StudentRequiredMixin, View):
 
         now_local = timezone.localtime()
         
-        # ── Limit of 2 passes per hour ──
-        one_hour_ago = now_local - datetime.timedelta(hours=1)
-        recent_passes_count = exitpasstable.objects.filter(
-            student_id=student_obj,
-            created_at__gte=one_hour_ago
-        ).count()
+        # # ── Limit of 2 passes per hour ──
+        # one_hour_ago = now_local - datetime.timedelta(hours=1)
+        # recent_passes_count = exitpasstable.objects.filter(
+        #     student_id=student_obj,
+        #     created_at__gte=one_hour_ago
+        # ).count()
         
-        if recent_passes_count >= 2:
-            messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
-            return redirect('/StudentNewPass')
+        # if recent_passes_count >= 2:
+        #     messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
+        #     return redirect('/StudentNewPass')
 
-        exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
-        exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
+        # exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
+        # exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
         
-        if exit_datetime <= now_local:
-            messages.error(request, "Exit time must be in the future")
-            return redirect('/StudentNewPass')
+        # if exit_datetime <= now_local:
+        #     messages.error(request, "Exit time must be in the future")
+        #     return redirect('/StudentNewPass')
 
-        window_open  = datetime.time(10, 0)
-        window_close = datetime.time(15, 40)
-        current_time = now_local.time()
+        # window_open  = datetime.time(10, 0)
+        # window_close = datetime.time(15, 40)
+        # current_time = now_local.time()
         
-        if not (window_open <= current_time <= window_close):
-            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-            return redirect('/StudentNewPass')
+        # if not (window_open <= current_time <= window_close):
+        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+        #     return redirect('/StudentNewPass')
 
-        formatted_time = time_obj.strftime('%I:%M %p')
+        # formatted_time = time_obj.strftime('%I:%M %p')
         
         try:
             exitpasstable.objects.create(

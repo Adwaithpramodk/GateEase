@@ -639,6 +639,8 @@ class MentorPendingPasses(MentorRequiredMixin, View):
             if action == 'approve':
                 exit_pass.mentor_status = 'approved'
                 exit_pass.mentor_id = mentor_obj
+                from django.utils import timezone
+                exit_pass.approved_at = timezone.now()
                 exit_pass.save()
                 messages.success(request, f"Pass for {exit_pass.student_id.name} approved.")
             elif action == 'reject':

@@ -178,52 +178,8 @@
             </a>
         </div>
 
-        <!-- Recent Passes Section -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-800">Recent Activity</h2>
-                <a href="/StudentMyPasses" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">View All</a>
-            </div>
-            
-            <div class="divide-y divide-slate-100">
-                {% if recent_passes %}
-                    {% for pass in recent_passes %}
-                    <div class="p-5 hover:bg-slate-50 transition-colors">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-medium text-slate-900 truncate pr-4">{{ pass.reason }}</h4>
-                            <span class="text-xs text-slate-500 whitespace-nowrap">{{ pass.created_at|date:"M d" }}</span>
-                        </div>
-                        <div class="flex items-center gap-2 mt-3">
-                            <!-- Mentor Status Badge -->
-                            <span class="px-2.5 py-1 text-xs font-semibold rounded-md flex items-center gap-1
-                                {% if pass.mentor_status == 'pending' %}bg-amber-50 text-amber-700
-                                {% elif pass.mentor_status == 'approved' %}bg-emerald-50 text-emerald-700
-                                {% else %}bg-red-50 text-red-700{% endif %}">
-                                Mentor: {{ pass.mentor_status|title }}
-                            </span>
-                            
-                            <!-- Security Status Badge -->
-                            {% if pass.mentor_status != 'rejected' and pass.mentor_status != 'revoked' and pass.mentor_status != 'cancelled' %}
-                            <span class="px-2.5 py-1 text-xs font-semibold rounded-md flex items-center gap-1
-                                {% if pass.security_status == 'scanned' %}bg-blue-50 text-blue-700
-                                {% else %}bg-slate-100 text-slate-600{% endif %}">
-                                Gate: {{ pass.security_status|title }}
-                            </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="p-10 text-center flex flex-col items-center">
-                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        </div>
-                        <p class="text-slate-500 font-medium">No recent passes</p>
-                        <p class="text-slate-400 text-sm mt-1">Apply for a pass to see it here.</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
+        <!-- Current Pass Timeline Component -->
+        {% include 'components/pass_timeline.html' %}
     </main>
 
     <!-- Bottom Navigation Bar (Mobile / Tablet) -->

@@ -1182,10 +1182,13 @@ class StudentHome(StudentRequiredMixin, View):
             student = studenttable.objects.get(LOGINID_id=user_id)
             # Fetch recent passes
             recent_passes = exitpasstable.objects.filter(student_id=student).order_by('-id')[:5]
+            # Fetch latest/current pass explicitly
+            current_pass = exitpasstable.objects.filter(student_id=student).order_by('-id').first()
         except studenttable.DoesNotExist:
             student = None
             recent_passes = []
-        return render(request, 'tables/form/student_home.html', {'student': student, 'recent_passes': recent_passes})
+            current_pass = None
+        return render(request, 'tables/form/student_home.html', {'student': student, 'recent_passes': recent_passes, 'current_pass': current_pass})
 
 from django.http import JsonResponse
 from GateApp.encryption import encrypt_pass_id, decrypt_pass_id

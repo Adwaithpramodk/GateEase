@@ -615,7 +615,7 @@ class HomePage(LoginRequiredMixin, AdminRequiredMixin, View):
 
 class MentorPendingPasses(MentorRequiredMixin, View):
     def get(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
             assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
@@ -628,7 +628,7 @@ class MentorPendingPasses(MentorRequiredMixin, View):
         return render(request, 'tables/form/mentor_pending_passes.html', {'passes': pending_passes, 'mentor': mentor_obj if 'mentor_obj' in locals() else None})
 
     def post(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         pass_id = request.POST.get('pass_id')
         action = request.POST.get('action')
         
@@ -664,7 +664,7 @@ class MentorPendingPasses(MentorRequiredMixin, View):
 
 class MentorApprovedPasses(MentorRequiredMixin, View):
     def get(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
             assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
@@ -680,7 +680,7 @@ class MentorApprovedPasses(MentorRequiredMixin, View):
         return render(request, 'tables/form/mentor_approved_passes.html', {'passes': approved_passes, 'mentor': mentor_obj if 'mentor_obj' in locals() else None})
 
     def post(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         pass_id = request.POST.get('pass_id')
         action = request.POST.get('action')
         
@@ -709,7 +709,7 @@ class MentorApprovedPasses(MentorRequiredMixin, View):
 
 class MntrHome(MentorRequiredMixin, View):
     def get(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             mentor = mentortable.objects.get(LOGINID_id=user_id)
         except mentortable.DoesNotExist:
@@ -718,7 +718,7 @@ class MntrHome(MentorRequiredMixin, View):
 
 class MentorProfileUpdate(LoginRequiredMixin, View):
     def get(self, request):
-        l_id = request.session.get('user_id')
+        l_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             mentor = mentortable.objects.get(LOGINID_id=l_id)
             return render(request, 'tables/form/mentor_profile.html', {'mentor': mentor})
@@ -726,7 +726,7 @@ class MentorProfileUpdate(LoginRequiredMixin, View):
             return redirect('/login')
         
     def post(self, request):
-        l_id = request.session.get('user_id')
+        l_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         mentor = mentortable.objects.get(LOGINID_id=l_id)
         
         name = request.POST.get('name')
@@ -1019,12 +1019,12 @@ class StudentRegister(View):
 
 class StudentNewPass(StudentRequiredMixin, View):
     def get(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         student_obj = studenttable.objects.get(LOGINID_id=user_id)
         return render(request, 'tables/form/student_new_pass.html', {'student': student_obj})
 
     def post(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
         except studenttable.DoesNotExist:
@@ -1101,7 +1101,7 @@ class StudentNewPass(StudentRequiredMixin, View):
 
 class StudentComplaint(StudentRequiredMixin, View):
     def get(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
             complaints = complainttable.objects.filter(student_id=student_obj).order_by('-id')
@@ -1111,7 +1111,7 @@ class StudentComplaint(StudentRequiredMixin, View):
         return render(request, 'tables/form/student_complaint.html', {'student': student_obj, 'complaints': complaints})
 
     def post(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
         except studenttable.DoesNotExist:
@@ -1137,7 +1137,7 @@ class StudentComplaint(StudentRequiredMixin, View):
 
 class StudentMyPasses(StudentRequiredMixin, View):
     def get(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             student_obj = studenttable.objects.get(LOGINID_id=user_id)
             passes_list = exitpasstable.objects.filter(student_id=student_obj).select_related('mentor_id').order_by('-id')
@@ -1176,7 +1176,7 @@ class StudentMyPasses(StudentRequiredMixin, View):
         return render(request, 'tables/form/student_my_passes.html', {'passes': passes, 'page_obj': passes if passes else None, 'student': student_obj if 'student_obj' in locals() else None})
 
     def post(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         pass_id = request.POST.get('pass_id')
         
         try:
@@ -1197,7 +1197,7 @@ class StudentMyPasses(StudentRequiredMixin, View):
 
 class StudentHome(StudentRequiredMixin, View):
     def get(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             student = studenttable.objects.get(LOGINID_id=user_id)
             # Fetch recent passes
@@ -1221,7 +1221,7 @@ class WebGenerateQRCode(StudentRequiredMixin, View):
         if not pass_id:
             return HttpResponse("Invalid Token", status=400)
         try:
-            exit_pass = exitpasstable.objects.get(id=pass_id, student_id__LOGINID_id=request.session.get('user_id'))
+            exit_pass = exitpasstable.objects.get(id=pass_id, student_id__LOGINID_id=(getattr(request, 'jwt_user_id', None) or request.session.get('user_id')))
             qr = qrcode.make(token)
             buffer = BytesIO()
             qr.save(buffer, format="PNG")
@@ -1235,7 +1235,7 @@ class WebCheckPassStatus(StudentRequiredMixin, View):
         if not pass_id:
             return JsonResponse({'error': 'Invalid token'}, status=400)
         try:
-            exit_pass = exitpasstable.objects.get(id=pass_id, student_id__LOGINID_id=request.session.get('user_id'))
+            exit_pass = exitpasstable.objects.get(id=pass_id, student_id__LOGINID_id=(getattr(request, 'jwt_user_id', None) or request.session.get('user_id')))
             return JsonResponse({'security_status': exit_pass.security_status})
         except exitpasstable.DoesNotExist:
             return JsonResponse({'error': 'Not found'}, status=404)
@@ -1311,7 +1311,7 @@ class SecurityScanPass(SecurityRequiredMixin, View):
             exit_pass = exitpasstable.objects.get(id=pass_id)
 
             # Identify the acting guard for the audit trail
-            user_id = request.session.get('user_id')
+            user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
             try:
                 from GateApp.models import securitytable
                 guard = securitytable.objects.get(LOGINID_id=user_id)
@@ -1356,7 +1356,7 @@ class SecurityScanPass(SecurityRequiredMixin, View):
 
 class SecurityHome(SecurityRequiredMixin, View):
     def get(self, request):
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             security_guard = securitytable.objects.get(LOGINID_id=user_id)
             # Fetch recently scanned passes for today
@@ -2681,7 +2681,7 @@ class DeleteDeviceTokenAPI(JWTAuthMixin, APIView):
 
 class MentorGroupPassCreate(MentorRequiredMixin, View):
     def get(self, request):
-        mentor_dept_id = request.session.get('user_id')
+        mentor_dept_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
         if not mentor_obj:
             messages.error(request, "Mentor Profile Not Found")
@@ -2712,7 +2712,7 @@ class MentorGroupPassCreate(MentorRequiredMixin, View):
         )
 
     def post(self, request):
-        mentor_dept_id = request.session.get('user_id')
+        mentor_dept_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
         if not mentor_obj:
             messages.error(request, "Mentor Profile Not Found")
@@ -2759,7 +2759,7 @@ from collections import defaultdict
 
 class MentorAnalyticsView(MentorRequiredMixin, View):
     def get(self, request):
-        mentor_dept_id = request.session.get('user_id')
+        mentor_dept_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
         if not mentor_obj:
             messages.error(request, "Mentor Profile Not Found")
@@ -2794,7 +2794,7 @@ class MentorAnalyticsView(MentorRequiredMixin, View):
 
 class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
     def get(self, request):
-        mentor_dept_id = request.session.get('user_id')
+        mentor_dept_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
         if not mentor_obj:
             messages.error(request, "Mentor Profile Not Found")
@@ -2833,7 +2833,7 @@ class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
 
 class VerifyStudentMentor(MentorRequiredMixin, View):
     def get(self, request):
-        mentor_dept_id = request.session.get('user_id')
+        mentor_dept_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         # Use LOGINID_id or connect via LOGINID object
         mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
         
@@ -2921,7 +2921,7 @@ class SecurityGroupPass(SecurityRequiredMixin, View):
         
         result.sort(key=lambda x: x['time'] if x['time'] else "", reverse=True)
             
-        user_id = request.session.get('user_id')
+        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             security_guard = securitytable.objects.get(LOGINID_id=user_id)
         except securitytable.DoesNotExist:

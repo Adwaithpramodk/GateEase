@@ -17,11 +17,11 @@
     <meta property="og:title" content="GateEase - Marymatha College">
     <meta property="og:description" content="Official digital exit pass system for Marymatha College.">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
     <link rel="shortcut icon" href="{% static 'favicon.png' %}">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#ffffff">
     <style>
         * {
             box-sizing: border-box;
@@ -30,165 +30,225 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
-            min-height: 100vh;
-            color: #0f172a;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Top Header Bar */
-        .top-header {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            padding: 32px 20px 100px 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .top-header .college-name {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 8px;
-        }
-
-        .top-header h1 {
-            font-size: 34px;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -1px;
-        }
-
-        .top-header p {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            margin-top: 6px;
-        }
-
-        /* Main Content Area */
-        .content-wrapper {
-            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 0 16px 32px 16px;
-            margin-top: -60px;
-            position: relative;
-            z-index: 2;
+            justify-content: center;
+            min-height: 100vh;
+            color: #0f172a;
+            padding: 20px;
         }
 
-        /* Login Card */
-        .login-card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px -15px rgba(79, 70, 229, 0.15);
-            padding: 32px 28px;
+        .main-container {
+            display: flex;
             width: 100%;
-            max-width: 420px;
-            border: 1px solid #e2e8f0;
+            max-width: 1100px;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        .login-card h2 {
-            font-size: 20px;
+        /* Left Side: Information */
+        .info-panel {
+            flex: 1;
+            background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%);
+            color: #ffffff;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Decorative background elements for premium feel */
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            filter: blur(40px);
+            z-index: 0;
+        }
+
+        .info-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -10%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            filter: blur(40px);
+            z-index: 0;
+        }
+
+        .info-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .info-content h2 {
+            font-size: 42px;
             font-weight: 800;
-            color: #1e293b;
-            margin-bottom: 4px;
-            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
         }
 
-        .login-card .subtext {
-            text-align: center;
+        .info-content p.subtitle {
+            font-size: 18px;
+            color: #e0e7ff;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .feature-icon {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .feature-text h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .feature-text p {
+            font-size: 14px;
+            color: #c7d2fe;
+            line-height: 1.4;
+        }
+
+        /* Right Side: Login Form */
+        .login-panel {
+            flex: 1;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #ffffff;
+        }
+
+        .login-header {
+            margin-bottom: 32px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
             color: #64748b;
-            font-size: 13px;
-            margin-bottom: 24px;
+            font-size: 15px;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .form-label {
             display: block;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             color: #334155;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .input-field {
             width: 100%;
             padding: 14px 16px;
-            border: 1.5px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             color: #1e293b;
             transition: all 0.2s ease;
             background-color: #f8fafc;
-            font-family: 'Inter', sans-serif;
-            -webkit-appearance: none;
-            appearance: none;
         }
 
         .input-field:focus {
             outline: none;
-            border-color: #6366f1;
+            border-color: #4f46e5;
             background-color: #ffffff;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
 
         .forgot-link-container {
             display: flex;
             justify-content: flex-end;
-            margin-bottom: 20px;
+            margin-bottom: 28px;
         }
 
         .forgot-link {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             color: #4f46e5;
             text-decoration: none;
-            padding: 4px 0;
+            transition: color 0.2s ease;
         }
 
         .forgot-link:hover {
+            color: #3730a3;
             text-decoration: underline;
         }
 
         .btn-primary {
             width: 100%;
-            padding: 15px 16px;
+            padding: 14px 16px;
             background-color: #4f46e5;
             color: #ffffff;
             border: none;
             border-radius: 10px;
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
         }
 
         .btn-primary:hover {
             background-color: #4338ca;
-        }
-
-        .btn-primary:active {
-            transform: scale(0.98);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.3);
         }
 
         .register-footer {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 32px;
             font-size: 14px;
             color: #64748b;
         }
 
         .register-footer a {
-            font-weight: 700;
+            font-weight: 600;
             color: #4f46e5;
             text-decoration: none;
         }
@@ -197,286 +257,103 @@
             text-decoration: underline;
         }
 
-        /* Features Section */
-        .features-section {
-            width: 100%;
-            max-width: 900px;
-            margin-top: 36px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .feature-box {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 24px 20px;
+        .login-footer {
+            margin-top: 40px;
             text-align: center;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.04);
-            transition: all 0.2s ease;
-        }
-
-        .feature-box:hover {
-            border-color: #c7d2fe;
-        }
-
-        .feature-box .icon-wrap {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            border-radius: 12px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            margin: 0 auto 14px;
-        }
-
-        .feature-box .icon-wrap svg {
-            color: #ffffff;
-        }
-
-        .feature-box h4 {
+            gap: 18px;
+            color: #475569;
             font-size: 14px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 6px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+            backdrop-filter: blur(10px);
+            padding: 24px 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .feature-box p {
-            font-size: 13px;
-            color: #64748b;
-            line-height: 1.5;
+        .login-footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #4f46e5, transparent);
+            opacity: 0.5;
         }
 
-        /* Footer */
-        .site-footer {
-            text-align: center;
-            padding: 20px 16px;
-            color: #94a3b8;
-            font-size: 13px;
-            border-top: 1px solid #e2e8f0;
-            background: #ffffff;
+        .footer-text {
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin: 0;
         }
 
-        .site-footer span {
+        .footer-text span {
             color: #4f46e5;
             font-weight: 700;
         }
 
         .btn-install {
-            background: #10b981;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 24px;
+            border-radius: 50px;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 8px;
-            transition: background 0.2s ease;
-            font-family: 'Inter', sans-serif;
-            margin-top: 10px;
-            -webkit-tap-highlight-color: transparent;
+            gap: 10px;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .btn-install:hover {
-            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(16, 185, 129, 0.35);
         }
 
-        /* ========== TABLET ========== */
-        @media (max-width: 768px) {
-            .top-header {
-                padding: 28px 16px 72px 16px;
+        .btn-install svg {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+                max-width: 500px;
             }
 
-            .top-header h1 {
-                font-size: 28px;
+            .info-panel {
+                padding: 40px;
             }
 
-            .top-header p {
-                font-size: 13px;
+            .info-content h2 {
+                font-size: 32px;
             }
 
-            .content-wrapper {
-                margin-top: -48px;
-                padding: 0 14px 28px 14px;
-            }
-
-            .login-card {
-                padding: 28px 22px;
-                border-radius: 14px;
-            }
-
-            .login-card h2 {
-                font-size: 19px;
-            }
-
-            .features-section {
-                grid-template-columns: 1fr;
-                max-width: 420px;
-                margin-top: 28px;
-                gap: 12px;
-            }
-
-            .feature-box {
-                text-align: left;
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                padding: 18px 20px;
-            }
-
-            .feature-box .icon-wrap {
-                margin: 0;
-                flex-shrink: 0;
-                width: 44px;
-                height: 44px;
-                border-radius: 10px;
-            }
-
-            .feature-box h4 {
-                margin-bottom: 2px;
+            .login-panel {
+                padding: 40px;
             }
         }
 
-        /* ========== MOBILE ========== */
         @media (max-width: 480px) {
-            .top-header {
-                padding: 24px 14px 64px 14px;
-            }
 
-            .top-header .college-name {
-                font-size: 10px;
-                letter-spacing: 1.5px;
-            }
-
-            .top-header h1 {
-                font-size: 26px;
-            }
-
-            .top-header p {
-                font-size: 12px;
-                margin-top: 4px;
-            }
-
-            .content-wrapper {
-                margin-top: -44px;
-                padding: 0 12px 24px 12px;
-            }
-
-            .login-card {
-                padding: 24px 18px;
-                border-radius: 12px;
-            }
-
-            .login-card h2 {
-                font-size: 18px;
-            }
-
-            .login-card .subtext {
-                font-size: 12px;
-                margin-bottom: 20px;
-            }
-
-            .form-group {
-                margin-bottom: 14px;
-            }
-
-            .form-label {
-                font-size: 12px;
-            }
-
-            .input-field {
-                padding: 13px 14px;
-                font-size: 16px;
-                border-radius: 8px;
-            }
-
-            .forgot-link-container {
-                margin-bottom: 18px;
-            }
-
-            .forgot-link {
-                font-size: 12px;
-            }
-
-            .btn-primary {
-                padding: 14px 16px;
-                font-size: 15px;
-                border-radius: 8px;
-            }
-
-            .register-footer {
-                font-size: 13px;
-                margin-top: 18px;
-            }
-
-            .features-section {
-                margin-top: 24px;
-                gap: 10px;
-            }
-
-            .feature-box {
-                padding: 16px 18px;
-                gap: 14px;
-                border-radius: 12px;
-            }
-
-            .feature-box .icon-wrap {
-                width: 40px;
-                height: 40px;
-                border-radius: 8px;
-            }
-
-            .feature-box .icon-wrap svg {
-                width: 18px;
-                height: 18px;
-            }
-
-            .feature-box h4 {
-                font-size: 13px;
-            }
-
-            .feature-box p {
-                font-size: 12px;
-            }
-
-            .site-footer {
-                padding: 16px 14px;
-                font-size: 12px;
-            }
-
-            .btn-install {
-                padding: 9px 18px;
-                font-size: 12px;
-                margin-top: 8px;
-            }
-        }
-
-        /* ========== SMALL MOBILE ========== */
-        @media (max-width: 360px) {
-            .top-header {
-                padding: 20px 12px 56px 12px;
-            }
-
-            .top-header h1 {
-                font-size: 22px;
-            }
-
-            .content-wrapper {
-                padding: 0 10px 20px 10px;
-            }
-
-            .login-card {
-                padding: 20px 14px;
-            }
-
-            .feature-box {
-                padding: 14px 14px;
-                gap: 12px;
+            .info-panel,
+            .login-panel {
+                padding: 30px 20px;
             }
         }
     </style>
@@ -486,20 +363,73 @@
 
     {% include 'partials/messages.html' %}
 
-    <!-- Header -->
-    <header class="top-header">
-        <div class="college-name">Marymatha College</div>
-        <h1>GateEase</h1>
-        <p>Digital Exit Pass & Campus Security System</p>
-    </header>
+    <div class="main-container">
+        <!-- Information Section -->
+        <div class="info-panel">
+            <div class="info-content">
+                <h2>GateEase</h2>
+                <p class="subtitle">The smart, secure, and seamless way to manage campus mobility.</p>
 
-    <!-- Main Content -->
-    <div class="content-wrapper">
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <div class="feature-icon">
+                            <!-- SVG Icon for Pass -->
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Digital Exit Passes</h4>
+                            <p>Apply for and track your exit passes instantly from anywhere.</p>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon">
+                            <!-- SVG Icon for Security -->
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Secure Authorizations</h4>
+                            <p>Multi-level approvals from mentors and automated security checks.</p>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon">
+                            <!-- SVG Icon for QR Code -->
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Fast QR Scanning</h4>
+                            <p>Quickly verify and approve passes at the security gate using QR codes.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
 
-        <!-- Login Card -->
-        <div class="login-card">
-            <h2>Welcome</h2>
-            <p class="subtext">Sign in to manage your exit passes</p>
+        <!-- Login Section -->
+        <div class="login-panel">
+            <div class="login-header">
+                <center>
+                    <h1>Welcome</h1>
+                </center>
+                <center>
+                    <p>Sign in to your GateEase account</p>
+                </center>
+            </div>
 
             <form action="/login/" method="POST">
                 {% csrf_token %}
@@ -512,8 +442,8 @@
 
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" class="input-field"
-                        placeholder="Enter your password" required autocomplete="current-password">
+                    <input type="password" id="password" name="password" class="input-field" placeholder="••••••••"
+                        required autocomplete="current-password">
                 </div>
 
                 <div class="forgot-link-container">
@@ -527,62 +457,15 @@
                 </div>
             </form>
         </div>
-
-        <!-- Features -->
-        <div class="features-section">
-            <div class="feature-box">
-                <div class="icon-wrap">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                </div>
-                <div>
-                    <h4>Digital Exit Passes</h4>
-                    <p>Apply and track your passes from anywhere on campus.</p>
-                </div>
-            </div>
-            <div class="feature-box">
-                <div class="icon-wrap">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h4>Secure Authorizations</h4>
-                    <p>Multi-level approvals from mentors and security staff.</p>
-                </div>
-            </div>
-            <div class="feature-box">
-                <div class="icon-wrap">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="14" width="7" height="7"></rect>
-                        <rect x="3" y="14" width="7" height="7"></rect>
-                    </svg>
-                </div>
-                <div>
-                    <h4>Fast QR Scanning</h4>
-                    <p>Verify passes instantly at the security gate.</p>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <!-- Footer -->
-    <footer class="site-footer">
-        <div>
-            Designed & Developed by <span>IT Club MMC 2026</span>
+    <footer class="login-footer">
+        <div class="footer-text">
+            <span style="color: #475569; font-weight: 500;">Designed & Developed by</span>
+            <span>© IT Club MMC 2026</span>
         </div>
         <button id="installAppBtn" class="btn-install" style="display: none;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill=currentColor>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill=currentColor">
                 <path
                     d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0004.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.415.415 0 0 0-.1521-.5676.416.416 0 0 0-.5676.1521l-2.0218 3.503C15.6548 8.271 13.9015 7.8485 12 7.8485c-1.9015 0-3.6548.4225-5.1373 1.1018L4.841 5.4473a.415.415 0 0 0-.5676-.1521.415.415 0 0 0-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396">
                 </path>
@@ -605,7 +488,7 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            installBtn.style.display = 'inline-flex';
+            installBtn.style.display = 'flex';
         });
 
         installBtn.addEventListener('click', async () => {

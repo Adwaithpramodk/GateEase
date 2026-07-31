@@ -1,3 +1,1 @@
-"""
-Django initialization file
-"""
+

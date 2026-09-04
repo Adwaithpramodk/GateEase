@@ -2,49 +2,73 @@
 <style>
     .toast-container {
         position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
+        top: 20px;
+        right: 20px;
         z-index: 99999;
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        max-width: 350px;
+        gap: 8px;
+        width: min(360px, calc(100vw - 32px));
         pointer-events: none;
     }
     .toast-message {
         pointer-events: auto;
         display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 16px;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 10px 12px;
         background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border-left: 4px solid #4f46e5;
+        border: 1px solid #e2e8f0;
+        border-left: 3px solid #4f46e5;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
         font-family: 'Inter', sans-serif;
-        transition: transform 0.3s ease, opacity 0.3s ease;
+        animation: toast-in 0.25s ease-out;
+        transition: transform 0.25s ease, opacity 0.25s ease;
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
     }
     .toast-success { border-left-color: #10b981; }
     .toast-error { border-left-color: #ef4444; }
     .toast-warning { border-left-color: #f59e0b; }
-    
+    .toast-icon {
+        display: grid;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        border-radius: 50%;
+        background: #eef2ff;
+        color: #4f46e5;
+        font-size: 13px;
+        font-weight: 800;
+    }
+    .toast-success .toast-icon { background: #ecfdf5; color: #059669; }
+    .toast-error .toast-icon { background: #fef2f2; color: #dc2626; }
+    .toast-warning .toast-icon { background: #fffbeb; color: #d97706; }
     .toast-content {
         flex: 1;
-        font-size: 14px;
+        min-width: 0;
+        overflow: hidden;
+        font-size: 13px;
+        line-height: 1.35;
         font-weight: 600;
         color: #1e293b;
-        margin-top: 2px;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
     }
     .toast-close {
         background: none;
         border: none;
         cursor: pointer;
         color: #94a3b8;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 24px;
         padding: 4px;
-        margin: -4px;
         border-radius: 50%;
     }
     .toast-close:hover {
@@ -53,13 +77,27 @@
     }
     .toast-hiding {
         opacity: 0;
-        transform: translateY(100%);
+        transform: translateX(110%);
+    }
+    @keyframes toast-in {
+        from { opacity: 0; transform: translateX(24px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @media (max-width: 640px) {
+        .toast-container {
+            top: 12px;
+            right: 16px;
+            width: calc(100vw - 32px);
+        }
     }
 </style>
 
 <div class="toast-container" id="django-messages-container">
     {% for message in messages %}
-    <div class="toast-message {% if 'success' in message.tags or 'info' in message.tags %}toast-success{% elif 'error' in message.tags or 'warning' in message.tags %}toast-error{% endif %}" id="toast-{{ forloop.counter }}">
+    <div class="toast-message {% if 'success' in message.tags or 'info' in message.tags %}toast-success{% elif 'warning' in message.tags %}toast-warning{% elif 'error' in message.tags %}toast-error{% endif %}" id="toast-{{ forloop.counter }}">
+        <div class="toast-icon" aria-hidden="true">
+            {% if 'error' in message.tags or 'warning' in message.tags %}!{% else %}&#10003;{% endif %}
+        </div>
         <div class="toast-content">
             {{ message }}
         </div>

@@ -2,69 +2,69 @@
 <style>
     .toast-container {
         position: fixed;
-        top: 20px;
-        right: 20px;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
         z-index: 99999;
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        width: min(360px, calc(100vw - 32px));
+        gap: 10px;
+        width: min(430px, calc(100vw - 32px));
         pointer-events: none;
     }
     .toast-message {
         pointer-events: auto;
         display: flex;
         align-items: center;
-        gap: 10px;
-        min-height: 48px;
-        padding: 10px 12px;
-        background-color: white;
-        border: 1px solid #e2e8f0;
-        border-left: 3px solid #4f46e5;
-        border-radius: 10px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        gap: 12px;
+        min-height: 58px;
+        padding: 11px 14px;
+        color: white;
+        background: linear-gradient(110deg, #287536 0%, #00c853 100%);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28);
         font-family: 'Inter', sans-serif;
         animation: toast-in 0.25s ease-out;
         transition: transform 0.25s ease, opacity 0.25s ease;
         opacity: 1;
-        transform: translateX(0);
+        transform: translateY(0);
     }
-    .toast-success { border-left-color: #10b981; }
-    .toast-error { border-left-color: #ef4444; }
-    .toast-warning { border-left-color: #f59e0b; }
+    .toast-error { background: linear-gradient(110deg, #8f2525 0%, #dc2626 100%); }
+    .toast-warning { background: linear-gradient(110deg, #8a5a08 0%, #d97706 100%); }
     .toast-icon {
-        display: grid;
-        flex: 0 0 24px;
-        width: 24px;
-        height: 24px;
-        place-items: center;
-        border-radius: 50%;
-        background: #eef2ff;
-        color: #4f46e5;
-        font-size: 13px;
-        font-weight: 800;
+        display: none;
     }
-    .toast-success .toast-icon { background: #ecfdf5; color: #059669; }
-    .toast-error .toast-icon { background: #fef2f2; color: #dc2626; }
-    .toast-warning .toast-icon { background: #fffbeb; color: #d97706; }
     .toast-content {
         flex: 1;
         min-width: 0;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .toast-title {
+        overflow: hidden;
         font-size: 13px;
-        line-height: 1.35;
-        font-weight: 600;
-        color: #1e293b;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
+        line-height: 1.2;
+        font-weight: 800;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .toast-text {
+        overflow: hidden;
+        font-size: 12px;
+        line-height: 1.25;
+        font-weight: 500;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        opacity: 0.9;
     }
     .toast-close {
         background: none;
         border: none;
         cursor: pointer;
-        color: #94a3b8;
+        color: rgba(255, 255, 255, 0.82);
         flex: 0 0 24px;
         width: 24px;
         height: 24px;
@@ -72,21 +72,20 @@
         border-radius: 50%;
     }
     .toast-close:hover {
-        color: #475569;
-        background-color: #f1f5f9;
+        color: white;
+        background-color: rgba(255, 255, 255, 0.14);
     }
     .toast-hiding {
         opacity: 0;
-        transform: translateX(110%);
+        transform: translateY(110%);
     }
     @keyframes toast-in {
-        from { opacity: 0; transform: translateX(24px); }
-        to { opacity: 1; transform: translateX(0); }
+        from { opacity: 0; transform: translateY(24px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     @media (max-width: 640px) {
         .toast-container {
-            top: 12px;
-            right: 16px;
+            bottom: 16px;
             width: calc(100vw - 32px);
         }
     }
@@ -95,11 +94,11 @@
 <div class="toast-container" id="django-messages-container">
     {% for message in messages %}
     <div class="toast-message {% if 'success' in message.tags or 'info' in message.tags %}toast-success{% elif 'warning' in message.tags %}toast-warning{% elif 'error' in message.tags %}toast-error{% endif %}" id="toast-{{ forloop.counter }}">
-        <div class="toast-icon" aria-hidden="true">
-            {% if 'error' in message.tags or 'warning' in message.tags %}!{% else %}&#10003;{% endif %}
-        </div>
         <div class="toast-content">
-            {{ message }}
+            <div class="toast-title">
+                {% if 'error' in message.tags %}Something went wrong{% elif 'warning' in message.tags %}Please check this{% else %}Success{% endif %}
+            </div>
+            <div class="toast-text">{{ message }}</div>
         </div>
         <button type="button" class="toast-close" onclick="closeToast('toast-{{ forloop.counter }}')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>

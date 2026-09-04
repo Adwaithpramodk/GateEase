@@ -214,6 +214,15 @@ class ResetPasswordWeb(View):
 
 class LoginPage(View):
     def get(self,request):
+        usertype = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
+        dashboard_by_role = {
+            'admin': '/HomePage',
+            'mentor': '/MntrHome',
+            'Student': '/StudentHome',
+            'security': '/SecurityHome',
+        }
+        if (getattr(request, 'jwt_user_id', None) or request.session.get('user_id')) and usertype in dashboard_by_role:
+            return redirect(dashboard_by_role[usertype])
         return render(request, 'tables/form/login.html')
     def post(self,request):
         username = request.POST.get('email')

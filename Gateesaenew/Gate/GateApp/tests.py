@@ -45,6 +45,13 @@ class PersistentLoginTests(TestCase):
 		self.assertEqual(reused_response.status_code, 401)
 		self.assertTrue(BlacklistedToken.objects.exists())
 
+	def test_reopening_login_url_redirects_authenticated_user_to_dashboard(self):
+		self.login()
+
+		response = self.client.get('/login/')
+
+		self.assertRedirects(response, '/StudentHome', fetch_redirect_response=False)
+
 	def test_logout_revokes_refresh_token_and_clears_cookies(self):
 		self.login()
 		refresh = self.client.cookies['refresh_token'].value

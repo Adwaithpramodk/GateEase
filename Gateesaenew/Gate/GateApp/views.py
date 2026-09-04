@@ -15,6 +15,7 @@ from xhtml2pdf import pisa
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import transaction
 from django.db import models as models
+from .auth_tokens import delete_auth_cookies, create_login_tokens, rotate_refresh_token, set_auth_cookies
 
 logger = logging.getLogger(__name__)
 
@@ -102,11 +103,16 @@ class SecurityRequiredMixin:
 
 class Logout(View):
     def get(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if refresh_token:
+            try:
+                RefreshToken(refresh_token).blacklist()
+            except Exception:
+                logger.info("Logout received an invalid or already revoked refresh token")
         request.session.flush()
         messages.success(request, "Logged out successfully")
         response = redirect('/login/')
-        response.delete_cookie('access_token')
-        response.delete_cookie('refresh_token')
+        delete_auth_cookies(response)
         return response
 
 #login page for admin
@@ -236,12 +242,8 @@ class LoginPage(View):
                 messages.error(request, "Login Unsuccessful")
                 return render(request, 'tables/form/login.html')
 
-            # If password is correct, generate JWT
-            from rest_framework_simplejwt.tokens import RefreshToken
-            refresh = RefreshToken()
-            refresh['login_id'] = obj.id
-            refresh['usertype'] = obj.usertype
-            refresh['username'] = obj.username
+            # If password is correct, generate short-lived access and persistent refresh tokens.
+            refresh = create_login_tokens(obj)
 
             response = None
             if obj.usertype == 'admin':
@@ -261,25 +263,7 @@ class LoginPage(View):
                 return render(request, 'tables/form/login.html')
 
             if response:
-                # 30 days in seconds
-                import datetime
-                max_age_seconds = 30 * 24 * 60 * 60
-                
-                response.set_cookie(
-                    'access_token',
-                    str(refresh.access_token),
-                    httponly=True,
-                    samesite='Lax',
-                    max_age=max_age_seconds
-                )
-                response.set_cookie(
-                    'refresh_token',
-                    str(refresh),
-                    httponly=True,
-                    samesite='Lax',
-                    max_age=max_age_seconds
-                )
-                # Keep session for messages framework but not auth
+                set_auth_cookies(response, refresh.access_token, refresh)
                 request.session.cycle_key() 
                 request.session['user_id'] = obj.id 
                 request.session['usertype'] = obj.usertype
@@ -1546,26 +1530,46 @@ class LoginpageAPI(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        refresh = RefreshToken()
-        refresh['login_id'] = t_user.id
-        refresh['user_id'] = t_user.id
-        refresh['usertype'] = t_user.usertype
+        refresh = create_login_tokens(t_user)
         
         access = refresh.access_token
         access['login_id'] = t_user.id
         access['user_id'] = t_user.id
         access['usertype'] = t_user.usertype
 
-        response_dict = {
+        response = Response({
             "message": "success",
             "login_id": t_user.id,
             "usertype": t_user.usertype,
             "access": str(access),
             "refresh": str(refresh),
-        }
+        }, status=status.HTTP_200_OK)
+        set_auth_cookies(response, access, refresh)
 
         logger.info("Login successful for login_id=%s usertype=%s", t_user.id, t_user.usertype)
-        return Response(response_dict, status=status.HTTP_200_OK)
+        return response
+
+
+class WebTokenRefresh(APIView):
+    """Rotate the HttpOnly refresh cookie and return a new short-lived access token."""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        raw_refresh = request.COOKIES.get('refresh_token')
+        if not raw_refresh:
+            return Response({'detail': 'Refresh token is required.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            refresh = rotate_refresh_token(raw_refresh)
+        except Exception:
+            response = Response({'detail': 'Refresh token is invalid or expired.'}, status=status.HTTP_401_UNAUTHORIZED)
+            delete_auth_cookies(response)
+            return response
+
+        response = Response({'access': str(refresh.access_token)}, status=status.HTTP_200_OK)
+        set_auth_cookies(response, refresh.access_token, refresh)
+        return response
 
 
 #apply pass api for student

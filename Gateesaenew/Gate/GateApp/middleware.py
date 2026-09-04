@@ -5,6 +5,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django.core.cache import cache
 from django.urls import resolve
 from django.conf import settings
+from .auth_tokens import rotate_refresh_token, set_auth_cookies
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class JWTWebAuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
         request.jwt_user_id = None
         request.jwt_usertype = None
+        request._rotated_auth_tokens = None
         
         token = request.COOKIES.get('access_token')
         if token:
@@ -26,7 +28,30 @@ class JWTWebAuthMiddleware(MiddlewareMixin):
                 request.jwt_usertype = access_token.get('usertype')
             except Exception as e:
                 logger.debug(f"JWTWebAuthMiddleware invalid token: {e}")
-                pass
+
+        # Refresh only when the access token is absent/expired, never on every request.
+        if not request.jwt_user_id and request.COOKIES.get('refresh_token') and request.path not in {
+            '/auth/refresh/',
+            '/api/token/refresh/',
+            '/LoginpageAPI',
+            '/Logout',
+        }:
+            try:
+                refresh = rotate_refresh_token(request.COOKIES['refresh_token'])
+                request.jwt_user_id = refresh.get('login_id')
+                request.jwt_usertype = refresh.get('usertype')
+                request._rotated_auth_tokens = (refresh.access_token, refresh)
+            except Exception:
+                # An expired refresh token must not leave an old session authenticated.
+                request.session.flush()
+        elif not request.jwt_user_id and request.session.get('user_id') and not request.COOKIES.get('refresh_token'):
+            # Do not let a database session outlive the persistent authentication cookie.
+            request.session.flush()
+
+    def process_response(self, request, response):
+        if request._rotated_auth_tokens:
+            set_auth_cookies(response, *request._rotated_auth_tokens)
+        return response
 
 class RateLimitMiddleware(MiddlewareMixin):
     """

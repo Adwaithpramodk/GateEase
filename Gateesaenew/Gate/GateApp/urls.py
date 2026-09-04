@@ -86,6 +86,7 @@ urlpatterns = [
 
     path('UserReg',UserReg_api.as_view(),name='userreg'), 
     path('LoginpageAPI',LoginpageAPI.as_view(),name='loginpageapi'),
+    path('auth/refresh/', WebTokenRefresh.as_view(), name='web_token_refresh'),
     path('ApplypassAPI/<int:lid>',ApplypassAPI.as_view(),name='applypassapi'),
     path('StudentInfo_api/<int:lid>',StudentInfo_api.as_view(),name='StudentInfo_api'),
     path('ViewcomplaintAPI/<int:lid>',ViewcomplaintAPI.as_view(),name='viewcomplaint_api'),

@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'GateApp',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -172,8 +173,8 @@ CSRF_TRUSTED_ORIGINS = [
     os.getenv('CSRF_TRUSTED_ORIGIN', 'https://gateeasee.pythonanywhere.com'),
 ]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
@@ -209,10 +210,10 @@ REST_FRAMEWORK = {
 # ── Simple JWT configuration ───────────────────────────────────────────────────
 from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,         # Issue a new refresh token on every refresh
-    'BLACKLIST_AFTER_ROTATION': False,     # Keep it simple — no blacklist app needed
+    'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'UPDATE_LAST_LOGIN': False,
 }
@@ -226,11 +227,14 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # ── Session & Cookie Settings ──────────────────────────────────────────────────
-# Force sessions to persist across browser/app restarts for 30 days
-SESSION_COOKIE_AGE = 2592000  # 30 days in seconds
+# Keep the server-side session aligned with the persistent refresh-token window.
+SESSION_COOKIE_AGE = 7 * 24 * 60 * 60
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_NAME = 'gateease_session'
 
 # Store sessions in the database so they survive worker/process restarts.
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# Keep local HTTP development usable without weakening production cookies.
+JWT_COOKIE_SECURE = os.getenv('JWT_COOKIE_SECURE', 'false' if DEBUG else 'true').lower() == 'true'

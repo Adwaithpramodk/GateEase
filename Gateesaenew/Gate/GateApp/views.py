@@ -19,6 +19,12 @@ from .auth_tokens import delete_auth_cookies, create_login_tokens, rotate_refres
 
 logger = logging.getLogger(__name__)
 
+
+def mentor_approval_window_open():
+    current_time = timezone.localtime().time()
+    return datetime.time(10, 0) <= current_time <= datetime.time(15, 40)
+
+
 # Create your views here.
 
 # Landing page view - Entry point for the application
@@ -2015,6 +2021,12 @@ class GroupPassAPI(JWTAuthMixin, APIView):
         try:
             student_ids = request.data.get('student_ids', [])
             reason = request.data.get('reason', 'Group Pass')
+
+            if not mentor_approval_window_open():
+                return Response(
+                    {'error': 'Group pass approvals are only allowed between 10:00 AM and 3:40 PM'},
+                    status=400,
+                )
             
             try:
                 mentor = mentortable.objects.get(LOGINID=lid)
@@ -2736,6 +2748,10 @@ class MentorGroupPassCreate(MentorRequiredMixin, View):
         
         if not student_ids:
             messages.error(request, "Please select at least one student.")
+            return redirect('/MentorGroupPassCreate')
+
+        if not mentor_approval_window_open():
+            messages.error(request, "Group pass approvals are only allowed between 10:00 AM and 3:40 PM")
             return redirect('/MentorGroupPassCreate')
         
         count = 0

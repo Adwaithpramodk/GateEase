@@ -498,6 +498,46 @@ class ComplaintManage(AdminRequiredMixin, View):
     def get(self,request):
         complaint=complainttable.objects.all().order_by('-id')
         return render(request, 'tables/form/complaint_mng.html',{'complaints':complaint})
+
+class ManageAnnouncements(AdminRequiredMixin, View):
+    def get(self, request):
+        announcements = announcementtable.objects.all()
+        return render(request, 'tables/form/announcement_mng.html', {'announcements': announcements})
+
+class AddAnnouncement(AdminRequiredMixin, View):
+    def get(self, request):
+        return render(request, 'tables/form/add_announcement.html')
+
+    def post(self, request):
+        title = request.POST.get('title', '').strip()
+        message = request.POST.get('message', '').strip()
+        expires_at = request.POST.get('expires_at', '').strip()
+
+        if not title or not message:
+            messages.error(request, 'Title and message are required.')
+            return redirect('/AddAnnouncement')
+
+        try:
+            expiry = datetime.datetime.fromisoformat(expires_at) if expires_at else None
+            if expiry and timezone.is_naive(expiry):
+                expiry = timezone.make_aware(expiry, timezone.get_current_timezone())
+            announcementtable.objects.create(
+                title=title,
+                message=message,
+                expires_at=expiry,
+            )
+            messages.success(request, 'Announcement published successfully.')
+            return redirect('/ManageAnnouncements')
+        except ValueError:
+            messages.error(request, 'Please provide a valid expiry date and time.')
+            return redirect('/AddAnnouncement')
+
+class DeleteAnnouncement(AdminRequiredMixin, View):
+    def post(self, request, id):
+        announcement = get_object_or_404(announcementtable, id=id)
+        announcement.delete()
+        messages.success(request, 'Announcement deleted successfully.')
+        return redirect('/ManageAnnouncements')
     
 class SendReply(AdminRequiredMixin, View):
     def post(self,request,id):
@@ -1133,6 +1173,14 @@ class StudentComplaint(StudentRequiredMixin, View):
         except Exception as e:
             messages.error(request, f"Error submitting complaint: {str(e)}")
             return redirect('/StudentComplaint')
+
+class StudentAnnouncements(StudentRequiredMixin, View):
+    def get(self, request):
+        current_time = timezone.now()
+        announcements = announcementtable.objects.filter(is_active=True).filter(
+            models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=current_time)
+        )
+        return render(request, 'tables/form/student_announcements.html', {'announcements': announcements})
 
 class StudentMyPasses(StudentRequiredMixin, View):
     def get(self, request):

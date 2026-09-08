@@ -75,6 +75,20 @@
             padding: 2px;
             background-clip: content-box;
         }
+
+        .student-nav-item {
+            min-width: 0;
+            flex: 1 1 0;
+            gap: 3px;
+            padding: 0 2px;
+        }
+
+        .student-nav-item span {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         .bpc-content {
             position: relative;
             z-index: 10;
@@ -116,6 +130,9 @@
     <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-2">
             <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+            <a href="/StudentAnnouncements" class="text-indigo-500 hover:text-indigo-700 transition-colors p-2 rounded-full hover:bg-indigo-50" title="Announcements" aria-label="Announcements">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h4l4-4v10l-4-4H3z"></path><path d="M15 9.5a4 4 0 0 1 0 5"></path><path d="M18 7a8 8 0 0 1 0 10"></path></svg>
+            </a>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
             </div>
             <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-900">GateEase</span>
@@ -176,6 +193,17 @@
                     <h3 class="font-semibold text-slate-800">My Passes</h3>
                 </div>
             </a>
+
+            <a href="/StudentAnnouncements" class="col-span-2 min-w-0 bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-3 sm:gap-4 group active:scale-[0.99]">
+                <div class="bg-amber-50 text-amber-600 w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100 transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h4l4-4v10l-4-4H3z" /><path d="M15 9.5a4 4 0 0 1 0 5" /><path d="M18 7a8 8 0 0 1 0 10" /></svg>
+                </div>
+                <div class="min-w-0">
+                    <h3 class="font-semibold text-slate-800 truncate">Announcements</h3>
+                    <p class="text-xs text-slate-500 mt-1">View the latest updates from administration</p>
+                </div>
+                <svg class="ml-auto flex-shrink-0 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6" /></svg>
+            </a>
         </div>
 
         <!-- Current Pass Timeline Component -->
@@ -185,22 +213,27 @@
     <!-- Bottom Navigation Bar (Mobile / Tablet) -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
         <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
-            <a href="/StudentHome" class="flex flex-col items-center justify-center w-full h-full text-indigo-600">
+            <a href="/StudentHome" class="student-nav-item flex flex-col items-center justify-center h-full text-indigo-600">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 <span class="text-[10px] font-semibold mt-1">Home</span>
             </a>
             
-            <a href="/StudentNewPass" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
+            <a href="/StudentNewPass" class="student-nav-item flex flex-col items-center justify-center h-full text-slate-400 hover:text-indigo-500 transition-colors">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                 <span class="text-[10px] font-medium mt-1">Apply</span>
             </a>
             
-            <a href="/StudentMyPasses" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
+            <a href="/StudentMyPasses" class="student-nav-item flex flex-col items-center justify-center h-full text-slate-400 hover:text-indigo-500 transition-colors">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 <span class="text-[10px] font-medium mt-1">Passes</span>
             </a>
             
-            <a href="/StudentComplaint" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
+            <a href="/StudentAnnouncements" class="student-nav-item flex flex-col items-center justify-center h-full text-slate-400 hover:text-indigo-500 transition-colors">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h4l4-4v10l-4-4H3z"></path><path d="M15 9.5a4 4 0 0 1 0 5"></path><path d="M18 7a8 8 0 0 1 0 10"></path></svg>
+                <span class="text-[10px] font-medium mt-1">Updates</span>
+            </a>
+
+            <a href="/StudentComplaint" class="student-nav-item flex flex-col items-center justify-center h-full text-slate-400 hover:text-indigo-500 transition-colors">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 <span class="text-[10px] font-medium mt-1">Complaints</span>
             </a>

@@ -171,6 +171,19 @@ class complainttable(models.Model):
     reply=models.TextField(max_length=200,null=True,blank=True)
     date=models.DateField(auto_now_add=True)
 
+class announcementtable(models.Model):
+    title=models.CharField(max_length=200)
+    message=models.TextField()
+    is_active=models.BooleanField(default=True)
+    expires_at=models.DateTimeField(null=True,blank=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
 class securitytable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
     email=models.CharField(max_length=100,null=True,blank=True)

@@ -6,23 +6,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Not Found | GateEase</title>
     <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="shortcut icon" href="{% static 'favicon.png' %}">
+    <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; background: #102b2b; color: #f4f7ed; font-family: 'DM Sans', sans-serif; }
+        .error-shell { min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .error-shell::before { content: ''; position: absolute; width: 42vw; height: 42vw; max-width: 620px; max-height: 620px; border: 1px solid rgba(201,239,91,.18); border-radius: 50%; right: -13vw; top: -18vw; }
+        .error-shell::after { content: ''; position: absolute; width: 20px; height: 20px; background: #c9ef5b; border-radius: 50%; right: 13%; top: 23%; box-shadow: 0 0 0 12px rgba(201,239,91,.09), 0 0 0 24px rgba(201,239,91,.04); }
+        .topbar, .error-main { width: min(1180px, calc(100% - 48px)); margin: 0 auto; position: relative; z-index: 1; }
+        .topbar { padding: 30px 0; display: flex; justify-content: space-between; align-items: center; }
+        .brand { display: flex; align-items: center; gap: 11px; color: #f4f7ed; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -.03em; font-size: 1.15rem; }
+        .brand-mark { width: 31px; height: 31px; border-radius: 9px; display: grid; place-items: center; background: #c9ef5b; color: #102b2b; font-size: .84rem; }
+        .top-note { color: #9ab6ad; font-size: .77rem; letter-spacing: .12em; text-transform: uppercase; }
+        .error-main { margin: auto; padding: 54px 0 92px; display: grid; grid-template-columns: minmax(0,1.15fr) minmax(280px,.85fr); gap: clamp(40px,8vw,130px); align-items: center; }
+        .eyebrow { color: #c9ef5b; font-size: .76rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+        .status-number { margin: 17px 0 11px; color: #c9ef5b; font-family: 'Space Grotesk', sans-serif; font-size: clamp(7rem,20vw,15rem); line-height: .78; letter-spacing: -.1em; }
+        h1 { max-width: 590px; margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.25rem,5vw,4.6rem); line-height: .98; letter-spacing: -.06em; }
+        .intro { max-width: 470px; margin: 22px 0 0; color: #b5cbc1; font-size: 1.06rem; line-height: 1.65; }
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+        .button { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 20px; border-radius: 7px; font-size: .9rem; font-weight: 700; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform .2s ease, background-color .2s ease; }
+        .button:hover { transform: translateY(-2px); }
+        .button-primary { background: #c9ef5b; color: #102b2b; }
+        .button-primary:hover { background: #daf58a; }
+        .button-quiet { color: #d4e2d8; border-color: rgba(212,226,216,.25); background: rgba(255,255,255,.03); }
+        .button-quiet:hover { background: rgba(255,255,255,.09); }
+        .detail-panel { border: 1px solid rgba(212,226,216,.16); border-radius: 18px; padding: 28px; background: rgba(255,255,255,.055); backdrop-filter: blur(12px); }
+        .panel-icon { width: 52px; height: 52px; display: grid; place-items: center; margin-bottom: 48px; border-radius: 13px; background: rgba(201,239,91,.13); color: #c9ef5b; }
+        .panel-label { margin: 0 0 8px; color: #8faea2; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+        .panel-title { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 1.45rem; line-height: 1.1; }
+        .panel-copy { margin: 13px 0 0; color: #a9c2b8; line-height: 1.6; font-size: .92rem; }
+        .panel-rule { height: 1px; margin: 24px 0 17px; background: rgba(212,226,216,.13); }
+        .panel-link { color: #c9ef5b; text-decoration: none; font-size: .86rem; font-weight: 700; }
+        .panel-link:hover { text-decoration: underline; }
+        @media (max-width:720px) { .topbar, .error-main { width: min(calc(100% - 32px),560px); } .top-note { display: none; } .error-main { grid-template-columns: 1fr; padding: 40px 0 56px; gap: 42px; } .status-number { font-size: 8.8rem; } .detail-panel { padding: 24px; } .panel-icon { margin-bottom: 32px; } }
+    </style>
 </head>
-<body class="bg-slate-50 flex items-center justify-center min-h-screen p-4 text-center">
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-md w-full">
-        <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-        </div>
-        <h1 class="text-3xl font-bold text-slate-800 mb-2">404 - Not Found</h1>
-        <p class="text-slate-500 font-medium mb-8">Oops! The page you are looking for doesn't exist or has been moved.</p>
-        <button onclick="window.history.back()" class="bg-indigo-600 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 w-full active:scale-95">
-            Go Back
-        </button>
-        <a href="/" class="block mt-4 text-indigo-600 font-semibold hover:underline">Return to Home</a>
+<body>
+    <div class="error-shell">
+        <header class="topbar"><a class="brand" href="/" aria-label="GateEase home"><span class="brand-mark">G</span> GateEase</a><span class="top-note">Pass management, made easy</span></header>
+        <main class="error-main">
+            <section aria-labelledby="page-title">
+                <div class="eyebrow">Route unavailable</div>
+                <div class="status-number" aria-hidden="true">404</div>
+                <h1 id="page-title">This page took an unexpected exit.</h1>
+                <p class="intro">The address may be outdated, or the page may have moved. Let us get you back to a familiar place.</p>
+                <div class="actions"><a class="button button-primary" href="/">Return home <span aria-hidden="true">&rarr;</span></a><button class="button button-quiet" type="button" onclick="window.history.back()">Go back</button></div>
+            </section>
+            <aside class="detail-panel">
+                <div class="panel-icon" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></div>
+                <p class="panel-label">A quick detour</p><h2 class="panel-title">Your session is still safe.</h2>
+                <p class="panel-copy">Use the home page to find your dashboard, active passes, and the rest of GateEase.</p>
+                <div class="panel-rule"></div><a class="panel-link" href="/">Open GateEase home &rarr;</a>
+            </aside>
+        </main>
     </div>
 </body>
 </html>

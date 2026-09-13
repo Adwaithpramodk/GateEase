@@ -738,6 +738,7 @@ class MentorApprovedPasses(MentorRequiredMixin, View):
                 revoke_reason = request.POST.get('revoke_reason', 'Revoked by mentor')
                 exit_pass.mentor_status = 'revoked'
                 exit_pass.reject_reason = revoke_reason
+                exit_pass.approved_at = timezone.now()
                 exit_pass.save()
                 messages.success(request, f"Pass for {exit_pass.student_id.name} has been revoked.")
                 

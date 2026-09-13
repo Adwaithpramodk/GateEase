@@ -92,7 +92,9 @@
                     </div>
                     <div class="tl-content">
                         <p class="tl-title tl-text-revoked">Pass Revoked by Mentor</p>
-                        <p class="tl-time">--</p>
+                        <time class="tl-time" datetime="{{ current_pass.approved_at|default:current_pass.created_at|date:'c' }}">
+                            Revoked on {{ current_pass.approved_at|default:current_pass.created_at|date:"M d, Y, h:i A" }}
+                        </time>
                         {% if current_pass.reject_reason %}<p class="tl-reason">{{ current_pass.reject_reason }}</p>{% endif %}
                     </div>
                 {% elif current_pass.mentor_status == 'cancelled' %}
@@ -122,7 +124,8 @@
                 {% endif %}
             </div>
 
-            <!-- Step 3: Security Status -->
+            <!-- Step 3: Security Status, only after mentor approval -->
+            {% if current_pass.mentor_status == 'approved' %}
             <div class="tl-step">
                 {% if current_pass.security_status == 'scanned' %}
                     <div class="tl-line-active"></div>
@@ -163,6 +166,7 @@
                     </div>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
         {% else %}
             <!-- Empty State -->

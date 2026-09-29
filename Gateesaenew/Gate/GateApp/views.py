@@ -157,7 +157,7 @@ class ForgotPasswordWeb(View):
                 fail_silently=False,
             )
             request.session['reset_email'] = email
-            messages.success(request, "OTP sent successfully. Please check your email.")
+            messages.success(request, "OTP sent successfully. Please check your email. Check your spam folder if you don't see it in your inbox.")
             return redirect('/ResetPassword')
         except Exception as e:
             logger.error("Mail Error in ForgotPasswordWeb: %s", e)

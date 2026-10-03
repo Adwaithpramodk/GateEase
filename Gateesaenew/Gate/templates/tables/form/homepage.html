@@ -534,7 +534,7 @@
             <a href="/" class="logo">Gate<span>Ease</span></a>
             <div class="nav-right">
                 <span class="admin-badge">Admin Portal</span>
-                <a href="/Logout" onclick="showLogoutModal(event);" class="logout-btn">
+                <a href="{% url 'logout' %}" onclick="showLogoutModal(event);" class="logout-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -579,7 +579,7 @@
                 </div>
 
                 <!-- Pending -->
-                <a href="/Pass" class="stat-card sc-amber">
+                <a href="{% url 'pass' %}" class="stat-card sc-amber">
                     <div class="stat-card-icon">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -638,7 +638,7 @@
                 </div>
 
                 <!-- Active Students -->
-                <a href="/VerifyStudent" class="stat-card sc-purple">
+                <a href="{% url 'verify_student' %}" class="stat-card sc-purple">
                     <div class="stat-card-icon">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -654,7 +654,7 @@
                 </a>
 
                 <!-- Pending Students -->
-                <a href="/VerifyStudent" class="stat-card sc-orange">
+                <a href="{% url 'verify_student' %}" class="stat-card sc-orange">
                     <div class="stat-card-icon">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -670,7 +670,7 @@
                 </a>
 
                 <!-- Mentors -->
-                <a href="/ManageMentor" class="stat-card sc-slate">
+                <a href="{% url 'mng_mntr' %}" class="stat-card sc-slate">
                     <div class="stat-card-icon">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -689,7 +689,7 @@
 
         <div class="grid">
 
-            <a href="/VerifyStudent" class="card">
+            <a href="{% url 'verify_student' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -708,7 +708,7 @@
                 </div>
             </a>
 
-            <a href="/ManageMentor" class="card">
+            <a href="{% url 'mng_mntr' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -728,7 +728,7 @@
                 </div>
             </a>
 
-            <a href="/ManageDepartment" class="card">
+            <a href="{% url 'mng_dep' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -748,7 +748,7 @@
                 </div>
             </a>
 
-            <a href="/Pass" class="card">
+            <a href="{% url 'pass' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -768,7 +768,7 @@
                 </div>
             </a>
 
-            <a href="/ComplaintManage" class="card">
+            <a href="{% url 'complaint_mng' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -787,7 +787,7 @@
                 </div>
             </a>
 
-            <a href="/ManageSecurity" class="card">
+            <a href="{% url 'mng_security' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -804,7 +804,7 @@
                 </div>
             </a>
 
-            <a href="/ManageAnnouncements" class="card">
+            <a href="{% url 'manage_announcements' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -823,7 +823,7 @@
                 </div>
             </a>
 
-            <a href="/ManageClass" class="card">
+            <a href="{% url 'mng_class' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -841,7 +841,7 @@
                 </div>
             </a>
 
-            <a href="/AssignClass" class="card">
+            <a href="{% url 'AssignClass' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -859,7 +859,7 @@
                 </div>
             </a>
 
-            <a href="/AssignDepartment" class="card">
+            <a href="{% url 'assn_dep' %}" class="card">
                 <div class="icon-wrap">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round" stroke-linejoin="round">

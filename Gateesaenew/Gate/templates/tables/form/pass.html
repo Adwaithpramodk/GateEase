@@ -249,7 +249,7 @@
 {% include 'partials/messages.html' %}
 
     <div class="container">
-        <a href="/HomePage" class="back-btn">&larr; Back to Dashboard</a>
+        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
         <h2 style="margin-bottom: 20px;">Exit Pass Requests</h2>
         
         <div class="header" style="justify-content: flex-end;">
@@ -313,12 +313,8 @@
                         <td>
                             <div class="actions">
                                 {% if i.mentor_status == "pending" %}
-                                <a href="/Approvepassadmin/{{ i.id }}">
-                                    <button class="btn btn-approve" type="button">Approve</button>
-                                </a>
-                                <a href="/Rejectpassadmin/{{ i.id }}">
-                                    <button class="btn btn-reject" type="button">Reject</button>
-                                </a>
+                                <form method="post" action="{% url 'approve_pass_admin' i.id %}" style="display:inline;">{% csrf_token %}<button class="btn btn-approve" type="submit">Approve</button></form>
+                                <form method="post" action="{% url 'reject_pass_admin' i.id %}" style="display:inline;">{% csrf_token %}<button class="btn btn-reject" type="submit">Reject</button></form>
                                 {% endif%}
                             </div>
                         </td>

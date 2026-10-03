@@ -100,7 +100,10 @@
         <p class="logout-desc">You will need to sign back in to access your dashboard and passes.</p>
         <div class="logout-actions">
             <button class="logout-btn logout-btn-cancel" onclick="closeLogoutModal()">Cancel</button>
-            <a href="/Logout" class="logout-btn logout-btn-confirm">Sign out</a>
+            <form method="post" action="{% url 'logout' %}" style="flex: 1;">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn logout-btn-confirm" style="width: 100%;">Sign out</button>
+            </form>
         </div>
     </div>
 </div>

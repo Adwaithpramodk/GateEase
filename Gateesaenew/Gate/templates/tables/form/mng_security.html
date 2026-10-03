@@ -210,10 +210,10 @@
 
     <div class="container">
 
-        <a href="/HomePage" class="back-btn">&larr; Back to Dashboard</a>
+        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
         <div class="header">
             <h2>Manage Security</h2>
-            <a href="/AddSecurity" class="add-btn">+ Add Security</a>
+            <a href="{% url 'add_security' %}" class="add-btn">+ Add Security</a>
         </div>
 
         <div class="table-container">
@@ -246,12 +246,10 @@
                         <td>{{ i.email }}</td>
                         <td>
                             <div class="actions">
-                                <a href="/EditSecurity/{{ i.id }}">
+                                <a href="{% url 'edit_security' i.id %}">
                                     <button class="btn btn-update" type="button">Update</button>
                                 </a>
-                                <a href="/DeleteSecurity/{{ i.id }}">
-                                    <button class="btn btn-remove" type="button">Remove</button>
-                                </a>
+                                <form method="post" action="{% url 'delete_security' i.id %}" onsubmit="return confirm('Delete this security account?');">{% csrf_token %}<button class="btn btn-remove" type="submit">Remove</button></form>
                             </div>
                         </td>
                     </tr>

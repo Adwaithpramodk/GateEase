@@ -237,7 +237,7 @@
 
     <div class="container">
 
-        <a href="/HomePage" class="back-btn">&larr; Back to Dashboard</a>
+        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
         <div class="header">
             <h2>Manage Mentors</h2>
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -245,10 +245,10 @@
                     <input type="text" name="q" value="{{ q }}" placeholder="Search by name, email, department…" class="search-box">
                     <button type="submit" class="add-btn" style="white-space:nowrap;">Search</button>
                     {% if q %}
-                    <a href="/ManageMentor" class="search-clear-btn">Clear</a>
+                    <a href="{% url 'mng_mntr' %}" class="search-clear-btn">Clear</a>
                     {% endif %}
                 </form>
-                <a href="/AddMentor" class="add-btn">+ Add Mentor</a>
+                <a href="{% url 'add_mntr' %}" class="add-btn">+ Add Mentor</a>
             </div>
         </div>
 
@@ -284,12 +284,10 @@
                         <td>{{ i.email }}</td>
                         <td>
                             <div class="actions">
-                                <a href="/EditMentor/{{ i.id }}">
+                                <a href="{% url 'edit_mentor' i.id %}">
                                     <button class="btn btn-update" type="button">Update</button>
                                 </a>
-                                <a href="/DeleteMentor/{{ i.id }}">
-                                    <button class="btn btn-delete" type="button">Delete</button>
-                                </a>
+                                <form method="post" action="{% url 'delete_mentor' i.id %}" onsubmit="return confirm('Delete this mentor?');">{% csrf_token %}<button class="btn btn-delete" type="submit">Delete</button></form>
                             </div>
                         </td>
                     </tr>

@@ -25,10 +25,10 @@
 <body>
     {% include 'partials/messages.html' %}
     <main class="container">
-        <a href="/HomePage" class="back">&larr; Back to Dashboard</a>
+        <a href="{% url 'homepage' %}" class="back">&larr; Back to Dashboard</a>
         <div class="header">
             <h1>Manage Announcements</h1>
-            <a href="/AddAnnouncement" class="add-btn">+ New Announcement</a>
+            <a href="{% url 'add_announcement' %}" class="add-btn">+ New Announcement</a>
         </div>
         {% for announcement in announcements %}
         <article class="announcement">
@@ -39,7 +39,7 @@
             <p class="message">{{ announcement.message }}</p>
             <div class="announcement-footer">
                 <span>{% if announcement.expires_at %}Visible until {{ announcement.expires_at|date:"d M Y, h:i A" }}{% else %}No expiry{% endif %}</span>
-                <form method="post" action="/DeleteAnnouncement/{{ announcement.id }}" onsubmit="return confirm('Delete this announcement?');">
+                <form method="post" action="{% url 'delete_announcement' announcement.id %}" onsubmit="return confirm('Delete this announcement?');">
                     {% csrf_token %}
                     <button class="delete" type="submit">Delete</button>
                 </form>

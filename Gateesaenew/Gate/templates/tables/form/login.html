@@ -285,7 +285,7 @@
             <div class="card-top">
                 <div><h2 id="login-title">Sign in</h2><p>Use your GateEase account to continue.</p></div>
             </div>
-            <form action="/login/" method="POST">
+            <form action="{% url 'LoginPage' %}" method="POST">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="email">Email address</label>
@@ -301,9 +301,9 @@
                     </div>
                     <p class="caps-warning" id="capsWarning" role="status">Caps Lock is on</p>
                 </div>
-                <div class="form-actions"><a href="/ForgotPassword" class="text-link">Forgot password?</a></div>
+                <div class="form-actions"><a href="{% url 'ForgotPassword' %}" class="text-link">Forgot password?</a></div>
                 <button type="submit" class="submit-button">Continue to GateEase</button>
-                <p class="register">New student? <a href="/StudentRegister" class="text-link">Create an account</a></p>
+                <p class="register">New student? <a href="{% url 'StudentRegister' %}" class="text-link">Create an account</a></p>
             </form>
             </section>
             <p class="card-credit">Designed and developed by IT Club MMC</p>

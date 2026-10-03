@@ -228,7 +228,7 @@
 {% include 'partials/messages.html' %}
 
     <div class="container">
-        <a href="/HomePage" class="back-btn">&larr; Back to Dashboard</a>
+        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
         <h2>Assign Mentor to Department</h2>
 
         <div class="assign-form">
@@ -270,9 +270,7 @@
                         <td>{{ i.department_id.name }}</td>
                         <td>
                             <div class="actions">
-                                <a href="/DeleteAssignDept/{{ i.id }}">
-                                    <button class="btn-remove" type="button">Remove</button>
-                                </a>
+                                <form method="post" action="{% url 'DeleteAssignDept' i.id %}" onsubmit="return confirm('Remove this assignment?');">{% csrf_token %}<button class="btn-remove" type="submit">Remove</button></form>
                             </div>
                         </td>
                     </tr>

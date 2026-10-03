@@ -174,7 +174,7 @@
             <p>Register as a student on GateEase</p>
         </div>
 
-        <form action="/StudentRegister" method="POST">
+        <form action="{% url 'StudentRegister' %}" method="POST">
             {% csrf_token %}
 
             <div class="form-row">
@@ -231,7 +231,7 @@
             <button type="submit" class="btn-primary">Register Account</button>
 
             <div class="login-footer">
-                Already have an account? <a href="/login/">Sign in</a>
+                Already have an account? <a href="{% url 'LoginPage' %}">Sign in</a>
             </div>
         </form>
     </div>

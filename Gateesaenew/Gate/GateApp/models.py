@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 from io import BytesIO
 from PIL import Image
 from django.core.files import File
@@ -16,17 +17,30 @@ def compress_image(image, quality=70, max_size=(800, 800)):
     return new_image
 
 class Logintable(models.Model):
-    username=models.CharField(max_length=100, null=True, blank=True, db_index=True) 
+    username=models.CharField(max_length=100, null=True, blank=True, db_index=True, unique=True)
     password=models.CharField(max_length=100,null=True,blank=True)
     usertype=models.CharField(max_length=100,null=True,blank=True)
 
 class departmenttable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(Lower('name'), name='department_name_ci_unique'),
+        ]
+
 class classstable(models.Model):
     class_name=models.CharField(max_length=100,null=True,blank=True)
     admission_year=models.IntegerField(null=True,blank=True)
     department_id=models.ForeignKey(departmenttable,on_delete=models.CASCADE,null=True,blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower('class_name'),
+                name='class_name_ci_unique',
+            ),
+        ]
     
     def __str__(self):
         return self.class_name
@@ -70,8 +84,8 @@ class classstable(models.Model):
 
 class studenttable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
-    email=models.CharField(max_length=100,null=True,blank=True,db_index=True)
-    admn_no=models.IntegerField(null=True,blank=True,db_index=True)
+    email=models.CharField(max_length=100,null=True,blank=True,db_index=True,unique=True)
+    admn_no=models.IntegerField(null=True,blank=True,db_index=True,unique=True)
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     
@@ -130,7 +144,7 @@ class studenttable(models.Model):
 
 class mentortable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
-    email=models.CharField(max_length=100,null=True,blank=True)
+    email=models.CharField(max_length=100,null=True,blank=True,unique=True)
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     department=models.ForeignKey(departmenttable,on_delete=models.CASCADE,null=True,blank=True)
@@ -186,7 +200,7 @@ class announcementtable(models.Model):
 
 class securitytable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
-    email=models.CharField(max_length=100,null=True,blank=True)
+    email=models.CharField(max_length=100,null=True,blank=True,unique=True)
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     Photo = models.ImageField(upload_to='profile_photos/security/', null=True, blank=True)
@@ -209,6 +223,14 @@ class class_assigntable(models.Model):
     
     # The mentor managing this batch
     mentor_id=models.ForeignKey(mentortable,on_delete=models.CASCADE,null=True,blank=True,)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['class_id', 'mentor_id'],
+                name='class_mentor_assignment_unique',
+            ),
+        ]
     
     def get_current_students(self):
         return studenttable.objects.filter(classs=self.class_id)
@@ -228,6 +250,14 @@ class dept_assigntable(models.Model):
     mentor_id=models.ForeignKey(mentortable,on_delete=models.CASCADE,null=True,blank=True)
     status=models.CharField(max_length=100,null=True,blank=True)
     date=models.DateField(null=True,blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['department_id', 'mentor_id'],
+                name='department_mentor_assignment_unique',
+            ),
+        ]
     
 class MentorDeviceToken(models.Model):
     mentor = models.ForeignKey(mentortable, on_delete=models.CASCADE, related_name='device_tokens')
@@ -250,4 +280,3 @@ class PasswordResetOTP(models.Model):
     otp = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     is_used = models.BooleanField(default=False)
-

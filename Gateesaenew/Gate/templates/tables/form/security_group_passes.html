@@ -38,7 +38,7 @@
                     {{ security.name|default:"S"|make_list|first|upper }}
                 </div>
             {% endif %}
-            <a href="/Logout" onclick="showLogoutModal(event);" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
+            <a href="{% url 'logout' %}" onclick="showLogoutModal(event);" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </a>
         </div>
@@ -76,7 +76,7 @@
                     
                     <!-- Action -->
                     <div class="w-full md:w-auto mt-2 md:mt-0">
-                        <form method="POST" action="/SecurityGroupPass" class="w-full">
+                        <form method="POST" action="{% url 'SecurityGroupPass' %}" class="w-full">
                             {% csrf_token %}
                             <input type="hidden" name="pass_ids" value="{{ group.pass_ids }}">
                             <button type="submit" class="w-full bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 flex items-center justify-center gap-2 active:scale-95">
@@ -102,12 +102,12 @@
     <!-- Bottom Navigation Bar (Mobile / Tablet) -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] lg:hidden">
         <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
-            <a href="/SecurityHome" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
+            <a href="{% url 'SecurityHome' %}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 <span class="text-[10px] font-medium mt-1">Scans</span>
             </a>
             
-            <a href="/SecurityGroupPass" class="flex flex-col items-center justify-center w-full h-full text-indigo-600">
+            <a href="{% url 'SecurityGroupPass' %}" class="flex flex-col items-center justify-center w-full h-full text-indigo-600">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                 <span class="text-[10px] font-semibold mt-1">Group Passes</span>
             </a>

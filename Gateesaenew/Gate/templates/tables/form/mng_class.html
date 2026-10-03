@@ -189,10 +189,10 @@
 
     <div class="container">
 
-        <a href="/HomePage" class="back-btn">&larr; Back to Dashboard</a>
+        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
         <div class="header">
             <h2>Manage Classes</h2>
-            <a href="/AddClass" class="add-btn">+ Add Class</a>
+            <a href="{% url 'add_class' %}" class="add-btn">+ Add Class</a>
         </div>
 
         <div class="table-container">
@@ -210,9 +210,7 @@
                         <td>{{ i.class_name }}</td>
                         <td>{{ i.admission_year }}</td>
                         <td>
-                            <a href="/DeleteClass/{{ i.id }}">
-                                <button class="btn-delete" type="button">Delete</button>
-                            </a>
+                            <form method="post" action="{% url 'delete_class' i.id %}" onsubmit="return confirm('Delete this class?');">{% csrf_token %}<button class="btn-delete" type="submit">Delete</button></form>
                         </td>
                     </tr>
                     {% endfor %}

@@ -344,7 +344,7 @@
 {% include 'partials/messages.html' %}
 
     <div class="container">
-        <a href="/HomePage" class="back-btn">&larr; Back to Dashboard</a>
+        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
 
         <div class="page-header">
             <h2>Verify Students</h2>
@@ -353,10 +353,10 @@
                     <input type="text" name="q" value="{{ q }}" placeholder="Search by name, email, class, admn no…" class="search-box">
                     <button type="submit" class="btn" style="background:#6366f1;color:#fff;border:none;padding:9px 14px;">Search</button>
                     {% if q %}
-                    <a href="/VerifyStudent" class="btn" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;">Clear</a>
+                    <a href="{% url 'verify_student' %}" class="btn" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;">Clear</a>
                     {% endif %}
                 </form>
-                <a href="/AdminAddStudent" class="btn-add-student">+ Add Student</a>
+                <a href="{% url 'admin_add_student' %}" class="btn-add-student">+ Add Student</a>
             </div>
         </div>
 
@@ -406,11 +406,11 @@
 
                             <td>
                                 <div class="actions">
-                                    <a href="/EditStudent/{{ i.id }}" class="btn btn-edit">Edit</a>
+                                    <a href="{% url 'edit_student' i.id %}" class="btn btn-edit">Edit</a>
                                     {% if i.LOGINID.usertype == 'Rejected' %}
-                                    <a href="/AcceptStudent/{{ i.LOGINID.id }}" class="btn btn-accept">Accept</a>
+                                    <form method="post" action="{% url 'accept_student' i.LOGINID.id %}" class="inline-form">{% csrf_token %}<button class="btn btn-accept" type="submit">Accept</button></form>
                                     {% elif i.LOGINID.usertype == 'Student' %}
-                                    <a href="/RejectStudent/{{ i.LOGINID.id }}" class="btn btn-reject">Reject</a>
+                                    <form method="post" action="{% url 'reject_student' i.LOGINID.id %}" class="inline-form">{% csrf_token %}<button class="btn btn-reject" type="submit">Reject</button></form>
 
                                     <form action="UploadImage/{{ i.id }}" method="post" enctype="multipart/form-data"
                                         class="upload-group">
@@ -422,12 +422,12 @@
                                         <button type="submit" class="btn-upload-submit">Upload</button>
                                     </form>
                                     {% else %}
-                                    <a href="/AcceptStudent/{{ i.LOGINID.id }}" class="btn btn-accept">Accept</a>
-                                    <a href="/RejectStudent/{{ i.LOGINID.id }}" class="btn btn-reject">Reject</a>
+                                    <form method="post" action="{% url 'accept_student' i.LOGINID.id %}" class="inline-form">{% csrf_token %}<button class="btn btn-accept" type="submit">Accept</button></form>
+                                    <form method="post" action="{% url 'reject_student' i.LOGINID.id %}" class="inline-form">{% csrf_token %}<button class="btn btn-reject" type="submit">Reject</button></form>
                                     {% endif %}
 
-                                    <a href="/DeleteStudent/{{ i.id }}" class="btn btn-remove"
-                                        title="Remove Student">Remove</a>
+                                    <form method="post" action="{% url 'delete_student' i.id %}" class="inline-form" onsubmit="return confirm('Delete this student?');"><button type="submit" class="btn btn-remove"
+                                        title="Remove Student">Remove                                        </button></form>
                                 </div>
                             </td>
                         </tr>

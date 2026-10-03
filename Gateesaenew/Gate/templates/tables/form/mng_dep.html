@@ -189,10 +189,10 @@
 
     <div class="container">
 
-        <a href="/HomePage" class="back-btn">&larr; Back to Dashboard</a>
+        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
         <div class="header">
             <h2>Manage Departments</h2>
-            <a href="/AddDepartment" class="add-btn">+ Add Department</a>
+            <a href="{% url 'add_dep' %}" class="add-btn">+ Add Department</a>
         </div>
 
         <div class="table-container">
@@ -208,9 +208,7 @@
                     <tr>
                         <td>{{ i.name }}</td>
                         <td>
-                            <a href="/DeleteDepartment/{{ i.id }}">
-                                <button class="btn-delete" type="button">Delete</button>
-                            </a>
+                            <form method="post" action="{% url 'delete_department' i.id %}" onsubmit="return confirm('Delete this department?');">{% csrf_token %}<button class="btn-delete" type="submit">Delete</button></form>
                         </td>
                     </tr>
                     {% endfor %}

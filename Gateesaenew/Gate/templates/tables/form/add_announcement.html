@@ -25,7 +25,7 @@
 <body>
     {% include 'partials/messages.html' %}
     <main class="container">
-        <a href="/ManageAnnouncements" class="back">&larr; Back to Announcements</a>
+        <a href="{% url 'manage_announcements' %}" class="back">&larr; Back to Announcements</a>
         <h1>New Announcement</h1>
         <p class="intro">Publish an update that will be visible to all students.</p>
         <form method="post">

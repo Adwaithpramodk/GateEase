@@ -65,7 +65,7 @@
             <a href="/" class="logo">Gate<span>Ease</span></a>
             <div class="nav-right">
                 <span class="admin-badge">Admin Portal</span>
-                <a href="/Logout" onclick="showLogoutModal(event);" class="logout-btn">
+                <a href="{% url 'logout' %}" onclick="showLogoutModal(event);" class="logout-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                         <polyline points="16 17 21 12 16 7"/>
@@ -78,7 +78,7 @@
     </header>
 
     <main>
-        <a href="/VerifyStudent" class="back-btn">
+        <a href="{% url 'verify_student' %}" class="back-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
             Back to Verify Students
         </a>
@@ -95,7 +95,7 @@
         </div>
 
         <div class="form-card">
-            <form method="post" action="/AdminAddStudent">
+            <form method="post" action="{% url 'admin_add_student' %}">
                 {% csrf_token %}
 
                 <div class="form-row">

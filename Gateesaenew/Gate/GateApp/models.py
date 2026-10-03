@@ -21,6 +21,9 @@ class Logintable(models.Model):
     password=models.CharField(max_length=100,null=True,blank=True)
     usertype=models.CharField(max_length=100,null=True,blank=True)
 
+    def __str__(self):
+        return self.username
+
 class departmenttable(models.Model):
     name=models.CharField(max_length=100,null=True,blank=True)
 
@@ -28,6 +31,9 @@ class departmenttable(models.Model):
         constraints = [
             models.UniqueConstraint(Lower('name'), name='department_name_ci_unique'),
         ]
+
+    def __str__(self):
+        return self.name
 
 class classstable(models.Model):
     class_name=models.CharField(max_length=100,null=True,blank=True)
@@ -162,6 +168,9 @@ class mentortable(models.Model):
             self.image = compress_image(self.image)
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return self.name
+
 
 class exitpasstable(models.Model):
     student_id=models.ForeignKey(studenttable,on_delete=models.CASCADE,null=True,blank=True)
@@ -178,6 +187,8 @@ class exitpasstable(models.Model):
     reject_reason = models.TextField(null=True, blank=True)
     is_group_pass = models.BooleanField(default=False, db_index=True)
 
+    def __str__(self):
+        return f"Pass for {self.student_id.name} - Status: {self.mentor_status}, {self.security_status}"
 
 class complainttable(models.Model):
     student_id=models.ForeignKey(studenttable,on_delete=models.CASCADE,null=True,blank=True)
@@ -205,6 +216,8 @@ class securitytable(models.Model):
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     Photo = models.ImageField(upload_to='profile_photos/security/', null=True, blank=True)
 
+    def __str__(self):
+        return self.name
     def save(self, *args, **kwargs):
         if self.pk:
             try:
@@ -216,6 +229,7 @@ class securitytable(models.Model):
         elif self.Photo:
             self.Photo = compress_image(self.Photo)
         super().save(*args, **kwargs)
+    
 
 
 class class_assigntable(models.Model):
@@ -258,7 +272,9 @@ class dept_assigntable(models.Model):
                 name='department_mentor_assignment_unique',
             ),
         ]
-    
+    def __str__(self):
+        return f"{self.department_id} - {self.mentor_id}"
+
 class MentorDeviceToken(models.Model):
     mentor = models.ForeignKey(mentortable, on_delete=models.CASCADE, related_name='device_tokens')
     device_token = models.CharField(max_length=255, unique=True)

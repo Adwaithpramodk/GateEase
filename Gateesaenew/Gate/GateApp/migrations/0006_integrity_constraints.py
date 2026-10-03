@@ -2,6 +2,45 @@ from django.db import migrations, models
 import django.db.models.functions
 
 
+def remove_duplicate_rows(apps, schema_editor):
+    models_to_clean = (
+        ('logintable', ('username',), False),
+        ('studenttable', ('email',), False),
+        ('studenttable', ('admn_no',), False),
+        ('mentortable', ('email',), False),
+        ('securitytable', ('email',), False),
+        ('departmenttable', ('name',), True),
+        ('classstable', ('class_name',), True),
+        ('class_assigntable', ('class_id_id', 'mentor_id_id'), False),
+        ('dept_assigntable', ('department_id_id', 'mentor_id_id'), False),
+    )
+
+    for model_name, fields, case_insensitive in models_to_clean:
+        model = apps.get_model('GateApp', model_name)
+        seen = set()
+        duplicate_ids = []
+
+        for row in model.objects.order_by('pk').values('pk', *fields):
+            values = tuple(row[field] for field in fields)
+            if any(value is None for value in values):
+                continue
+            key = tuple(
+                value.casefold() if case_insensitive and isinstance(value, str) else value
+                for value in values
+            )
+            if key in seen:
+                duplicate_ids.append(row['pk'])
+            else:
+                seen.add(key)
+
+        if duplicate_ids:
+            model.objects.filter(pk__in=duplicate_ids).delete()
+
+
+def preserve_data(apps, schema_editor):
+    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -9,6 +48,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(remove_duplicate_rows, preserve_data),
         migrations.AlterField(
             model_name='logintable',
             name='username',

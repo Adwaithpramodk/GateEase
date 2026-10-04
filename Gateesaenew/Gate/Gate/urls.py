@@ -22,7 +22,7 @@ from django.views.static import serve
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('gateease-marymatha-9884/', admin.site.urls),
     path('',include('GateApp.urls')),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     # JWT token refresh endpoint (used by mobile app to silently renew access tokens)

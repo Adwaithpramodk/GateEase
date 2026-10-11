@@ -293,9 +293,26 @@ class LoginPage(View):
 
 from django.core.paginator import Paginator
 from .models import studenttable
+
+
+def filter_student_verification_status(queryset, status):
+    status_filters = {
+        'pending': (
+            models.Q(LOGINID__isnull=True) |
+            models.Q(LOGINID__usertype__isnull=True) |
+            ~models.Q(LOGINID__usertype__in=['Student', 'Rejected'])
+        ),
+        'verified': models.Q(LOGINID__usertype='Student'),
+        'rejected': models.Q(LOGINID__usertype='Rejected'),
+        'no_image': models.Q(Photo__isnull=True) | models.Q(Photo=''),
+    }
+    return queryset.filter(status_filters[status]) if status in status_filters else queryset
+
+
 class VerifyStudent(LoginRequiredMixin, View):
     def get(self, request):
         q = request.GET.get('q', '').strip()
+        status = request.GET.get('status', '').strip()
         students_list = studenttable.objects.all().order_by('-id')
         if q:
             students_list = students_list.filter(
@@ -304,13 +321,14 @@ class VerifyStudent(LoginRequiredMixin, View):
                 models.Q(admn_no__icontains=q) |
                 models.Q(classs__class_name__icontains=q)
             )
+        students_list = filter_student_verification_status(students_list, status)
         paginator = Paginator(students_list, 10)
         page_number = request.GET.get('page')
         students = paginator.get_page(page_number)
         return render(
             request,
             'tables/form/verify_student.html',
-            {'students': students, 'q': q}
+            {'students': students, 'q': q, 'status': status}
         )
 
 class AdminAddStudent(AdminRequiredMixin, View):
@@ -2902,6 +2920,7 @@ class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
 
 class VerifyStudentMentor(MentorRequiredMixin, View):
     def get(self, request):
+        status = request.GET.get('status', '').strip()
         mentor_dept_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         # Use LOGINID_id or connect via LOGINID object
         mentor_obj = mentortable.objects.filter(LOGINID__id=mentor_dept_id).first()
@@ -2917,6 +2936,7 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
 
         # Filter students strictly by the mentor's assigned classes
         students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids).order_by('-id')
+        students_list = filter_student_verification_status(students_list, status)
 
         paginator = Paginator(students_list, 10)
         page_number = request.GET.get('page')
@@ -2929,7 +2949,8 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
                 'students': students,
                 'mentor_name': mentor_obj.name,
                 'class_names': class_names,
-                'mentor': mentor_obj
+                'mentor': mentor_obj,
+                'status': status
             }
         )
 

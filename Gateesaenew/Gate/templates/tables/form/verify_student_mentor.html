@@ -50,6 +50,19 @@
         <div class="mb-6 mt-2">
             <h1 class="text-2xl font-bold text-slate-900">Verify Students</h1>
             <p class="text-slate-500 mt-1 text-sm">Managing students for {{ class_names }}</p>
+            <form method="get" class="mt-4 flex flex-wrap items-center gap-2">
+                <label for="student-status" class="text-sm font-medium text-slate-600">Filter:</label>
+                <select id="student-status" name="status" onchange="this.form.submit()" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm">
+                    <option value="">All students</option>
+                    <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="verified" {% if status == 'verified' %}selected{% endif %}>Verified</option>
+                    <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
+                    <option value="no_image" {% if status == 'no_image' %}selected{% endif %}>Image not uploaded</option>
+                </select>
+                {% if status %}
+                    <a href="{% url 'verify_student_mentor' %}" class="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200">Clear</a>
+                {% endif %}
+            </form>
         </div>
 
         <div class="space-y-4">
@@ -119,13 +132,13 @@
                 {% if students.has_other_pages %}
                 <div class="flex justify-center items-center gap-2 mt-6">
                     {% if students.has_previous %}
-                        <a href="?page={{ students.previous_page_number }}" class="bg-white border border-slate-200 text-slate-600 font-medium py-2 px-4 rounded-xl hover:bg-slate-50 transition-colors text-sm">Previous</a>
+                        <a href="?page={{ students.previous_page_number }}{% if status %}&status={{ status }}{% endif %}" class="bg-white border border-slate-200 text-slate-600 font-medium py-2 px-4 rounded-xl hover:bg-slate-50 transition-colors text-sm">Previous</a>
                     {% endif %}
                     
                     <span class="bg-purple-600 text-white font-bold py-2 px-4 rounded-xl text-sm shadow-sm">Page {{ students.number }} of {{ students.paginator.num_pages }}</span>
                     
                     {% if students.has_next %}
-                        <a href="?page={{ students.next_page_number }}" class="bg-white border border-slate-200 text-slate-600 font-medium py-2 px-4 rounded-xl hover:bg-slate-50 transition-colors text-sm">Next</a>
+                        <a href="?page={{ students.next_page_number }}{% if status %}&status={{ status }}{% endif %}" class="bg-white border border-slate-200 text-slate-600 font-medium py-2 px-4 rounded-xl hover:bg-slate-50 transition-colors text-sm">Next</a>
                     {% endif %}
                 </div>
                 {% endif %}

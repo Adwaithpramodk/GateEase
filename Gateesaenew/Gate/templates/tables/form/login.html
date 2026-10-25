@@ -11,316 +11,245 @@
     <meta name="author" content="IT Club MMC">
     <meta property="og:title" content="GateEase - Marymatha College">
     <meta property="og:description" content="Official digital exit pass system for Marymatha College.">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="{% url 'manifest.json' %}">
     <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-    <meta name="theme-color" content="#f8fafc">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#ffffff">
     <style>
         :root {
-            --canvas: #f8fafc;
-            --surface: #ffffff;
-            --surface-soft: #f1f5f9;
-            --ink: #0f172a;
-            --muted: #64748b;
-            --line: #e2e8f0;
-            --indigo: #4f46e5;
-            --indigo-dark: #3730a3;
-            --indigo-soft: #eef2ff;
-            --purple: #7c3aed;
-            --green: #059669;
+            --violet: #7622d7;
+            --violet-dark: #631bb9;
+            --lavender: #f9f5ff;
+            --lilac: #f0e6fa;
+            --periwinkle: #e6d5fe;
+            --ink: #000;
+            --carbon: #121214;
+            --graphite: #27272a;
+            --slate: #71717a;
+            --mist: #a9a9b2;
+            --fog: #e4e4e7;
+            --lime: #94e022;
+            --display: 'Plus Jakarta Sans', system-ui, sans-serif;
+            --body: 'DM Sans', system-ui, sans-serif;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             min-height: 100vh;
-            margin: 0;
-            background: var(--canvas);
             color: var(--ink);
-            font-family: 'Inter', sans-serif;
+            background: #fff;
+            background-image: radial-gradient(ellipse 60% 40% at 85% 15%, rgba(240,230,250,.6), transparent 60%), radial-gradient(ellipse 45% 35% at 10% 85%, rgba(249,245,255,.8), transparent 55%);
+            display: flex;
+            flex-direction: column;
+            font-family: var(--body);
+            -webkit-font-smoothing: antialiased;
         }
+        a { color: inherit; }
+        .site-header, .page, .site-footer { width: min(100% - 64px, 1200px); margin: 0 auto; }
         .site-header {
-            width: min(100% - 48px, 1180px);
-            margin: 0 auto;
-            padding: 22px 0;
+            padding: 26px 0 20px;
+            
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        .brand {
-            display: inline-flex;
+        .brand { display: inline-flex; align-items: center; text-decoration: none; }
+        .brand-name { font: 900 30px/1 var(--display); letter-spacing: -.8px; }
+        .brand-name span, .text-link { color: var(--violet); }
+        .header-meta {
+            display: flex;
             align-items: center;
-            gap: 10px;
-            color: var(--ink);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -.5px;
-            text-decoration: none;
+            gap: 12px;
         }
-        .brand-mark {
-            width: 36px;
-            height: 36px;
-            display: grid;
-            place-items: center;
-            border-radius: 11px;
-            background: var(--indigo);
-            color: #fff;
-            box-shadow: 0 7px 16px rgba(79,70,229,.2);
-        }
-        .page {
-            width: min(100% - 48px, 1180px);
-            min-height: calc(100vh - 81px);
-            margin: 0 auto;
-            padding: 42px 0 52px;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
-            align-items: center;
-            gap: clamp(48px, 8vw, 116px);
-        }
-        .welcome { max-width: 610px; }
-        .eyebrow {
+        .college-tag, .eyebrow {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            margin: 0 0 20px;
-            color: var(--indigo);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: .1em;
-            text-transform: uppercase;
+            border: 1px solid var(--periwinkle);
+            border-radius: 999px;
+            background: var(--lavender);
+            color: var(--violet);
+            font-size: 13px;
+            font-weight: 600;
         }
-        .eyebrow::before { content: ''; width: 24px; height: 2px; background: var(--purple); }
-        .welcome h1 {
-            max-width: 580px;
-            margin: 0;
-            color: var(--ink);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: clamp(38px, 5.2vw, 68px);
-            line-height: 1.02;
-            letter-spacing: -3px;
-        }
-        .welcome-copy {
-            max-width: 500px;
-            margin: 24px 0 0;
-            color: var(--muted);
-            font-size: 16px;
-            line-height: 1.7;
-        }
-        .flow-card {
-            max-width: 520px;
-            margin-top: 42px;
-            padding: 20px;
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            background: var(--surface);
-            box-shadow: 0 10px 28px rgba(15,23,42,.05);
-        }
-        .flow-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-        }
-        .flow-heading strong { font-size: 13px; }
-        .flow-heading span { color: var(--muted); font-size: 11px; }
-        .flow {
+        .college-tag { padding: 6px 14px; }
+        .page {
+            flex: 1;
+            padding: 36px 0 64px;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 9px;
+            grid-template-columns: 1.15fr .85fr;
+            align-items: center;
+            gap: 64px;
         }
-        .flow-step {
-            min-height: 82px;
-            padding: 12px;
-            border-radius: 11px;
-            background: var(--surface-soft);
+        .welcome { display: flex; flex-direction: column; gap: 20px; }
+        .eyebrow { width: fit-content; padding: 7px 13px; text-transform: uppercase; letter-spacing: .05em; font-size: 11px; }
+        .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); }
+        h1, h2 { font-family: var(--display); }
+        h1 { max-width: 640px; font-size: clamp(40px, 4.6vw, 64px); line-height: 1.05; letter-spacing: -1.5px; }
+        h1 .accent { color: var(--violet); }
+        .welcome-copy { max-width: 520px; color: var(--graphite); font-size: 18px; line-height: 1.55; }
+        .flow-card {
+            max-width: 560px;
+            margin-top: 14px;
+            padding: 24px;
+            border: 1px solid var(--periwinkle);
+            border-radius: 14px;
+            background: var(--lavender);
         }
-        .flow-step:nth-child(2) { background: var(--indigo-soft); }
-        .flow-step:nth-child(3) { background: #f5f3ff; }
-        .flow-number {
-            display: block;
-            margin-bottom: 11px;
-            color: var(--indigo);
-            font-size: 11px;
-            font-weight: 800;
-        }
-        .flow-step:nth-child(3) .flow-number { color: var(--purple); }
-        .flow-step span:last-child { color: #334155; font-size: 12px; font-weight: 600; line-height: 1.35; }
-        .login-card {
-            padding: 34px;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            background: var(--surface);
-            box-shadow: 0 22px 48px rgba(15,23,42,.09);
-        }
-        .card-top {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 14px;
-            margin-bottom: 30px;
-        }
-        .card-top h2 {
-            margin: 0 0 7px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 26px;
-            letter-spacing: -.8px;
-        }
-        .card-top p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+        .flow-heading { display: flex; justify-content: space-between; padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid rgba(118,34,215,.12); }
+        .flow-heading strong { color: var(--carbon); font: 800 13.5px var(--display); text-transform: uppercase; }
+        .flow-heading span { color: var(--violet); font-size: 12px; font-weight: 600; }
+        .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .flow-step { min-height: 110px; padding: 16px 14px; border: 1px solid var(--fog); border-radius: 10px; background: #fff; }
+        .flow-step-top { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .flow-number { color: var(--violet); font: 800 18px/1 var(--display); }
+        .flow-icon { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--lilac); color: var(--violet); }
+        .flow-icon svg { display: block; width: 14px; height: 14px; }
+        .flow-title { margin-bottom: 4px; color: var(--carbon); font-size: 13.5px; font-weight: 700; }
+        .flow-desc { color: var(--slate); font-size: 11px; line-height: 1.4; }
+        .login-column { width: 100%; }
+        .login-card { padding: 38px; border: 1px solid var(--fog); border-radius: 14px; background: #fff; box-shadow: 0 4px 20px -2px rgba(118,34,215,.06); }
+        .card-top { margin-bottom: 26px; }
+        h2 { margin-bottom: 4px; font-size: 28px; letter-spacing: -.6px; }
+        .card-top p { color: var(--slate); font-size: 14px; }
         .form-group { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 7px; color: #334155; font-size: 13px; font-weight: 700; }
+        label { display: block; margin-bottom: 8px; color: var(--graphite); font-size: 13px; font-weight: 600; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-leading-icon { position: absolute; left: 14px; display: flex; color: var(--slate); pointer-events: none; }
+        .input-leading-icon svg { width: 16px; height: 16px; }
         input {
             width: 100%;
-            min-height: 48px;
-            padding: 0 14px;
-            border: 1px solid var(--line);
-            border-radius: 10px;
+            min-height: 46px;
+            padding: 0 16px 0 42px;
+            border: 1px solid var(--fog);
+            border-radius: 8px;
             outline: none;
-            background: #fbfdff;
-            color: var(--ink);
-            font: inherit;
-            font-size: 14px;
-            transition: border-color .2s, box-shadow .2s, background .2s;
+            color: var(--graphite);
+            background: #fff;
+            font: 14.5px var(--body);
+            transition: border-color .2s, box-shadow .2s;
         }
-        input:focus { border-color: var(--indigo); background: #fff; box-shadow: 0 0 0 4px rgba(79,70,229,.12); }
-        input::placeholder { color: #94a3b8; }
-        .password-wrap { position: relative; }
-        .password-input { padding-right: 50px; }
-        .toggle-password {
-            position: absolute;
-            top: 50%;
-            right: 7px;
-            width: 36px;
-            height: 36px;
-            display: grid;
-            place-items: center;
-            border: 0;
-            border-radius: 8px;
-            background: transparent;
-            color: var(--muted);
-            cursor: pointer;
-            transform: translateY(-50%);
+        input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(118,34,215,.15); }
+        input::placeholder { color: var(--mist); }
+        .password-input { padding-right: 48px; }
+        .toggle-password { position: absolute; right: 8px; top: 50%; width: 32px; height: 32px; display: grid; place-items: center; transform: translateY(-50%); border: 0; border-radius: 6px; background: transparent; color: var(--slate); cursor: pointer; }
+        .toggle-password:hover, .toggle-password:focus-visible { color: var(--violet); background: var(--lavender); outline: none; }
+        .caps-warning { display: none; margin-top: 6px; color: #b45309; font-size: 12px; }
+        .form-actions { display: flex; justify-content: flex-end; margin: -4px 0 22px; }
+        .text-link { font-size: 12.5px; font-weight: 600; text-decoration: none; }
+        .text-link:hover { color: var(--violet-dark); text-decoration: underline; }
+        .submit-button { width: 100%; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: 0; border-radius: 32px; background: var(--violet); color: #fff; font: 700 15px var(--body); cursor: pointer; transition: background .15s, transform .15s; }
+        .submit-button:hover { background: var(--violet-dark); transform: translateY(-1px); }
+        .submit-button:active { transform: translateY(0); }
+        .register, .card-credit { color: var(--slate); text-align: center; }
+        .register { margin-top: 22px; font-size: 13px; }
+        .card-credit { margin-top: 16px; font-size: 11.5px; }
+        .site-footer { padding: 24px 0; border-top: 1px solid var(--fog); display: flex; justify-content: space-between; color: var(--slate); font-size: 12px; }
+        .system-status { display: flex; align-items: center; gap: 8px; color: var(--carbon); font-weight: 500; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 2px rgba(148,224,34,.25); }
+        .toast-fallback { width: min(430px, calc(100vw - 32px)); margin: 0 auto 16px; }
+        @media (max-width: 960px) {
+            .site-header, .page, .site-footer { width: min(100% - 32px, 620px); }
+            .page { grid-template-columns: 1fr; gap: 48px; padding: 24px 0 48px; }
+            h1 { font-size: 42px; }
+            .site-footer { flex-direction: column; gap: 12px; text-align: center; }
         }
-        .toggle-password:hover, .toggle-password:focus-visible { outline: none; background: var(--indigo-soft); color: var(--indigo); }
-        .caps-warning { display: none; margin: 7px 0 0; color: #b45309; font-size: 12px; }
-        .form-actions { display: flex; justify-content: flex-end; margin: 2px 0 22px; }
-        a { color: var(--indigo); }
-        .text-link { font-size: 12px; font-weight: 700; text-decoration: none; }
-        .text-link:hover { color: var(--indigo-dark); text-decoration: underline; }
-        .submit-button {
-            width: 100%;
-            min-height: 49px;
-            border: 0;
-            border-radius: 10px;
-            background: var(--indigo);
-            color: #fff;
-            cursor: pointer;
-            font: inherit;
-            font-size: 14px;
-            font-weight: 700;
-            transition: background .2s, transform .2s;
-        }
-        .submit-button:hover { background: var(--indigo-dark); transform: translateY(-1px); }
-        .register { margin: 21px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
-        .login-column { width: 100%; }
-        .card-credit { margin: 24px 0 0; color: #94a3b8; font-size: 11px; line-height: 1.5; text-align: center; }
-        .install-area { display: flex; justify-content: center; min-height: 42px; }
-        .install-button {
-            display: none;
-            align-items: center;
-            gap: 7px;
-            margin: 16px 0 0;
-            padding: 8px 12px;
-            border: 1px solid #c7d2fe;
-            border-radius: 8px;
-            background: var(--indigo-soft);
-            color: var(--indigo-dark);
-            cursor: pointer;
-            font: inherit;
-            font-size: 12px;
-            font-weight: 700;
-        }
-        .install-button svg { width: 14px; height: 14px; }
-        @media (max-width: 820px) {
-            .site-header, .page { width: min(100% - 32px, 560px); }
-            .site-header { padding-top: 17px; }
-            .page { min-height: auto; padding: 38px 0 34px; grid-template-columns: 1fr; gap: 34px; }
-            .welcome h1 { font-size: clamp(38px, 9vw, 56px); letter-spacing: -2px; }
-            .welcome-copy { font-size: 14px; }
-            .flow-card { margin-top: 28px; }
-            .login-card { padding: 28px 24px; }
-        }
-        @media (max-width: 420px) {
-            .site-header, .page { width: min(100% - 28px, 360px); }
-            .brand { font-size: 18px; }
-            .brand-mark { width: 32px; height: 32px; }
-            .flow-card { padding: 14px; }
-            .flow-step { min-height: 78px; padding: 10px; }
-            .flow-step span:last-child { font-size: 11px; }
-            .login-card { padding: 24px 20px; }
+        @media (max-width: 520px) {
+            .site-header { padding-top: 20px; }
+            .header-meta { display: none; }
+            .flow { grid-template-columns: 1fr; }
+            .flow-step { min-height: auto; }
+            .login-card { padding: 26px 22px; }
         }
     </style>
 </head>
 <body>
     {% include 'partials/messages.html' %}
     <header class="site-header">
-        <a href="/" class="brand"><span class="brand-mark" aria-hidden="true">G</span> GateEase</a>
+        <a href="{% url 'landing' %}" class="brand" aria-label="GateEase home">
+            <span class="brand-name">Gate<span>Ease</span></span>
+        </a>
+        <div class="header-meta">
+            <span class="college-tag">Mary Matha Arts and Science College</span>
+        </div>
     </header>
+
     <main class="page">
         <section class="welcome" aria-labelledby="welcome-title">
-            <p class="eyebrow">Campus access platform</p>
-            <h1 id="welcome-title">Everything at the gate, in one place.</h1>
-            <p class="welcome-copy">A simple workspace for requesting, reviewing, and validating campus exit passes.</p>
+            <!-- <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Campus access platform</p> -->
+            <h1 id="welcome-title">Everything at the gate, <span class="accent">in one place.</span></h1>
+            <p class="welcome-copy">A simple workspace for requesting, reviewing, and validating campus exit passes with real-time faculty approval.</p>
             <div class="flow-card" aria-label="Exit pass flow">
-                <div class="flow-heading"><strong>Exit pass flow</strong><span>Three connected steps</span></div>
+                <div class="flow-heading"><strong>Exit pass flow</strong><span>3 connected steps</span></div>
                 <div class="flow">
-                    <div class="flow-step"><span class="flow-number">01</span><span>Request pass</span></div>
-                    <div class="flow-step"><span class="flow-number">02</span><span>Mentor review</span></div>
-                    <div class="flow-step"><span class="flow-number">03</span><span>Gate verification</span></div>
+                    <div class="flow-step">
+                        <div class="flow-step-top"><span class="flow-number">01</span><span class="flow-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M8 13h8"></path><path d="M8 17h5"></path></svg></span></div>
+                        <div class="flow-title">Request pass</div><div class="flow-desc">Submit destination and schedule reason</div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-step-top"><span class="flow-number">02</span><span class="flow-icon" aria-hidden="true">◷</span></div>
+                        <div class="flow-title">Mentor review</div><div class="flow-desc">Advisor approval and clearance timestamp</div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-step-top"><span class="flow-number">03</span><span class="flow-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h5"></path><path d="M4 4v5"></path><path d="M20 4h-5"></path><path d="M20 4v5"></path><path d="M4 20h5"></path><path d="M4 20v-5"></path><path d="M20 20h-5"></path><path d="M20 20v-5"></path><path d="M9 12h6"></path><path d="M12 9v6"></path></svg></span></div>
+                        <div class="flow-title">Gate verification</div><div class="flow-desc">QR scan and secure exit check</div>
+                    </div>
                 </div>
             </div>
         </section>
+
         <div class="login-column">
             <section class="login-card" aria-labelledby="login-title">
-            <div class="card-top">
-                <div><h2 id="login-title">Sign in</h2><p>Use your GateEase account to continue.</p></div>
-            </div>
-            <form action="{% url 'LoginPage' %}" method="POST">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="email">Email address</label>
-                    <input type="email" id="email" name="email" placeholder="name@example.com" required autocomplete="email">
+                <div class="card-top">
+                    <h2 id="login-title">Sign in</h2>
+                    <p>Use your GateEase account to continue.</p>
                 </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="password-wrap">
-                        <input type="password" id="password" name="password" class="password-input" placeholder="Enter your password" required autocomplete="current-password" aria-describedby="capsWarning">
-                        <button type="button" class="toggle-password" id="togglePassword" aria-label="Show password" title="Show password">
-                            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        </button>
+                <form action="{% url 'LoginPage' %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <div class="input-wrapper">
+                            <span class="input-leading-icon" aria-hidden="true">@</span>
+                            <input type="email" id="email" name="email" placeholder="Enter the Email address" required autocomplete="email">
+                        </div>
                     </div>
-                    <p class="caps-warning" id="capsWarning" role="status">Caps Lock is on</p>
-                </div>
-                <div class="form-actions"><a href="{% url 'ForgotPassword' %}" class="text-link">Forgot password?</a></div>
-                <button type="submit" class="submit-button">Continue to GateEase</button>
-                <p class="register">New student? <a href="{% url 'StudentRegister' %}" class="text-link">Create an account</a></p>
-            </form>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper">
+                            <span class="input-leading-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+                                    <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                                </svg>
+                            </span>
+                            <input type="password" id="password" name="password" class="password-input" placeholder="Enter your password" required autocomplete="current-password" aria-describedby="capsWarning">
+                            <button type="button" class="toggle-password" id="togglePassword" aria-label="Show password" title="Show password">
+                                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                        <p class="caps-warning" id="capsWarning" role="status">Caps Lock is on</p>
+                    </div>
+                    <div class="form-actions"><a href="{% url 'ForgotPassword' %}" class="text-link">Forgot password?</a></div>
+                    <button type="submit" class="submit-button">Continue to GateEase <span aria-hidden="true"></span></button>
+                    <p class="register">New student? <a href="{% url 'StudentRegister' %}" class="text-link">Create an account</a></p>
+                </form>
             </section>
             <p class="card-credit">Designed and developed by IT Club MMC</p>
-            <div class="install-area">
-                <button id="installAppBtn" class="install-button" type="button">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 16l4-5h-3V3h-2v8H8l4 5zm-7 2h14v2H5v-2z"></path></svg>
-                    Install web app
-                </button>
-            </div>
         </div>
     </main>
+
+    <footer class="site-footer">
+        <span>© 2026 Marymatha College Access System</span>
+        <!-- <span class="system-status"><span class="status-dot" aria-hidden="true"></span>System operational</span> -->
+    </footer>
+
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+            window.addEventListener('load', () => navigator.serviceWorker.register("{% url 'sw.js' %}").catch(error => {
+                console.warn('GateEase service worker registration failed:', error);
+            }));
         }
-        let deferredPrompt;
-        const installBtn = document.getElementById('installAppBtn');
         const passwordInput = document.getElementById('password');
         const togglePassword = document.getElementById('togglePassword');
         const eyeIcon = document.getElementById('eyeIcon');
@@ -338,18 +267,6 @@
             capsWarning.style.display = event.getModifierState('CapsLock') ? 'block' : 'none';
         });
         passwordInput.addEventListener('blur', () => capsWarning.style.display = 'none');
-        window.addEventListener('beforeinstallprompt', event => {
-            event.preventDefault();
-            deferredPrompt = event;
-            installBtn.style.display = 'inline-flex';
-        });
-        installBtn.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            installBtn.style.display = 'none';
-        });
     </script>
 </body>
 </html>

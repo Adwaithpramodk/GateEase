@@ -3,143 +3,295 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Students</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { display: none; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>GateEase | Verify Students</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
     <link rel="shortcut icon" href="{% static 'favicon.png' %}">
+    <meta name="theme-color" content="#f7f5fb">
+    <style>
+        :root {
+            --bg: #f7f5fb;
+            --surface: #fff;
+            --soft: #f0e6fa;
+            --line: #e4e4e7;
+            --ink: #000;
+            --muted: #5a5b5f;
+            --dim: #71717a;
+            --purple: #7622d7;
+            --purple-dark: #6119b5;
+            --green: #15803d;
+            --green-soft: #dcfce7;
+            --red: #b42318;
+            --red-soft: #fff1f0;
+            --rail: 72px;
+            --font: 'DM Sans', sans-serif;
+            --display: 'Plus Jakarta Sans', sans-serif;
+        }
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+        body { min-height: 100vh; margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); }
+        a { color: inherit; text-decoration: none; }
+        button, input, select { font: inherit; }
+        button { cursor: pointer; }
+        :focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
+        .i { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+        .rail { position: fixed; inset: 0 auto 0 0; z-index: 10; display: flex; width: var(--rail); flex-direction: column; padding: 16px 12px; overflow: hidden; border-right: 1px solid var(--line); background: var(--surface); transition: width .2s ease; }
+        .rail:hover, .rail:focus-within { width: 244px; }
+        .brand { display: flex; height: 48px; align-items: center; padding: 0 13px; margin-bottom: 12px; font: 800 20px var(--display); letter-spacing: -.02em; white-space: nowrap; }
+        .brand span, .nav-label { opacity: 0; transition: opacity .15s ease; }
+        .rail:hover .brand span, .rail:focus-within .brand span, .rail:hover .nav-label, .rail:focus-within .nav-label { opacity: 1; }
+        .nav { display: grid; gap: 2px; overflow-y: auto; scrollbar-width: none; }
+        .nav::-webkit-scrollbar { display: none; }
+        .nav-link { display: flex; height: 44px; align-items: center; gap: 14px; padding: 0 13px; border-radius: 12px; color: var(--muted); font-size: 14px; font-weight: 500; white-space: nowrap; }
+        .nav-link:hover { background: var(--soft); color: var(--ink); }
+        .nav-link.active { background: var(--soft); color: var(--purple); font-weight: 700; }
+        .nav-link .i { width: 20px; height: 20px; flex: 0 0 20px; }
+
+        .main { min-height: 100vh; margin-left: var(--rail); padding: 34px 6vw 70px; }
+        .crumbs { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; color: var(--dim); font-size: 13px; }
+        .crumbs a:hover { color: var(--purple); }
+        .crumbs .i { width: 14px; height: 14px; }
+        .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 25px; border-bottom: 1px solid var(--line); }
+        .eyebrow { margin: 0 0 8px; color: var(--purple); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+        h1 { margin: 0; font: 800 clamp(2rem, 4vw, 3.6rem)/1.05 var(--display); letter-spacing: -.055em; }
+        .intro { max-width: 600px; margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+        .add-student { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; padding: 0 16px; border-radius: 10px; background: var(--purple); color: #fff; font-weight: 700; box-shadow: 0 8px 18px rgba(118,34,215,.15); }
+        .add-student:hover { background: var(--purple-dark); }
+        .add-student .i { width: 17px; height: 17px; }
+        .toolbar { display: flex; align-items: center; gap: 10px; padding: 14px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+        .search { position: relative; flex: 1; min-width: 220px; }
+        .search .i { position: absolute; left: 13px; top: 50%; width: 18px; height: 18px; color: #a3a0a9; transform: translateY(-50%); pointer-events: none; }
+        .search input, .filter { height: 42px; border: 1px solid var(--line); border-radius: 9px; outline: 0; background: #fff; color: var(--ink); }
+        .search input { width: 100%; padding: 0 13px 0 39px; }
+        .search input:focus, .filter:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(118,34,215,.12); }
+        .filter { min-width: 170px; padding: 0 12px; color: var(--muted); }
+        .toolbar button, .clear { height: 42px; padding: 0 16px; border: 0; border-radius: 9px; background: var(--purple); color: #fff; font-size: 13px; font-weight: 700; }
+        .toolbar button:hover { background: var(--purple-dark); }
+        .clear { display: inline-flex; align-items: center; background: var(--soft); color: var(--purple); }
+        .clear:hover { background: #e6d5fe; }
+        .directory { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); box-shadow: 0 10px 28px rgba(24,16,39,.05); }
+        .directory-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 21px 24px; border-bottom: 1px solid var(--line); background: linear-gradient(110deg, var(--soft), #fff 75%); }
+        .directory-head h2 { margin: 0; font: 800 18px var(--display); letter-spacing: -.03em; }
+        .directory-head p { margin: 4px 0 0; color: var(--dim); font-size: 13px; }
+        .total { color: var(--muted); font-size: 13px; font-weight: 600; }
+        .total strong { color: var(--purple); font: 800 20px var(--display); }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; min-width: 920px; border-collapse: collapse; }
+        th, td { padding: 15px 18px; text-align: left; }
+        th { color: var(--dim); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        td { border-top: 1px solid #f0eef2; color: var(--muted); vertical-align: middle; }
+        tbody tr:hover { background: #fcfaff; }
+        .photo { width: 42px; height: 42px; object-fit: cover; border: 1px solid var(--line); border-radius: 50%; }
+        .initials { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: var(--soft); color: var(--purple); font-size: 12px; font-weight: 800; }
+        .student-name { color: var(--ink); font-weight: 700; }
+        .student-email, .secondary { display: block; margin-top: 2px; color: var(--dim); font-size: 12px; }
+        .class-name { color: var(--ink); font-weight: 600; }
+        .admission { display: inline-flex; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: #faf9fb; color: var(--muted); font: 600 12px var(--font); }
+        .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .actions form { display: flex; margin: 0; }
+        .action { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; padding: 0 9px; border: 1px solid transparent; border-radius: 7px; line-height: 1; font-size: 11px; font-weight: 700; white-space: nowrap; }
+        .action.edit, .action.upload { background: var(--soft); color: var(--purple); }
+        .action.accept { background: var(--green-soft); color: var(--green); }
+        .action.reject { background: var(--red-soft); color: var(--red); }
+        .action.remove { border-color: var(--line); background: #fff; color: var(--muted); }
+        .action:hover { filter: brightness(.95); }
+        .upload-form { display: inline-flex !important; align-items: center; gap: 4px; }
+        .upload-form input { display: none; }
+        .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--line); color: var(--dim); font-size: 13px; }
+        .page-links { display: flex; align-items: center; gap: 7px; }
+        .page-link, .current-page { display: inline-grid; min-width: 34px; height: 32px; place-items: center; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 12px; font-weight: 600; }
+        .page-link:hover { border-color: var(--purple); color: var(--purple); }
+        .current-page { border-color: var(--purple); background: var(--purple); color: #fff; }
+        .empty { padding: 60px 24px; text-align: center; color: var(--dim); font-size: 14px; }
+        .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(23,19,29,.45); }
+        .modal-backdrop.open { display: flex; }
+        .edit-modal { width: min(100%, 560px); max-height: calc(100vh - 40px); overflow-y: auto; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); box-shadow: 0 20px 55px rgba(24,16,39,.22); }
+        .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 22px 24px; border-bottom: 1px solid var(--line); background: linear-gradient(110deg, var(--soft), #fff 75%); }
+        .modal-head h2 { margin: 0; font: 800 19px var(--display); letter-spacing: -.03em; }
+        .modal-head p { margin: 4px 0 0; color: var(--dim); font-size: 13px; }
+        .modal-close { display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
+        .modal-close:hover { background: var(--soft); color: var(--purple); }
+        .modal-close .i { width: 18px; height: 18px; }
+        .edit-form { display: grid; gap: 16px; padding: 24px; }
+        .edit-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .edit-form label { display: grid; gap: 6px; color: var(--ink); font-size: 12px; font-weight: 700; }
+        .edit-form input, .edit-form select { width: 100%; min-height: 43px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; outline: 0; background: #fff; color: var(--ink); }
+        .edit-form input:focus, .edit-form select:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(118,34,215,.12); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 5px; }
+        .modal-actions button { min-height: 40px; padding: 0 15px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 700; }
+        .modal-cancel { background: var(--soft); color: var(--purple); }
+        .modal-save { background: var(--purple); color: #fff; }
+        .modal-save:hover { background: var(--purple-dark); }
+
+        @media (max-width: 760px) {
+            .rail { inset: auto 0 0; width: 100%; height: 65px; flex-direction: row; padding: 8px 10px; border-top: 1px solid var(--line); border-right: 0; }
+            .rail:hover, .rail:focus-within { width: 100%; }
+            .brand { display: none; }
+            .nav { width: 100%; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+            .nav-link { height: 49px; justify-content: center; padding: 0; }
+            .nav-label { display: none; }
+            .main { margin-left: 0; padding: 22px 14px 90px; }
+            .topbar { align-items: flex-start; flex-direction: column; gap: 18px; padding-bottom: 22px; }
+            .add-student { width: 100%; justify-content: center; }
+            .toolbar { align-items: stretch; flex-direction: column; }
+            .search { min-width: 0; }
+            .filter, .toolbar button, .clear { width: 100%; }
+            .directory-head { padding: 19px; }
+            .pagination { align-items: flex-start; flex-direction: column; padding: 15px 19px; }
+            .edit-form .form-row { grid-template-columns: 1fr; }
+            .edit-form { padding: 20px; }
+        }
+    </style>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+        }
+    </script>
 </head>
-<body class="bg-[#f8f9fc] text-[#0f172a] antialiased min-h-screen py-8 px-4 sm:px-8 lg:px-12">
-{% include 'partials/messages.html' %}
+<body>
+    {% include 'partials/messages.html' %}
+    <aside class="rail" aria-label="Management navigation">
+        <a href="/" class="brand" aria-label="GateEase home"><span>GateEase</span></a>
+        <nav class="nav">
+            <a href="{% url 'verify_student' %}" class="nav-link active" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V19"/><path d="m15 8 2 2 4-4"/></svg><span class="nav-label">Verify Students</span></a>
+            <a href="{% url 'mng_mntr' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg><span class="nav-label">Mentors</span></a>
+            <a href="{% url 'mng_dep' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 21v-3h4v3"/></svg><span class="nav-label">Departments</span></a>
+            <a href="{% url 'pass' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5z"/><path d="M4 6h16M8 10h8M8 14h6"/></svg><span class="nav-label">Exit Passes</span></a>
+            <a href="{% url 'complaint_mng' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6.5A7.5 7.5 0 1 1 21 11.5Z"/><path d="M8 10h8M8 14h5"/></svg><span class="nav-label">Complaints</span></a>
+            <a href="{% url 'mng_security' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg><span class="nav-label">Security</span></a>
+            <a href="{% url 'manage_announcements' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-5v12L3 13z"/><path d="M6 14v5h5l-2-4M21 10v6"/></svg><span class="nav-label">Announcements</span></a>
+            <a href="{% url 'mng_class' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5M8 13h3M8 16h3M15 13h2"/></svg><span class="nav-label">Classes</span></a>
+        </nav>
+    </aside>
 
-<div class="max-w-7xl mx-auto">
-    <div class="mb-4">
-        <a href="{% url 'homepage' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#e2e8f0] text-xs font-medium text-[#475569] hover:text-[#4f46e5] hover:border-[#6366f1] transition-colors shadow-sm">
-            <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-            <span>Back to Home</span>
-        </a>
-    </div>
-
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight text-[#0f172a]">Verify Students</h1>
-            <p class="text-sm sm:text-base text-[#64748b] mt-1">Manage and verify registered student records and credential submissions.</p>
-        </div>
-        <a href="{% url 'admin_add_student' %}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#6366f1] hover:bg-[#4f46e5] text-white text-sm font-semibold shadow-sm transition-all whitespace-nowrap">
-            <span class="material-symbols-outlined text-[19px]">add</span>
-            <span>Add Student</span>
-        </a>
-    </div>
-
-    <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-[#e5e7eb] shadow-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <form method="get" class="flex flex-wrap items-center gap-2.5 w-full">
-            <div class="relative flex-1 min-w-[220px]">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[20px] pointer-events-none">search</span>
-                <input name="q" value="{{ q }}" class="w-full h-10 pl-9 pr-3 rounded-lg bg-white border border-[#e2e8f0] text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#6366f1]/20 focus:border-[#6366f1] transition-all" placeholder="Search by name, email, or admission no..." type="text">
+    <main class="main">
+        <div class="crumbs"><a href="{% url 'homepage' %}">Dashboard</a><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span>Verify Students</span></div>
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Student administration</p>
+                <h1>Verify students</h1>
+                <p class="intro">Review student records, check credentials, and manage account verification from one place.</p>
             </div>
-            <select name="status" aria-label="Filter students by status" class="h-10 rounded-lg bg-white border border-[#e2e8f0] px-3 text-sm text-[#475569] focus:outline-none focus:ring-2 focus:ring-[#6366f1]/20 focus:border-[#6366f1]">
+            <a href="{% url 'admin_add_student' %}" class="add-student"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add student</a>
+        </header>
+
+        <form method="get" class="toolbar">
+            <div class="search"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input name="q" value="{{ q }}" placeholder="Search by name, email, admission number, or class" type="text"></div>
+            <select name="status" aria-label="Filter students by status" class="filter">
                 <option value="">All students</option>
                 <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
                 <option value="verified" {% if status == 'verified' %}selected{% endif %}>Verified</option>
                 <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
                 <option value="no_image" {% if status == 'no_image' %}selected{% endif %}>Image not uploaded</option>
             </select>
-            <button class="px-4 h-10 rounded-lg bg-[#6366f1] hover:bg-[#4f46e5] text-white text-sm font-medium transition-colors shadow-sm whitespace-nowrap" type="submit">Search</button>
-            {% if q or status %}
-                <a href="{% url 'verify_student' %}" class="px-4 h-10 inline-flex items-center rounded-lg bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] text-sm font-medium transition-colors whitespace-nowrap">Clear</a>
-            {% endif %}
+            <button type="submit">Apply filters</button>
+            {% if q or status %}<a href="{% url 'verify_student' %}" class="clear">Clear</a>{% endif %}
         </form>
-        <div class="w-full md:w-auto flex justify-end">
-            <span class="text-xs sm:text-sm text-[#64748b] font-medium whitespace-nowrap">Total Students: <strong class="text-[#0f172a] font-semibold">{{ students.paginator.count }}</strong></span>
-        </div>
-    </div>
 
-    <div class="bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden mb-6">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[960px]">
-                <thead>
-                    <tr class="bg-[#f8fafc] text-[#64748b] text-[11px] font-semibold tracking-wider uppercase border-b border-[#e5e7eb]">
-                        <th class="py-3.5 px-4 w-16 text-center">Photo</th>
-                        <th class="py-3.5 px-4">Student Details</th>
-                        <th class="py-3.5 px-4">Contact</th>
-                        <th class="py-3.5 px-4">Academic</th>
-                        <th class="py-3.5 px-4">Admn No</th>
-                        <th class="py-3.5 px-6 text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[#f1f5f9] text-sm">
-                {% for i in students %}
-                    <tr class="hover:bg-[#f8fafc]/80 transition-colors">
-                        <td class="py-4 px-4 text-center">
-                            {% if i.Photo %}
-                                <img src="{{ i.Photo.url }}" alt="{{ i.name }}" class="w-10 h-10 rounded-full object-cover mx-auto border border-[#e2e8f0]">
-                            {% else %}
-                                <div class="w-10 h-10 rounded-full bg-[#e0e7ff] text-[#4338ca] font-semibold flex items-center justify-center mx-auto text-xs tracking-wide">NA</div>
-                            {% endif %}
-                        </td>
-                        <td class="py-4 px-4">
-                            <div class="flex flex-col">
-                                <span class="font-semibold text-[#0f172a]">{{ i.name }}</span>
-                                <span class="text-xs text-[#64748b]">{{ i.email }}</span>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-[#475569] whitespace-nowrap">{{ i.phone }}</td>
-                        <td class="py-4 px-4">
-                            <div class="flex flex-col">
-                                <span class="text-[#0f172a] font-medium">{{ i.classs.class_name }}</span>
-                                <span class="text-xs text-[#64748b]">{{ i.classs.department_id.name }}</span>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4"><span class="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#f1f5f9] text-[#334155] border border-[#e2e8f0]">{{ i.admn_no }}</span></td>
-                        <td class="py-4 px-6 text-center">
-                            <div class="inline-flex items-center justify-start gap-1.5 whitespace-nowrap">
-                                <a href="{% url 'edit_student' i.id %}" class="px-2.5 py-1.5 rounded-md bg-[#e0e7ff] text-[#4338ca] hover:bg-[#c7d2fe] text-xs font-semibold transition-colors">Edit</a>
-                                {% if i.LOGINID.usertype == 'Rejected' %}
-                                    <form method="post" action="{% url 'accept_student' i.LOGINID.id %}">{% csrf_token %}<button class="px-2.5 py-1.5 rounded-md bg-[#dcfce7] text-[#15803d] hover:bg-[#15803d] hover:text-white text-xs font-semibold transition-all" type="submit">Accept</button></form>
-                                {% elif i.LOGINID.usertype == 'Student' %}
-                                    <form method="post" action="{% url 'reject_student' i.LOGINID.id %}">{% csrf_token %}<button class="px-2.5 py-1.5 rounded-md bg-[#fee2e2] text-[#b91c1c] hover:bg-[#b91c1c] hover:text-white text-xs font-semibold transition-all" type="submit">Reject</button></form>
-                                {% else %}
-                                    <form method="post" action="{% url 'accept_student' i.LOGINID.id %}">{% csrf_token %}<button class="px-2.5 py-1.5 rounded-md bg-[#dcfce7] text-[#15803d] hover:bg-[#15803d] hover:text-white text-xs font-semibold transition-all" type="submit">Accept</button></form>
-                                    <form method="post" action="{% url 'reject_student' i.LOGINID.id %}">{% csrf_token %}<button class="px-2.5 py-1.5 rounded-md bg-[#fee2e2] text-[#b91c1c] hover:bg-[#b91c1c] hover:text-white text-xs font-semibold transition-all" type="submit">Reject</button></form>
-                                {% endif %}
-                                <form action="{% url 'UploadImage' i.id %}" method="post" enctype="multipart/form-data" class="inline-flex items-center gap-1">
-                                    {% csrf_token %}
-                                    <label class="px-2.5 py-1.5 rounded-md bg-[#e0e7ff] text-[#4f46e5] hover:bg-[#6366f1] hover:text-white text-xs font-semibold transition-all cursor-pointer">
-                                        Upload
-                                        <input type="file" name="image" required class="hidden">
-                                    </label>
-                                    <button type="submit" class="px-2 py-1.5 rounded-md bg-[#6366f1] text-white text-xs font-semibold hover:bg-[#4f46e5]">Save</button>
-                                </form>
-                                <form method="post" action="{% url 'delete_student' i.id %}" onsubmit="return confirm('Delete this student?');">{% csrf_token %}<button class="px-2.5 py-1.5 rounded-md bg-[#f3f4f6] text-[#4b5563] border border-[#d1d5db] hover:bg-[#374151] hover:text-white hover:border-[#374151] text-xs font-medium transition-all" type="submit">Remove</button></form>
-                            </div>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="6" class="py-12 text-center text-sm text-[#64748b]">No students found for the selected filters.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="px-6 py-3.5 bg-white flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#e5e7eb]">
-            <div class="text-xs sm:text-sm text-[#64748b] whitespace-nowrap">Page <span class="font-semibold text-[#0f172a]">{{ students.number }}</span> of <span class="font-semibold text-[#0f172a]">{{ students.paginator.num_pages|default:1 }}</span></div>
-            <div class="inline-flex items-center gap-2">
-                {% if students.has_previous %}
-                    <a href="?page={{ students.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="inline-flex items-center justify-center px-3.5 py-1.5 min-w-[76px] rounded-lg border border-[#e2e8f0] text-xs font-medium text-[#475569] hover:bg-[#f8fafc] transition-colors">Previous</a>
-                {% endif %}
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#6366f1] text-white text-xs font-semibold shadow-sm">{{ students.number }}</span>
-                {% if students.has_next %}
-                    <a href="?page={{ students.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="inline-flex items-center justify-center px-3.5 py-1.5 min-w-[64px] rounded-lg border border-[#e2e8f0] text-xs font-medium text-[#475569] hover:bg-[#f8fafc] transition-colors">Next</a>
-                {% endif %}
+        <section class="directory" aria-labelledby="students-title">
+            <div class="directory-head"><div><h2 id="students-title">Student records</h2><p>Review each account and take action when needed.</p></div><span class="total"><strong>{{ students.paginator.count }}</strong></span></div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Photo</th><th>Student details</th><th>Contact</th><th>Academic</th><th>Admission</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    {% for i in students %}
+                        <tr>
+                            <td>{% if i.Photo %}<img src="{{ i.Photo.url }}" alt="{{ i.name }}" class="photo">{% else %}<span class="initials">NA</span>{% endif %}</td>
+                            <td><span class="student-name">{{ i.name }}</span><span class="student-email">{{ i.email }}</span></td>
+                            <td>{{ i.phone }}</td>
+                            <td><span class="class-name">{{ i.classs.class_name }}</span><span class="secondary">{{ i.classs.department_id.name }}</span></td>
+                            <td><span class="admission">{{ i.admn_no }}</span></td>
+                            <td>
+                                <div class="actions">
+                                    <button type="button" class="action edit edit-trigger"
+                                        data-edit-url="{% url 'edit_student' i.id %}"
+                                        data-name="{{ i.name }}"
+                                        data-email="{{ i.email }}"
+                                        data-phone="{{ i.phone }}"
+                                        data-admn-no="{{ i.admn_no }}"
+                                        data-class-id="{{ i.classs.id }}">Edit</button>
+                                    {% if i.LOGINID.usertype == 'Rejected' %}
+                                        <form method="post" action="{% url 'accept_student' i.LOGINID.id %}">{% csrf_token %}<button class="action accept" type="submit">Accept</button></form>
+                                    {% elif i.LOGINID.usertype == 'Student' %}
+                                        <form method="post" action="{% url 'reject_student' i.LOGINID.id %}">{% csrf_token %}<button class="action reject" type="submit">Reject</button></form>
+                                    {% else %}
+                                        <form method="post" action="{% url 'accept_student' i.LOGINID.id %}">{% csrf_token %}<button class="action accept" type="submit">Accept</button></form>
+                                        <form method="post" action="{% url 'reject_student' i.LOGINID.id %}">{% csrf_token %}<button class="action reject" type="submit">Reject</button></form>
+                                    {% endif %}
+                                    <form class="upload-form" action="{% url 'UploadImage' i.id %}" method="post" enctype="multipart/form-data">{% csrf_token %}<label class="action upload">Upload<input type="file" name="image" required></label><button class="action upload" type="submit">Save</button></form>
+                                    <form method="post" action="{% url 'delete_student' i.id %}" onsubmit="return confirm('Delete this student?');">{% csrf_token %}<button class="action remove" type="submit">Remove</button></form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6" class="empty">No students found for the selected filters.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </div>
+            <div class="pagination">
+                <span>Page <strong>{{ students.number }}</strong> of <strong>{{ students.paginator.num_pages|default:1 }}</strong></span>
+                <div class="page-links">
+                    {% if students.has_previous %}<a class="page-link" href="?page={{ students.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Previous</a>{% endif %}
+                    <span class="current-page">{{ students.number }}</span>
+                    {% if students.has_next %}<a class="page-link" href="?page={{ students.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Next</a>{% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+    <div class="modal-backdrop" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+        <section class="edit-modal">
+            <div class="modal-head">
+                <div><h2 id="edit-modal-title">Edit student details</h2><p>Update the student record and save your changes.</p></div>
+                <button type="button" class="modal-close" id="close-edit-modal" aria-label="Close edit student dialog"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+            </div>
+            <form class="edit-form" id="edit-student-form" method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label>Full name<input type="text" name="name" id="edit-name" required></label>
+                    <label>Admission number<input type="text" name="admn_no" id="edit-admn-no" pattern="[0-9]{4}" minlength="4" maxlength="4" inputmode="numeric" required></label>
+                </div>
+                <label>Email address<input type="email" name="email" id="edit-email" required></label>
+                <div class="form-row">
+                    <label>Phone number<input type="tel" name="phone" id="edit-phone" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required></label>
+                    <label>Class / batch<select name="classs" id="edit-class" required><option value="">Select a class</option>{% for c in classes %}<option value="{{ c.id }}">{{ c.class_name }}{% if c.department_id %} -- {{ c.department_id.name }}{% endif %}</option>{% endfor %}</select></label>
+                </div>
+                <div class="modal-actions"><button type="button" class="modal-cancel" id="cancel-edit-modal">Cancel</button><button type="submit" class="modal-save">Save changes</button></div>
+            </form>
+        </section>
     </div>
-</div>
+    <script>
+        const editModal = document.getElementById('edit-modal');
+        const editForm = document.getElementById('edit-student-form');
+        const closeEditModal = () => {
+            editModal.classList.remove('open');
+            document.body.style.overflow = '';
+        };
+        document.querySelectorAll('.edit-trigger').forEach((button) => {
+            button.addEventListener('click', () => {
+                editForm.action = button.dataset.editUrl;
+                document.getElementById('edit-name').value = button.dataset.name;
+                document.getElementById('edit-email').value = button.dataset.email;
+                document.getElementById('edit-phone').value = button.dataset.phone;
+                document.getElementById('edit-admn-no').value = button.dataset.admnNo;
+                document.getElementById('edit-class').value = button.dataset.classId;
+                editModal.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                document.getElementById('edit-name').focus();
+            });
+        });
+        document.getElementById('close-edit-modal').addEventListener('click', closeEditModal);
+        document.getElementById('cancel-edit-modal').addEventListener('click', closeEditModal);
+        editModal.addEventListener('click', (event) => {
+            if (event.target === editModal) closeEditModal();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && editModal.classList.contains('open')) closeEditModal();
+        });
+    </script>
 </body>
 </html>

@@ -1,225 +1,29 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Classes</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>GateEase | Manage Classes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json"><link rel="shortcut icon" href="{% static 'favicon.png' %}">
+    <meta name="theme-color" content="#f7f5fb">
     <style>
-        :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
-            --table-header-bg: #f9fafb;
-            --danger-color: #ef4444;
-            --danger-hover: #dc2626;
-        }
-
-        body {
-            margin: 0;
-            padding: 20px;
-            background: var(--bg-color);
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-color);
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        h2 {
-            margin: 0;
-            font-weight: 600;
-            color: var(--text-color);
-            font-size: 24px;
-        }
-
-        .add-btn {
-            padding: 10px 20px;
-            background: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s;
-            text-decoration: none;
-        }
-
-        .add-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        .table-container {
-            overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #ffffff;
-            white-space: nowrap;
-        }
-
-        th,
-        td {
-            padding: 16px 20px;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        th {
-            background: var(--table-header-bg);
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        td {
-            border-bottom: 1px solid var(--border-color);
-            color: #374151;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover {
-            background-color: #f9fafb;
-        }
-
-        .btn-delete {
-            padding: 6px 14px;
-            background-color: #fee2e2;
-            color: var(--danger-color);
-            border: 1px solid transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-delete:hover {
-            background-color: var(--danger-color);
-            color: white;
-        }
-
-        a {
-            text-decoration: none;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-                margin: 20px auto;
-            }
-
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 8px 16px;
-            background: #ffffff;
-            color: #4f46e5;
-            text-decoration: none;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-
-        .back-btn:hover {
-            background: #f9fafb;
-            color: #4338ca;
-            border-color: #d1d5db;
-        }
+        :root{--bg:#f7f5fb;--surface:#fff;--soft:#f0e6fa;--line:#e4e4e7;--ink:#000;--muted:#5a5b5f;--dim:#71717a;--purple:#7622d7;--purple-dark:#6119b5;--red:#b42318;--red-soft:#fff1f0;--rail:72px;--font:'DM Sans',sans-serif;--display:'Plus Jakarta Sans',sans-serif}*{box-sizing:border-box}body{min-height:100vh;margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font)}a{color:inherit;text-decoration:none}button,input,select{font:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--purple);outline-offset:3px}.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.rail{position:fixed;inset:0 auto 0 0;z-index:10;display:flex;width:var(--rail);flex-direction:column;padding:16px 12px;overflow:hidden;border-right:1px solid var(--line);background:var(--surface);transition:width .2s}.rail:hover,.rail:focus-within{width:244px}.brand{display:flex;height:48px;align-items:center;padding:0 13px;margin-bottom:12px;font:800 20px var(--display);letter-spacing:-.02em;white-space:nowrap}.brand span,.nav-label{opacity:0;transition:opacity .15s}.rail:hover .brand span,.rail:focus-within .brand span,.rail:hover .nav-label,.rail:focus-within .nav-label{opacity:1}.nav{display:grid;gap:2px;overflow-y:auto;scrollbar-width:none}.nav::-webkit-scrollbar{display:none}.nav-link{display:flex;height:44px;align-items:center;gap:14px;padding:0 13px;border-radius:12px;color:var(--muted);font-size:14px;font-weight:500;white-space:nowrap}.nav-link:hover,.nav-link.active{background:var(--soft);color:var(--purple)}.nav-link.active{font-weight:700}.nav-link .i{width:20px;height:20px;flex:0 0 20px}.main{min-height:100vh;margin-left:var(--rail);padding:34px 6vw 70px}.crumbs{display:flex;align-items:center;gap:8px;margin-bottom:22px;color:var(--dim);font-size:13px}.crumbs a:hover{color:var(--purple)}.crumbs .i{width:14px;height:14px}.topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:25px;border-bottom:1px solid var(--line)}.eyebrow{margin:0 0 8px;color:var(--purple);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}h1{margin:0;font:800 clamp(2rem,4vw,3.6rem)/1.05 var(--display);letter-spacing:-.055em}.intro{max-width:600px;margin:10px 0 0;color:var(--muted)}.primary{display:inline-flex;min-height:44px;align-items:center;gap:8px;padding:0 16px;border:0;border-radius:10px;background:var(--purple);color:#fff;font-weight:700}.primary:hover,.submit:hover{background:var(--purple-dark)}.primary .i{width:17px;height:17px}.directory{overflow:hidden;margin-top:22px;border:1px solid var(--line);border-radius:17px;background:var(--surface);box-shadow:0 10px 28px rgba(24,16,39,.05)}.directory-head{display:flex;align-items:center;justify-content:space-between;padding:21px 24px;border-bottom:1px solid var(--line);background:linear-gradient(110deg,var(--soft),#fff 75%)}.directory-head h2{margin:0;font:800 18px var(--display)}.directory-head p{margin:4px 0 0;color:var(--dim);font-size:13px}.total{color:var(--muted);font-size:13px}.total strong{color:var(--purple);font:800 20px var(--display)}.table-wrap{overflow-x:auto}table{width:100%;min-width:540px;border-collapse:collapse}th,td{padding:15px 18px;text-align:left}th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase}td{border-top:1px solid #f0eef2;color:var(--muted)}tbody tr:hover{background:#fcfaff}.class-name{color:var(--ink);font-weight:700}.badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:var(--soft);color:var(--purple);font-size:12px;font-weight:700}.remove{min-height:32px;padding:0 10px;border:0;border-radius:7px;background:var(--red-soft);color:var(--red);font-size:12px;font-weight:700}.remove:hover{filter:brightness(.95)}.empty{padding:60px 24px;text-align:center;color:var(--dim)}.modal-backdrop{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(19,12,29,.58)}.modal-backdrop.open{display:flex}.modal{width:min(100%,520px);max-height:min(620px,calc(100vh - 40px));overflow-y:auto;scrollbar-width:none;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:0 24px 70px rgba(15,10,24,.25)}.modal::-webkit-scrollbar{display:none}.modal-head{display:flex;justify-content:space-between;gap:16px;padding:24px 26px 18px;border-bottom:1px solid var(--line);background:linear-gradient(110deg,var(--soft),#fff 78%)}.modal-head h2{margin:0;font:800 20px var(--display)}.modal-head p{margin:5px 0 0;color:var(--dim);font-size:13px}.close{display:grid;width:32px;height:32px;place-items:center;border:0;border-radius:8px;background:transparent;color:var(--muted)}.close .i{width:18px;height:18px}.form{display:grid;gap:15px;padding:24px 26px 26px}.field{display:grid;gap:6px}.field label{color:var(--muted);font-size:12px;font-weight:700}.field input,.field select{min-height:43px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;outline:0;background:#fff;color:var(--ink)}.field input:focus,.field select:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(118,34,215,.12)}.field input[type=number]{-moz-appearance:textfield;appearance:textfield}.field input[type=number]::-webkit-inner-spin-button,.field input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.actions{display:flex;justify-content:flex-end;gap:9px;padding-top:5px}.cancel,.submit{min-height:40px;padding:0 15px;border:0;border-radius:8px;font-size:13px;font-weight:700}.cancel{background:var(--soft);color:var(--purple)}.submit{background:var(--purple);color:#fff}@media(max-width:760px){.rail{inset:auto 0 0;width:100%;height:65px;flex-direction:row;padding:8px 10px;border-top:1px solid var(--line);border-right:0}.rail:hover,.rail:focus-within{width:100%}.brand{display:none}.nav{width:100%;grid-template-columns:repeat(4,1fr);gap:4px}.nav-link{height:49px;justify-content:center;padding:0}.nav-label{display:none}.main{margin-left:0;padding:22px 14px 90px}.topbar{align-items:flex-start;flex-direction:column;gap:18px;padding-bottom:22px}.primary{width:100%;justify-content:center}.directory-head{padding:19px}}
     </style>
-
-    <!-- PWA Setup -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1e293b">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('ServiceWorker registered'))
-                    .catch(err => console.log('ServiceWorker registration failed: ', err));
-            });
-        }
-    </script>
-    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
 </head>
-
 <body>
-<!-- Django Messages Toast -->
-{% include 'partials/messages.html' %}
-
-    <div class="container">
-
-        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
-        <div class="header">
-            <h2>Manage Classes</h2>
-            <a href="{% url 'add_class' %}" class="add-btn">+ Add Class</a>
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Class Name</th>
-                        <th>Admission Year</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for i in classes %}
-                    <tr>
-                        <td>{{ i.class_name }}</td>
-                        <td>{{ i.admission_year }}</td>
-                        <td>
-                            <form method="post" action="{% url 'delete_class' i.id %}" onsubmit="return confirm('Delete this class?');">{% csrf_token %}<button class="btn-delete" type="submit">Delete</button></form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-    </div>
-
-</body>
-
-</html>
+<aside class="rail" aria-label="Management navigation"><a href="/" class="brand"><span>GateEase</span></a><nav class="nav">
+<a href="{% url 'verify_student' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V19"/><path d="m15 8 2 2 4-4"/></svg><span class="nav-label">Verify Students</span></a>
+<a href="{% url 'mng_mntr' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg><span class="nav-label">Mentors</span></a>
+<a href="{% url 'mng_dep' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 21v-3h4v3"/></svg><span class="nav-label">Departments</span></a>
+<a href="{% url 'pass' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5z"/><path d="M4 6h16M8 10h8M8 14h6"/></svg><span class="nav-label">Exit Passes</span></a>
+<a href="{% url 'complaint_mng' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><path d="M21 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6.5A7.5 7.5 0 1 1 21 11.5Z"/><path d="M8 10h8M8 14h5"/></svg><span class="nav-label">Complaints</span></a>
+<a href="{% url 'mng_security' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg><span class="nav-label">Security</span></a>
+<a href="{% url 'manage_announcements' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M6 14v5h5l-2-4M21 10v6"/></svg><span class="nav-label">Announcements</span></a>
+<a href="{% url 'mng_class' %}" class="nav-link active"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5M8 13h3M8 16h3M15 13h2"/></svg><span class="nav-label">Classes</span></a></nav></aside>
+<main class="main"><div class="crumbs"><a href="{% url 'homepage' %}">Dashboard</a><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><span>Classes</span></div><header class="topbar"><div><p class="eyebrow">Academic structure</p><h1>Manage classes</h1><p class="intro">Create and maintain class groups used throughout GateEase.</p></div><button type="button" class="primary" data-open><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add class</button></header>
+<section class="directory"><div class="directory-head"><div><h2>Class directory</h2><p>Review class names and admission years.</p></div></div><div class="table-wrap"><table><thead><tr><th>Class</th><th>Admission year</th><th>Action</th></tr></thead><tbody>{% for i in classes %}<tr><td><span class="class-name">{{ i.class_name }}</span></td><td><span class="badge">{{ i.admission_year }}</span></td><td><form method="post" action="{% url 'delete_class' i.id %}" onsubmit="return confirm('Delete this class?');">{% csrf_token %}<button class="remove" type="submit">Delete</button></form></td></tr>{% empty %}<tr><td colspan="3" class="empty">No classes found.</td></tr>{% endfor %}</tbody></table></div></section></main>
+<div class="modal-backdrop" id="class-modal" role="dialog" aria-modal="true" aria-labelledby="class-title"><div class="modal"><div class="modal-head"><div><h2 id="class-title">Add class</h2><p>Create a class group for student assignments.</p></div><button type="button" class="close" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><form method="post" action="{% url 'add_class' %}" class="form">{% csrf_token %}<div class="field"><label for="class-name">Class name</label><input id="class-name" name="class_name" minlength="2" placeholder="e.g. CSE-A" required></div><div class="field"><label for="admission-year">Admission year</label><input id="admission-year" name="admission_year" type="number" min="2000" max="2100" placeholder="e.g. 2026" required></div><div class="field"><label for="department">Department</label><select id="department" name="department_id" required><option value="">Select department</option>{% for department in departments %}<option value="{{ department.id }}">{{ department.name }}</option>{% endfor %}</select></div><div class="actions"><button type="button" class="cancel" data-close>Cancel</button><button type="submit" class="submit">Create class</button></div></form></div></div>
+<script>(function(){const m=document.getElementById('class-modal');document.querySelector('[data-open]').onclick=()=>{m.classList.add('open');document.getElementById('class-name').focus()};document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>m.classList.remove('open'));m.onclick=e=>{if(e.target===m)m.classList.remove('open')};document.onkeydown=e=>{if(e.key==='Escape')m.classList.remove('open')};}());</script>
+</body></html>

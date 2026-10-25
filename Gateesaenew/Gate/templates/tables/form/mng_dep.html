@@ -1,223 +1,184 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Departments</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Departments</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
+    <meta name="theme-color" content="#f7f5fb">
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
-            --table-header-bg: #f9fafb;
-            --danger-color: #ef4444;
-            --danger-hover: #dc2626;
+            --bg: #f7f5fb;
+            --surface: #fff;
+            --soft: #f2eafa;
+            --line: #e5e1eb;
+            --ink: #17131d;
+            --muted: #706b78;
+            --purple: #7622d7;
+            --purple-dark: #5f18b4;
+            --red: #b42318;
+            --red-soft: #fff1f0;
+            --rail: 72px;
+            --font: 'DM Sans', sans-serif;
+            --display: 'Plus Jakarta Sans', sans-serif;
         }
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+        body { min-height: 100vh; margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); }
+        a { color: inherit; text-decoration: none; }
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+        :focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
+        .i { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-        body {
-            margin: 0;
-            padding: 20px;
-            background: var(--bg-color);
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-color);
-        }
+        .rail { position: fixed; inset: 0 auto 0 0; z-index: 10; display: flex; width: var(--rail); flex-direction: column; padding: 18px 12px; overflow: hidden; border-right: 1px solid var(--line); background: var(--surface); transition: width .2s ease; }
+        .rail:hover, .rail:focus-within { width: 238px; }
+        .brand { display: flex; height: 42px; align-items: center; padding: 0 13px; margin-bottom: 22px; font: 800 20px var(--display); white-space: nowrap; }
+        .brand span, .nav-label { opacity: 0; transition: opacity .15s ease; }
+        .rail:hover .brand span, .rail:focus-within .brand span, .rail:hover .nav-label, .rail:focus-within .nav-label { opacity: 1; }
+        .nav { display: grid; gap: 4px; }
+        .nav-link { display: flex; height: 44px; align-items: center; gap: 14px; padding: 0 13px; border-radius: 11px; color: var(--muted); font-size: 13px; font-weight: 600; white-space: nowrap; }
+        .nav-link:hover { background: var(--soft); color: var(--ink); }
+        .nav-link.active { background: var(--soft); color: var(--purple); }
+        .nav-link .i { width: 20px; height: 20px; flex: 0 0 20px; }
 
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
+        .main { min-height: 100vh; margin-left: var(--rail); padding: 34px 6vw 70px; }
+        .crumbs { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; color: var(--muted); font-size: 13px; }
+        .crumbs a:hover { color: var(--purple); }
+        .crumbs .i { width: 14px; height: 14px; }
+        .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 8px 0 26px; border-bottom: 1px solid var(--line); }
+        .eyebrow { margin: 0 0 8px; color: var(--purple); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+        h1 { margin: 0; font: 800 clamp(2rem, 4vw, 3.7rem)/1.05 var(--display); letter-spacing: -.055em; }
+        .hero-copy { max-width: 580px; margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+        .header-count { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+        .header-count strong { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: var(--purple); color: #fff; font: 800 16px var(--display); }
+        .workspace { display: grid; grid-template-columns: 300px minmax(0, 1fr); align-items: start; gap: 22px; margin-top: 26px; }
+        .create-card { padding: 25px; border: 1px solid var(--line); border-radius: 17px; background: var(--soft); }
+        .create-card h2 { margin: 0; font: 800 19px var(--display); letter-spacing: -.03em; }
+        .create-card p { margin: 7px 0 21px; color: var(--muted); font-size: 13px; }
+        .add-form { display: grid; gap: 10px; }
+        .add-form input { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid var(--line); border-radius: 9px; outline: 0; background: #fff; color: var(--ink); }
+        .add-form input::placeholder { color: #aaa3b2; }
+        .add-form input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(118,34,215,.13); }
+        .add-form button { min-height: 44px; border: 0; border-radius: 9px; background: var(--purple); color: #fff; font-weight: 700; transition: background .15s ease; }
+        .add-form button:hover { background: var(--purple-dark); }
+        .form-error { color: var(--red); font-size: 12px; }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+        .content { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 0 10px 28px rgba(23,19,29,.05); }
+        .content-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 23px 28px; border-bottom: 1px solid var(--line); background: linear-gradient(110deg, var(--soft), #fff 75%); }
+        .content-head h2 { margin: 0; font: 800 19px var(--display); letter-spacing: -.03em; }
+        .content-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+        .count { display: inline-grid; min-width: 42px; height: 34px; place-items: center; padding: 0 10px; border-radius: 9px; background: var(--soft); color: var(--purple); font-weight: 800; }
+        .department-list { margin: 0; padding: 8px 28px 22px; list-style: none; }
+        .department-row { display: flex; min-height: 60px; align-items: center; justify-content: space-between; gap: 18px; padding: 0 14px; border-bottom: 1px solid var(--line); }
+        .department-row:last-child { border-bottom: 0; }
+        .department-row:hover { background: #fcfbfd; }
+        .department-name { color: var(--ink); font-size: 15px; font-weight: 700; }
+        .delete-form { margin: 0; }
+        .delete-btn { min-height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--red); font-size: 12px; font-weight: 700; }
+        .delete-btn:hover { border-color: #f3c0bb; background: var(--red-soft); }
+        .empty { padding: 64px 24px; text-align: center; }
+        .empty h2 { margin: 0; font: 800 18px var(--display); }
+        .empty p { margin: 8px auto 0; color: var(--muted); font-size: 14px; }
 
-        h2 {
-            margin: 0;
-            font-weight: 600;
-            color: var(--text-color);
-            font-size: 24px;
-        }
-
-        .add-btn {
-            padding: 10px 20px;
-            background: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s;
-            text-decoration: none;
-        }
-
-        .add-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        .table-container {
-            overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #ffffff;
-            white-space: nowrap;
-        }
-
-        th,
-        td {
-            padding: 16px 20px;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        th {
-            background: var(--table-header-bg);
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        td {
-            border-bottom: 1px solid var(--border-color);
-            color: #374151;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover {
-            background-color: #f9fafb;
-        }
-
-        .btn-delete {
-            padding: 6px 14px;
-            background-color: #fee2e2;
-            color: var(--danger-color);
-            border: 1px solid transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-delete:hover {
-            background-color: var(--danger-color);
-            color: white;
-        }
-
-        a {
-            text-decoration: none;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-                margin: 20px auto;
-            }
-
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 8px 16px;
-            background: #ffffff;
-            color: #4f46e5;
-            text-decoration: none;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-
-        .back-btn:hover {
-            background: #f9fafb;
-            color: #4338ca;
-            border-color: #d1d5db;
+        @media (max-width: 760px) {
+            .rail { inset: auto 0 0; width: 100%; height: 65px; flex-direction: row; padding: 8px 10px; border-top: 1px solid var(--line); border-right: 0; }
+            .rail:hover, .rail:focus-within { width: 100%; }
+            .brand { display: none; }
+            .nav { width: 100%; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+            .nav-link { height: 49px; justify-content: center; padding: 0; }
+            .nav-label { display: none; }
+            .main { margin-left: 0; padding: 22px 14px 90px; }
+            .topbar { align-items: flex-start; flex-direction: column; gap: 18px; padding-bottom: 22px; }
+            .workspace { grid-template-columns: 1fr; margin-top: 20px; }
+            .create-card { padding: 21px; }
+            .content-head { padding: 20px; }
+            .department-list { padding: 8px 14px 18px; }
         }
     </style>
-
-    <!-- PWA Setup -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1e293b">
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('ServiceWorker registered'))
-                    .catch(err => console.log('ServiceWorker registration failed: ', err));
-            });
+            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
         }
     </script>
-    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
 </head>
-
 <body>
-<!-- Django Messages Toast -->
-{% include 'partials/messages.html' %}
+    {% include 'partials/messages.html' %}
+    <aside class="rail" aria-label="Management navigation">
+        <a href="/" class="brand" aria-label="GateEase home"><span>GateEase</span></a>
+        <nav class="nav">
+            <a href="{% url 'verify_student' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V19"/><path d="m15 8 2 2 4-4"/></svg><span class="nav-label">Verify Students</span></a>
+            <a href="{% url 'mng_mntr' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg><span class="nav-label">Mentors</span></a>
+            <a href="{% url 'mng_dep' %}" class="nav-link active" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 21v-3h4v3"/></svg><span class="nav-label">Departments</span></a>
+            <a href="{% url 'pass' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5z"/><path d="M4 6h16M8 10h8M8 14h6"/></svg><span class="nav-label">Exit Passes</span></a>
+            <a href="{% url 'complaint_mng' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6.5A7.5 7.5 0 1 1 21 11.5Z"/><path d="M8 10h8M8 14h5"/></svg><span class="nav-label">Complaints</span></a>
+            <a href="{% url 'mng_security' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg><span class="nav-label">Security</span></a>
+            <a href="{% url 'manage_announcements' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-5v12L3 13z"/><path d="M6 14v5h5l-2-4M21 10v6"/></svg><span class="nav-label">Announcements</span></a>
+            <a href="{% url 'mng_class' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5M8 13h3M8 16h3M15 13h2"/></svg><span class="nav-label">Classes</span></a>
+        </nav>
+    </aside>
 
-    <div class="container">
-
-        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
-        <div class="header">
-            <h2>Manage Departments</h2>
-            <a href="{% url 'add_dep' %}" class="add-btn">+ Add Department</a>
+    <main class="main">
+        <div class="crumbs">
+            <a href="{% url 'homepage' %}">Dashboard</a>
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            <span>Departments</span>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Department Name</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <header class="topbar" aria-labelledby="page-title">
+            <div>
+                <p class="eyebrow">Administration</p>
+                <h1 id="page-title">Departments</h1>
+                <p class="hero-copy">Create and maintain the departments used throughout your GateEase workspace.</p>
+            </div>
+            <!-- <div class="header-count"><strong>{{ departments|length }}</strong><span>departments<br>in workspace</span></div> -->
+        </header>
+
+        <div class="workspace">
+            <section class="create-card" aria-labelledby="create-title">
+                <h2 id="create-title">Add a department</h2>
+                <p>Use a clear name that students and mentors will recognise.</p>
+                <form class="add-form" method="post">
+                    {% csrf_token %}
+                    {{ department_form.name }}
+                    <button type="submit">Create department</button>
+                    {% if department_form.name.errors %}<div class="form-error" role="alert">{{ department_form.name.errors|striptags }}</div>{% endif %}
+                </form>
+            </section>
+
+            <section class="content" aria-labelledby="directory-title">
+                <div class="content-head">
+                    <div>
+                        <h2 id="directory-title">Department directory</h2>
+                        <p>All departments currently available for classes and assignments.</p>
+                    </div>
+                    <span class="count" aria-label="{{ departments|length }} departments">{{ departments|length }}</span>
+                </div>
+                {% if departments %}
+                <ul class="department-list">
                     {% for i in departments %}
-                    <tr>
-                        <td>{{ i.name }}</td>
-                        <td>
-                            <form method="post" action="{% url 'delete_department' i.id %}" onsubmit="return confirm('Delete this department?');">{% csrf_token %}<button class="btn-delete" type="submit">Delete</button></form>
-                        </td>
-                    </tr>
+                    <li class="department-row">
+                        <span class="department-name">{{ i.name }}</span>
+                        <form class="delete-form" method="post" action="{% url 'delete_department' i.id %}" onsubmit="return confirm('Delete this department?');">
+                            {% csrf_token %}
+                            <button class="delete-btn" type="submit" aria-label="Delete {{ i.name }}">Delete</button>
+                        </form>
+                    </li>
                     {% endfor %}
-                </tbody>
-            </table>
+                </ul>
+                {% else %}
+                <div class="empty">
+                    <h2>No departments yet</h2>
+                    <p>Use the form to create your first department.</p>
+                </div>
+                {% endif %}
+            </section>
         </div>
-
-    </div>
-
+    </main>
 </body>
-
 </html>

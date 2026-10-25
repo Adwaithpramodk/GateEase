@@ -1,353 +1,162 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exit Pass Management</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>GateEase | Exit Passes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
+    <meta name="theme-color" content="#f7f5fb">
     <style>
-        :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
-            --table-header-bg: #f9fafb;
-            --danger-color: #ef4444;
-            --danger-hover: #dc2626;
-            --success-color: #10b981;
-            --success-hover: #059669;
-        }
-
-        body {
-            margin: 0;
-            padding: 20px;
-            background: var(--bg-color);
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-color);
-        }
-
-        .container {
-            max-width: 95%;
-            margin: 40px auto;
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        h2 {
-            margin: 0;
-            font-weight: 600;
-            color: var(--text-color);
-            font-size: 24px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        select {
-            padding: 10px 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 14px;
-            outline: none;
-            background: #fff;
-            min-width: 150px;
-            font-family: inherit;
-        }
-
-        select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .export-btn {
-            padding: 10px 20px;
-            background: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s;
-            text-decoration: none;
-        }
-
-        .export-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        .table-container {
-            overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #ffffff;
-        }
-
-        th,
-        td {
-            padding: 16px 20px;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        th {
-            background: var(--table-header-bg);
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        td {
-            border-bottom: 1px solid var(--border-color);
-            color: #374151;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover {
-            background-color: #f9fafb;
-        }
-
-        .actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            padding: 6px 14px;
-            border: 1px solid transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-
-        .btn-approve {
-            background-color: #d1fae5;
-            color: var(--success-color);
-        }
-
-        .btn-approve:hover {
-            background-color: var(--success-color);
-            color: white;
-        }
-
-        .btn-reject {
-            background-color: #fee2e2;
-            color: var(--danger-color);
-        }
-
-        .btn-reject:hover {
-            background-color: var(--danger-color);
-            color: white;
-        }
-
-        a {
-            text-decoration: none;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-                margin: 20px auto;
-            }
-
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 8px 16px;
-            background: #ffffff;
-            color: #4f46e5;
-            text-decoration: none;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-
-        .back-btn:hover {
-            background: #f9fafb;
-            color: #4338ca;
-            border-color: #d1d5db;
-        }
-
-        .search-box {
-            padding: 10px 14px 10px 38px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
-            min-width: 200px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .search-box:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        :root { --bg:#f7f5fb; --surface:#fff; --soft:#f0e6fa; --line:#e4e4e7; --ink:#000; --muted:#5a5b5f; --dim:#71717a; --purple:#7622d7; --purple-dark:#6119b5; --green:#15803d; --green-soft:#dcfce7; --red:#b42318; --red-soft:#fff1f0; --amber:#a16207; --amber-soft:#fef3c7; --rail:72px; --font:'DM Sans',sans-serif; --display:'Plus Jakarta Sans',sans-serif; }
+        * { box-sizing:border-box; }
+        html { -webkit-text-size-adjust:100%; }
+        body { min-height:100vh; margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 var(--font); }
+        a { color:inherit; text-decoration:none; }
+        button, input, select { font:inherit; }
+        button { cursor:pointer; }
+        :focus-visible { outline:2px solid var(--purple); outline-offset:3px; }
+        .i { fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+        .rail { position:fixed; inset:0 auto 0 0; z-index:10; display:flex; width:var(--rail); flex-direction:column; padding:16px 12px; overflow:hidden; border-right:1px solid var(--line); background:var(--surface); transition:width .2s ease; }
+        .rail:hover, .rail:focus-within { width:244px; }
+        .brand { display:flex; height:48px; align-items:center; padding:0 13px; margin-bottom:12px; font:800 20px var(--display); letter-spacing:-.02em; white-space:nowrap; }
+        .brand span, .nav-label { opacity:0; transition:opacity .15s ease; }
+        .rail:hover .brand span, .rail:focus-within .brand span, .rail:hover .nav-label, .rail:focus-within .nav-label { opacity:1; }
+        .nav { display:grid; gap:2px; overflow-y:auto; scrollbar-width:none; }
+        .nav::-webkit-scrollbar { display:none; }
+        .nav-link { display:flex; height:44px; align-items:center; gap:14px; padding:0 13px; border-radius:12px; color:var(--muted); font-size:14px; font-weight:500; white-space:nowrap; }
+        .nav-link:hover { background:var(--soft); color:var(--ink); }
+        .nav-link.active { background:var(--soft); color:var(--purple); font-weight:700; }
+        .nav-link .i { width:20px; height:20px; flex:0 0 20px; }
+        .main { min-height:100vh; margin-left:var(--rail); padding:34px 6vw 70px; }
+        .crumbs { display:flex; align-items:center; gap:8px; margin-bottom:22px; color:var(--dim); font-size:13px; }
+        .crumbs:hover a { color:var(--purple); }
+        .crumbs .i { width:14px; height:14px; }
+        .topbar { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; padding-bottom:25px; border-bottom:1px solid var(--line); }
+        .eyebrow { margin:0 0 8px; color:var(--purple); font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+        h1 { margin:0; font:800 clamp(2rem,4vw,3.6rem)/1.05 var(--display); letter-spacing:-.055em; }
+        .intro { max-width:600px; margin:10px 0 0; color:var(--muted); font-size:15px; }
+        .export-btn, .search-btn { display:inline-flex; min-height:42px; align-items:center; justify-content:center; gap:8px; padding:0 15px; border:0; border-radius:9px; background:var(--purple); color:#fff; font-size:13px; font-weight:700; }
+        .export-btn:hover, .search-btn:hover { background:var(--purple-dark); }
+        .export-btn .i { width:17px; height:17px; }
+        .toolbar { display:flex; align-items:center; gap:10px; padding:14px; margin:22px 0 16px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+        .search { position:relative; flex:1; }
+        .search .i { position:absolute; left:13px; top:50%; width:18px; height:18px; color:#a3a0a9; transform:translateY(-50%); pointer-events:none; }
+        .search input, .month-select { width:100%; height:42px; padding:0 13px; border:1px solid var(--line); border-radius:9px; outline:0; background:#fff; color:var(--ink); }
+        .search input { padding-left:39px; }
+        .search input:focus, .month-select:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(118,34,215,.12); }
+        .month-filter { min-width:155px; }
+        .clear-btn { display:inline-flex; height:42px; align-items:center; padding:0 14px; border-radius:9px; background:var(--soft); color:var(--purple); font-size:13px; font-weight:700; }
+        .clear-btn:hover { background:#e6d5fe; }
+        .directory { overflow:hidden; border:1px solid var(--line); border-radius:17px; background:var(--surface); box-shadow:0 10px 28px rgba(24,16,39,.05); }
+        .directory-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:21px 24px; border-bottom:1px solid var(--line); background:linear-gradient(110deg,var(--soft),#fff 75%); }
+        .directory-head h2 { margin:0; font:800 18px var(--display); letter-spacing:-.03em; }
+        .directory-head p { margin:4px 0 0; color:var(--dim); font-size:13px; }
+        .pass-count { color:var(--muted); font-size:13px; font-weight:600; }
+        .pass-count strong { color:var(--purple); font:800 20px var(--display); }
+        .table-wrap { overflow-x:auto; }
+        table { width:100%; min-width:1040px; border-collapse:collapse; }
+        th, td { padding:15px 18px; text-align:left; }
+        th { color:var(--dim); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        td { border-top:1px solid #f0eef2; color:var(--muted); vertical-align:middle; }
+        tbody tr:hover { background:#fcfaff; }
+        .student-name { display:block; color:var(--ink); font-weight:700; }
+        .student-meta { display:block; margin-top:2px; color:var(--dim); font-size:12px; }
+        .reason { max-width:210px; color:var(--ink); }
+        .date { white-space:nowrap; }
+        .status { display:inline-flex; padding:5px 9px; border-radius:999px; font-size:11px; font-weight:700; text-transform:capitalize; }
+        .status.pending { background:var(--amber-soft); color:var(--amber); }
+        .status.approved { background:var(--green-soft); color:var(--green); }
+        .status.rejected, .status.expired { background:var(--red-soft); color:var(--red); }
+        .actions { display:flex; align-items:center; gap:7px; }
+        .action { display:inline-flex; min-height:32px; align-items:center; justify-content:center; padding:0 10px; border:0; border-radius:7px; font-size:12px; font-weight:700; line-height:1; white-space:nowrap; }
+        .approve { background:var(--green-soft); color:var(--green); }
+        .reject { background:var(--red-soft); color:var(--red); }
+        .action:hover { filter:brightness(.95); }
+        .empty { padding:60px 24px; text-align:center; color:var(--dim); font-size:14px; }
+        .pagination { display:flex; align-items:center; justify-content:center; gap:7px; padding:20px; }
+        .page-link, .page-current { display:inline-flex; min-height:34px; align-items:center; justify-content:center; padding:0 11px; border-radius:8px; font-size:12px; font-weight:700; }
+        .page-link { background:var(--soft); color:var(--purple); }
+        .page-link:hover { background:#e6d5fe; }
+        .page-current { color:var(--muted); }
+        @media (max-width:760px) {
+            .rail { inset:auto 0 0; width:100%; height:65px; flex-direction:row; padding:8px 10px; border-top:1px solid var(--line); border-right:0; }
+            .rail:hover, .rail:focus-within { width:100%; }
+            .brand { display:none; }
+            .nav { width:100%; grid-template-columns:repeat(4,1fr); gap:4px; }
+            .nav-link { height:49px; justify-content:center; padding:0; }
+            .nav-label { display:none; }
+            .main { margin-left:0; padding:22px 14px 90px; }
+            .topbar { align-items:flex-start; flex-direction:column; gap:18px; padding-bottom:22px; }
+            .export-btn { width:100%; }
+            .toolbar { align-items:stretch; flex-direction:column; }
+            .month-filter, .search-btn, .clear-btn { width:100%; }
+            .directory-head { padding:19px; }
         }
     </style>
-
-    <!-- PWA Setup -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1e293b">
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('ServiceWorker registered'))
-                    .catch(err => console.log('ServiceWorker registration failed: ', err));
-            });
+            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
         }
     </script>
-    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
 </head>
-
 <body>
-<!-- Django Messages Toast -->
-{% include 'partials/messages.html' %}
-
-    <div class="container">
-        <a href="{% url 'homepage' %}" class="back-btn">&larr; Back to Dashboard</a>
-        <h2 style="margin-bottom: 20px;">Exit Pass Requests</h2>
-        
-        <div class="header" style="justify-content: flex-end;">
-
-            <div class="controls">
-                <!-- Search bar -->
-                <form method="get" style="display:flex; gap:8px; align-items:center;">
-                    {% if selected_month %}<input type="hidden" name="month" value="{{ selected_month }}">{% endif %}
-                    <input type="text" name="q" value="{{ q }}" placeholder="Search student, reason, dept…" class="search-box">
-                    <button type="submit" class="export-btn" style="white-space:nowrap;">Search</button>
-                    {% if q %}
-                    <a href="/Pass{% if selected_month %}?month={{ selected_month }}{% endif %}" class="export-btn" style="background:#6b7280;">Clear</a>
-                    {% endif %}
-                </form>
-
-                <!-- Month filter -->
-                <form method="get">
-                    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
-                    <select name="month" onchange="this.form.submit()">
-                        <option value="">All Months</option>
-                        {% for m in months %}
-                        <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
-                            Month {{ m }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </form>
-
-                <!-- Export PDF -->
-                <a href="{% url 'export_pass_pdf' %}?month={{ selected_month }}">
-                    <button class="export-btn" type="button">Export PDF</button>
-                </a>
-            </div>
-        </div>
-
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Department</th>
-                        <th>Reason</th>
-                        <th>Time</th>
-                        <th>Date</th>
-                        <th>Mentor Status</th>
-                        <th>Security Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
+    <aside class="rail" aria-label="Management navigation">
+        <a href="/" class="brand" aria-label="GateEase home"><span>GateEase</span></a>
+        <nav class="nav">
+            <a href="{% url 'verify_student' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V19"/><path d="m15 8 2 2 4-4"/></svg><span class="nav-label">Verify Students</span></a>
+            <a href="{% url 'mng_mntr' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg><span class="nav-label">Mentors</span></a>
+            <a href="{% url 'mng_dep' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 21v-3h4v3"/></svg><span class="nav-label">Departments</span></a>
+            <a href="{% url 'pass' %}" class="nav-link active" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5z"/><path d="M4 6h16M8 10h8M8 14h6"/></svg><span class="nav-label">Exit Passes</span></a>
+            <a href="{% url 'complaint_mng' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6.5A7.5 7.5 0 1 1 21 11.5Z"/><path d="M8 10h8M8 14h5"/></svg><span class="nav-label">Complaints</span></a>
+            <a href="{% url 'mng_security' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7-8 11-8 11Z"/><path d="m9 12 2 2 4-4"/></svg><span class="nav-label">Security</span></a>
+            <a href="{% url 'manage_announcements' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-5v12L3 13z"/><path d="M6 14v5h5l-2-4M21 10v6"/></svg><span class="nav-label">Announcements</span></a>
+            <a href="{% url 'mng_class' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5M8 13h3M8 16h3M15 13h2"/></svg><span class="nav-label">Classes</span></a>
+        </nav>
+    </aside>
+    <main class="main">
+        <div class="crumbs"><a href="{% url 'homepage' %}">Dashboard</a><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span>Exit passes</span></div>
+        <header class="topbar">
+            <div><p class="eyebrow">Campus movement</p><h1>Exit pass requests</h1><p class="intro">Review student exit requests and approve or reject pending mentor submissions.</p></div>
+            <a href="{% url 'export_pass_pdf' %}?month={{ selected_month|default:'' }}" class="export-btn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export report</a>
+        </header>
+        <form method="get" class="toolbar">
+            <div class="search"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input type="text" name="q" value="{{ q }}" placeholder="Search student, reason, or department"></div>
+            <button type="submit" class="search-btn">Search</button>
+            <div class="month-filter"><select name="month" class="month-select" onchange="this.form.submit()" aria-label="Filter by month"><option value="">All months</option>{% for m in months %}<option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>Month {{ m }}</option>{% endfor %}</select></div>
+            {% if q or selected_month %}<a href="{% url 'pass' %}" class="clear-btn">Clear</a>{% endif %}
+        </form>
+        <section class="directory" aria-labelledby="pass-directory-title">
+            <div class="directory-head"><div><h2 id="pass-directory-title">Pass directory</h2><p>Requests are shown newest first. Pending requests need an admin decision.</p></div></div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Student</th><th>Department</th><th>Reason</th><th>Exit time</th><th>Requested</th><th>Mentor</th><th>Security</th><th>Action</th></tr></thead>
+                    <tbody>
                     {% for i in exitpasses %}
                     <tr>
-                        <td>{{ i.student_id.name }}</td>
-                        <td>{{ i.student_id.classs.department_id.name }}</td>
-                        <td>{{ i.reason }}</td>
+                        <td><span class="student-name">{{ i.student_id.name }}</span><span class="student-meta">{{ i.student_id.classs.class_name|default:"Class not assigned" }}</span></td>
+                        <td>{{ i.student_id.classs.department_id.name|default:"Unassigned" }}</td>
+                        <td class="reason">{{ i.reason }}</td>
                         <td>{{ i.time }}</td>
-                        <td>{{ i.created_at }}</td>
-                        <td>{{ i.mentor_status }}</td>
-                        <td>{{ i.security_status }}</td>
-                        <td>
-                            <div class="actions">
-                                {% if i.mentor_status == "pending" %}
-                                <form method="post" action="{% url 'approve_pass_admin' i.id %}" style="display:inline;">{% csrf_token %}<button class="btn btn-approve" type="submit">Approve</button></form>
-                                <form method="post" action="{% url 'reject_pass_admin' i.id %}" style="display:inline;">{% csrf_token %}<button class="btn btn-reject" type="submit">Reject</button></form>
-                                {% endif%}
-                            </div>
-                        </td>
+                        <td class="date">{{ i.created_at }}</td>
+                        <td><span class="status {{ i.mentor_status|lower }}">{{ i.mentor_status }}</span></td>
+                        <td><span class="status {{ i.security_status|lower }}">{{ i.security_status }}</span></td>
+                        <td>{% if i.mentor_status == "pending" %}<div class="actions"><form method="post" action="{% url 'approve_pass_admin' i.id %}">{% csrf_token %}<button class="action approve" type="submit">Approve</button></form><form method="post" action="{% url 'reject_pass_admin' i.id %}">{% csrf_token %}<button class="action reject" type="submit">Reject</button></form></div>{% else %}<span class="student-meta">No action</span>{% endif %}</td>
                     </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" style="text-align: center; padding: 20px;">No exit passes found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        {% if page_obj.has_other_pages %}
-        <div style="display: flex; justify-content: center; margin-top: 20px; gap: 5px;">
-            {% if page_obj.has_previous %}
-                <a href="?page=1{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="export-btn" style="background:#4f46e5; text-decoration:none;">&laquo; First</a>
-                <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="export-btn" style="background:#4f46e5; text-decoration:none;">Previous</a>
-            {% endif %}
-
-            <span style="padding: 10px; font-weight: 500;">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="export-btn" style="background:#4f46e5; text-decoration:none;">Next</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="export-btn" style="background:#4f46e5; text-decoration:none;">Last &raquo;</a>
-            {% endif %}
-        </div>
-        {% endif %}
-
-    </div>
-
+                    {% empty %}<tr><td colspan="8" class="empty">No exit passes found for the selected filters.</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if page_obj.has_other_pages %}<nav class="pagination" aria-label="Exit pass pages">
+                {% if page_obj.has_previous %}<a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">First</a><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">Previous</a>{% endif %}
+                <span class="page-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}<a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">Next</a><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">Last</a>{% endif %}
+            </nav>{% endif %}
+        </section>
+    </main>
 </body>
-
 </html>

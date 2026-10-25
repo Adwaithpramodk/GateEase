@@ -328,7 +328,12 @@ class VerifyStudent(LoginRequiredMixin, View):
         return render(
             request,
             'tables/form/verify_student.html',
-            {'students': students, 'q': q, 'status': status}
+            {
+                'students': students,
+                'q': q,
+                'status': status,
+                'classes': classstable.objects.all().order_by('class_name'),
+            }
         )
 
 class AdminAddStudent(AdminRequiredMixin, View):
@@ -344,6 +349,7 @@ class AdminAddStudent(AdminRequiredMixin, View):
         phone = request.POST.get('phone', '').strip()
         class_id = request.POST.get('classs', '').strip()
         password = request.POST.get('password', '').strip()
+        activate_student = request.POST.get('activate_student') == 'on'
 
         if not all([name, email, admn_no, phone, class_id, password]):
             messages.error(request, 'All fields are required.')
@@ -366,13 +372,14 @@ class AdminAddStudent(AdminRequiredMixin, View):
                 login_obj = Logintable.objects.create(
                     username=email,
                     password=make_password(password),
-                    usertype='Student'  # Admin-created accounts are immediately active
+                    usertype='Student' if activate_student else 'pending'
                 )
                 studenttable.objects.create(
                     name=name, email=email, admn_no=admn_no,
                     phone=phone, classs=class_obj, LOGINID=login_obj
                 )
-            messages.success(request, f'Student "{name}" added successfully and is immediately active.')
+            account_status = 'immediately active' if activate_student else 'pending approval'
+            messages.success(request, f'Student "{name}" added successfully with {account_status} status.')
             return redirect('verify_student')
         except classstable.DoesNotExist:
             messages.error(request, 'Selected class not found.')
@@ -455,7 +462,23 @@ class UploadImage(AdminOrMentorRequiredMixin, View):
 class ManageDepartment(AdminRequiredMixin, View):
     def get(self,request):
         department=departmenttable.objects.all()
-        return render(request, 'tables/form/mng_dep.html',{'departments':department})
+        return render(request, 'tables/form/mng_dep.html', {
+            'departments': department,
+            'department_form': AddDepartmentForm(),
+        })
+
+    def post(self, request):
+        department_form = AddDepartmentForm(request.POST)
+        if department_form.is_valid():
+            department_form.save()
+            messages.success(request, "Department added successfully")
+            return redirect('mng_dep')
+
+        department = departmenttable.objects.all()
+        return render(request, 'tables/form/mng_dep.html', {
+            'departments': department,
+            'department_form': department_form,
+        })
 
 class AssignDepartment(AdminRequiredMixin, View):
     def get(self,request):
@@ -570,7 +593,11 @@ class SendReply(AdminRequiredMixin, View):
 class ManageClass(AdminRequiredMixin, View):
     def get(self,request):
         classs_name=classstable.objects.all().order_by('-id')
-        return render(request, 'tables/form/mng_class.html',{'classes':classs_name})
+        departments = departmenttable.objects.all().order_by('name')
+        return render(request, 'tables/form/mng_class.html', {
+            'classes': classs_name,
+            'departments': departments,
+        })
 
 class AssignClass(AdminRequiredMixin, View):
     def get(self, request):
@@ -803,7 +830,12 @@ class ManageMentor(AdminRequiredMixin, View):
                 models.Q(email__icontains=q) |
                 models.Q(department__name__icontains=q)
             )
-        return render(request, 'tables/form/mng_mntr.html', {'mentors': mentor, 'q': q})
+        departments = departmenttable.objects.all().order_by('name')
+        return render(request, 'tables/form/mng_mntr.html', {
+            'mentors': mentor,
+            'q': q,
+            'departments': departments,
+        })
 
 class AddMentor(AdminRequiredMixin, View):
     def get(self, request):

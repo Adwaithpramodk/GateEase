@@ -13,6 +13,7 @@
     </style>
 </head>
 <body>
+{% include 'partials/messages.html' %}
 <aside class="rail" aria-label="Management navigation"><a href="/" class="brand"><span>GateEase</span></a><nav class="nav">
 <a href="{% url 'verify_student' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V19"/><path d="m15 8 2 2 4-4"/></svg><span class="nav-label">Verify Students</span></a>
 <a href="{% url 'mng_mntr' %}" class="nav-link"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg><span class="nav-label">Mentors</span></a>

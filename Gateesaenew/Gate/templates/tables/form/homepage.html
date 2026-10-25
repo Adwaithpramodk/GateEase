@@ -3,702 +3,375 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>GateEase | Admin Dashboard</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
     <link rel="manifest" href="/manifest.json">
     <link rel="shortcut icon" href="{% static 'favicon.png' %}">
-    <meta name="theme-color" content="#20213A">
+    <meta name="theme-color" content="#FFFFFF">
 
     <style>
         :root {
-            --blue: #4F46E5;
-            --blue-dark: #4338CA;
-            --blue-light: #EEF2FF;
-            --navy: #20213A;
-            --navy-soft: #F5F6FC;
-            --ink: #202238;
-            --muted: #74788C;
-            --border: #E6E8F0;
-            --background: #F5F6FC;
-            --white: #FFFFFF;
-            --sidebar-width: 248px;
+            --bg: #FFFFFF;
+            --tile: #F9F5FF;
+            --tile-2: #F0E6FA;
+            --veil: #E6D5FE;
+            --line: #E4E4E7;
+            --text: #000000;
+            --muted: #5A5B5F;
+            --dim: #71717A;
+            --accent: #7622D7;
+            --accent-dark: #6119B5;
+            --accent-ink: #FFFFFF;
+            --rail-w: 72px;
+            --rail-open: 244px;
+            --font: 'DM Sans', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            --display: 'Plus Jakarta Sans', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
 
         body {
             min-height: 100vh;
             margin: 0;
-            color: var(--ink);
-            background: var(--background);
-            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 15px;
+            line-height: 1.5;
             -webkit-font-smoothing: antialiased;
         }
 
-        a {
-            color: inherit;
-        }
+        a { color: inherit; text-decoration: none; }
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-        .app-shell {
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-        }
+        svg.i { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
-        /* Sidebar */
-        .sidebar {
-            position: sticky;
-            top: 0;
+        /* Icon rail (expands on hover / focus) */
+        .rail {
+            position: fixed;
+            inset: 0 auto 0 0;
+            z-index: 40;
             display: flex;
-            height: 100vh;
-            min-height: 0;
+            width: var(--rail-w);
             flex-direction: column;
-            padding: 25px 15px 16px;
-            overflow-x: hidden;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #454663 #20213A;
-            color: #C7C9DA;
-            background: #20213A;
-            border-right: 1px solid #30314A;
+            padding: 16px 12px;
+            overflow: hidden;
+            border-right: 1px solid var(--line);
+            background: var(--bg);
+            transition: width .2s ease;
         }
 
-        /* Text-only GateEase branding */
-        .brand {
-            display: block;
-            padding: 7px 9px 29px;
-            color: #FFFFFF;
-            font-size: 1.28rem;
+        .rail:hover, .rail:focus-within { width: var(--rail-open); background: #FFFFFF; }
+
+        .rail-brand {
+            display: flex;
+            height: 48px;
+            align-items: center;
+            padding: 0 13px;
+            margin-bottom: 12px;
+            color: var(--text);
+            font-family: var(--display);
+            font-size: 20px;
             font-weight: 800;
-            line-height: 1.3;
-            letter-spacing: -.055em;
-            text-decoration: none;
+            letter-spacing: -.02em;
             white-space: nowrap;
         }
 
-        .brand span {
-            color: #A5B4FC;
+        .rail-brand span { opacity: 0; transition: opacity .15s ease; }
+        .rail:hover .rail-brand span, .rail:focus-within .rail-brand span { opacity: 1; }
+
+        .rail-nav { display: grid; gap: 2px; overflow-y: auto; scrollbar-width: none; }
+        .rail-nav::-webkit-scrollbar { display: none; }
+
+        .rail-link {
+            display: flex;
+            height: 44px;
+            align-items: center;
+            gap: 14px;
+            padding: 0 13px;
+            border-radius: 12px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: background .12s ease, color .12s ease;
         }
 
-        /* Navigation */
-        .nav-label {
-            margin: 8px 11px 10px;
-            color: #8E90AB;
-            font-size: .65rem;
-            font-weight: 800;
-            letter-spacing: .12em;
-            text-transform: uppercase;
+        .rail-link svg { width: 20px; height: 20px; flex: 0 0 20px; }
+        .rail-link span { opacity: 0; transition: opacity .15s ease; }
+        .rail:hover .rail-link span, .rail:focus-within .rail-link span { opacity: 1; }
+        .rail-link:hover { background: var(--tile-2); color: var(--text); }
+
+        .rail-bottom { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
+        .rail-link span { display: block; line-height: 1.2; text-align: left; }
+        .rail-bottom .rail-link,
+        .rail-bottom a.logout-btn {
+            display: flex;
+            width: 100%;
+            height: 44px;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 14px;
+            margin: 0;
+            padding: 0 13px;
+            text-align: left;
+        }
+        .rail-link.logout:hover { color: var(--accent); }
+
+        /* Main */
+        .main {
+            margin-left: var(--rail-w);
+            padding: 32px clamp(20px, 3.5vw, 48px) 32px;
         }
 
-        .side-nav {
+        .wrap { max-width: 1280px; margin-inline: auto; }
+
+        .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+
+        .eyebrow { display: inline-block; margin: 0 0 14px; padding: 5px 14px; border: 1px solid var(--veil); border-radius: 9999px; background: var(--tile); color: var(--accent); font-size: 13px; font-weight: 500; }
+
+        h1 { margin: 0; font-family: var(--display); font-size: clamp(1.9rem, 4vw, 2.75rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+
+        .sub { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
+
+        .stamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border: 1px solid var(--veil);
+            border-radius: 9999px;
+            background: var(--tile);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .stamp::before { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); content: ""; }
+
+        /* Bento grid */
+        .bento {
             display: grid;
-            gap: 4px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-auto-rows: minmax(104px, auto);
+            gap: 12px;
         }
 
-        .side-link {
+        .tile {
             position: relative;
             display: flex;
-            min-height: 42px;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            color: #C7C9DA;
-            font-size: .81rem;
-            font-weight: 550;
-            text-decoration: none;
-            transition: background .16s ease, color .16s ease, border-color .16s ease;
-        }
-
-        .side-link:hover {
-            color: #FFFFFF;
-            background: #2A2B46;
-        }
-
-        .side-link.current {
-            color: #FFFFFF;
-            background: #34345A;
-            border-color: #41416B;
-        }
-
-        .side-link.current::before {
-            position: absolute;
-            top: 9px;
-            bottom: 9px;
-            left: -15px;
-            width: 3px;
-            border-radius: 0 3px 3px 0;
-            background: var(--blue);
-            content: "";
-        }
-
-        .side-icon {
-            display: grid;
-            width: 19px;
-            height: 19px;
-            flex: 0 0 19px;
-            place-items: center;
-            color: #8E90AB;
-        }
-
-        .side-link:hover .side-icon,
-        .side-link.current .side-icon {
-            color: #A5B4FC;
-        }
-
-        .side-icon svg {
-            width: 18px;
-            height: 18px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.7;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* Sidebar footer */
-        .sidebar-bottom {
-            margin-top: auto;
-            padding-top: 18px;
-        }
-
-        .sidebar-divider {
-            height: 1px;
-            margin: 0 7px 14px;
-            background: #34354F;
-        }
-
-        .portal-label {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 10px 11px 14px;
-            color: #9294AE;
-            font-size: .73rem;
-            font-weight: 600;
-        }
-
-        .portal-dot {
-            width: 7px;
-            height: 7px;
-            flex: 0 0 7px;
-            border-radius: 50%;
-            background: #818CF8;
-            box-shadow: 0 0 0 4px rgba(129, 140, 248, .12);
-        }
-
-        /* Logout button: icon and text always stay on one row */
-        .sidebar .sidebar-bottom > a.logout-btn {
-            display: grid !important;
-            grid-template-columns: 30px minmax(0, 1fr);
-            grid-template-rows: 1fr;
-            align-items: center;
-            justify-content: start;
-            column-gap: 10px;
-            width: 100%;
-            height: 46px;
-            min-height: 46px;
+            flex-direction: column;
+            justify-content: space-between;
             min-width: 0;
-            padding: 6px 10px;
-            border: 1px solid #3A3B55;
-            border-radius: 10px;
-            color: #D7D8E5;
-            background: #25263F;
-            font-family: inherit;
-            font-size: .81rem;
-            font-weight: 650;
-            line-height: 1;
-            text-align: left;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: border-color .16s ease, background .16s ease, color .16s ease;
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--tile);
+            transition: border-color .15s ease, background .15s ease;
         }
 
-        .sidebar .sidebar-bottom > a.logout-btn > .side-icon {
-            grid-column: 1;
-            grid-row: 1;
+        a.tile:hover { border-color: var(--accent); }
+
+        .tile-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+        .t-label { color: var(--muted); font-size: 13px; font-weight: 500; }
+
+        .t-icon {
             display: grid;
             width: 30px;
             height: 30px;
-            min-width: 30px;
-            margin: 0;
+            flex: 0 0 30px;
             place-items: center;
-            border-radius: 8px;
-            color: #FCA5A5;
-            background: rgba(248, 113, 113, .12);
+            border: 1px solid var(--veil);
+            border-radius: 50%;
+            background: #FFFFFF;
+            color: var(--accent);
         }
 
-        .sidebar .sidebar-bottom > a.logout-btn > .side-icon svg {
-            display: block;
-            width: 17px;
-            height: 17px;
-            flex: 0 0 auto;
+        .t-icon svg { width: 15px; height: 15px; }
+
+        .t-value { display: block; margin-top: 10px; font-family: var(--display); font-size: clamp(1.6rem, 2.3vw, 2rem); font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+
+        .accent { color: var(--accent); }
+
+        /* Hero tile */
+        .hero { grid-column: span 2; grid-row: span 2; padding: 20px; background: var(--tile-2); border-color: var(--veil); }
+
+        .hero .t-label { color: var(--accent); font-weight: 600; }
+        .hero .t-icon { border-color: var(--veil); color: var(--accent); }
+        .hero .t-value { margin-top: 14px; font-size: clamp(3.5rem, 6vw, 5rem); letter-spacing: -.05em; }
+        .hero-note { margin: 12px 0 0; max-width: 340px; color: var(--muted); font-size: 15px; }
+
+        .btn {
+            display: inline-flex;
+            min-height: 40px;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 32px;
+            background: var(--accent);
+            color: var(--accent-ink);
+            font-size: 14px;
+            font-weight: 600;
+            font-weight: 700;
+            transition: background .15s ease;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .sidebar .sidebar-bottom > a.logout-btn > span:last-child {
-            grid-column: 2;
-            grid-row: 1;
-            display: block;
-            width: max-content;
-            min-width: 0;
-            max-width: 100%;
-            margin: 0;
-            align-self: center;
-            line-height: 1.2;
-            white-space: nowrap;
-        }
+        .btn:hover { background: var(--accent-dark); }
+        .btn svg { width: 16px; height: 16px; stroke-width: 2.2; }
 
-        .sidebar .sidebar-bottom > a.logout-btn:hover {
-            color: #FFFFFF;
-            border-color: #5A4058;
-            background: #30273F;
-        }
+        .hero-bottom { margin-top: 18px; }
 
-        .sidebar .sidebar-bottom > a.logout-btn:hover .side-icon {
-            color: #FCA5A5;
-            background: rgba(248, 113, 113, .18);
-        }
+        .dist { display: flex; height: 8px; gap: 3px; margin: 16px 0 8px; }
+        .dist i { display: block; min-width: 4px; height: 100%; border-radius: 9999px; transition: flex-grow .4s ease; }
+        .dist .d-p { background: var(--accent); flex: 1; }
+        .dist .d-a { background: var(--veil); flex: 1; }
+        .dist .d-r { background: #27272A; flex: 1; }
 
-        /* Main workspace */
-        .workspace {
-            min-width: 0;
-        }
+        .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 13px; }
+        .legend span { display: inline-flex; align-items: center; gap: 7px; }
+        .legend b { color: var(--text); font-weight: 600; }
+        .legend i { width: 8px; height: 8px; border-radius: 50%; }
+        .legend .d-p { background: var(--accent); }
+        .legend .d-a { background: var(--veil); }
+        .legend .d-r { background: #27272A; }
 
-        .topbar {
-            display: flex;
-            min-height: 69px;
+        /* Wide tile (Mentors) */
+        .span2 { grid-column: span 2; }
+        .span2 .t-value { margin-top: 10px; }
+
+        /* Quick actions: slim strip across the grid */
+        .quick {
+            grid-column: 1 / -1;
+            flex-direction: row;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
-            padding: 0 34px;
-            border-bottom: 1px solid var(--border);
-            background: rgba(255, 255, 255, .96);
+            padding: 10px 12px 10px 18px;
         }
 
-        .breadcrumbs {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            color: var(--muted);
-            font-size: .76rem;
-        }
+        .q-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 
-        .breadcrumbs strong {
-            color: var(--ink);
-            font-weight: 700;
-        }
-
-        .breadcrumb-separator {
-            color: #CBD5E1;
-        }
-
-        .topbar-badge {
+        .q-link {
             display: inline-flex;
+            min-height: 40px;
             align-items: center;
             gap: 8px;
-            padding: 7px 10px;
-            border: 1px solid #E0E3FC;
-            border-radius: 7px;
-            color: #4338CA;
-            background: #F5F6FF;
-            font-size: .71rem;
-            font-weight: 700;
-        }
-
-        .topbar-badge::before {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--blue);
-            content: "";
-        }
-
-        .main-content {
-            width: min(1320px, 100%);
-            margin-inline: auto;
-            padding: 31px 34px 28px;
-        }
-
-        /* Page heading */
-        .page-intro {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            gap: 20px;
-            margin-bottom: 29px;
-        }
-
-        .eyebrow {
-            margin: 0 0 9px;
-            color: var(--blue);
-            font-size: .69rem;
-            font-weight: 800;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-        }
-
-        h1 {
-            margin: 0;
-            color: var(--navy);
-            font-size: clamp(1.8rem, 3vw, 2.25rem);
-            font-weight: 800;
-            letter-spacing: -.06em;
-            line-height: 1.15;
-        }
-
-        .intro-description {
-            margin: 10px 0 0;
-            color: var(--muted);
-            font-size: .88rem;
-            line-height: 1.6;
-        }
-
-        /* Statistics section */
-        .section-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            margin-bottom: 15px;
-        }
-
-        .section-title {
-            margin: 0;
-            color: var(--navy);
-            font-size: .98rem;
-            font-weight: 750;
-            letter-spacing: -.025em;
-        }
-
-        .section-caption {
-            margin: 5px 0 0;
-            color: var(--muted);
-            font-size: .77rem;
-        }
-
-        .stats-timestamp {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            color: var(--muted);
-            font-size: .72rem;
+            padding: 0 16px;
+            border: 1px solid var(--veil);
+            border-radius: 32px;
+            background: #FFFFFF;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
             white-space: nowrap;
+            transition: border-color .15s ease, background .15s ease;
         }
 
-        .stats-timestamp::before {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #22C55E;
-            content: "";
+        .q-link svg { width: 15px; height: 15px; color: var(--accent); transition: transform .15s ease; }
+        .q-link:hover { border-color: var(--accent); background: var(--tile); }
+        .q-link:hover svg { transform: translateX(3px); }
+
+        .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--dim); font-size: 13px; }
+        .foot b { color: var(--muted); font-weight: 600; }
+
+        /* Tablet */
+        @media (max-width: 1100px) {
+            .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .hero { grid-row: auto; }
+            .quick { flex-wrap: wrap; }
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 13px;
-        }
-
-        /* Statistics cards */
-        .stat-card {
-            position: relative;
-            display: flex;
-            min-height: 145px;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: space-between;
-            overflow: hidden;
-            padding: 18px;
-            border: 1px solid var(--border);
-            border-radius: 11px;
-            background: var(--white);
-            box-shadow: 0 2px 5px rgba(15, 23, 42, .025);
-            text-decoration: none;
-            transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
-        }
-
-        .stat-card::before {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 3px;
-            height: 100%;
-            background: var(--accent, var(--blue));
-            content: "";
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            border-color: #CBD5E1;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, .055);
-        }
-
-        .stat-top {
-            display: flex;
-            width: 100%;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .stat-label {
-            color: var(--muted);
-            font-size: .76rem;
-            font-weight: 600;
-            line-height: 1.4;
-        }
-
-        .stat-icon {
-            display: grid;
-            width: 32px;
-            height: 32px;
-            flex: 0 0 32px;
-            place-items: center;
-            border-radius: 8px;
-            color: var(--accent, var(--blue));
-            background: var(--icon-bg, var(--blue-light));
-        }
-
-        .stat-icon svg {
-            width: 17px;
-            height: 17px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .stat-value {
-            display: block;
-            margin-top: 15px;
-            color: var(--navy);
-            font-size: 1.9rem;
-            font-weight: 800;
-            letter-spacing: -.055em;
-            line-height: 1;
-        }
-
-        /* Muted, status-specific accents */
-        .sc-blue   { --accent: #4F46E5; --icon-bg: #EEF2FF; }
-        .sc-amber  { --accent: #A87827; --icon-bg: #FAF5E9; }
-        .sc-green  { --accent: #397B5A; --icon-bg: #EEF6F0; }
-        .sc-red    { --accent: #B45353; --icon-bg: #FBEFEF; }
-        .sc-teal   { --accent: #357D83; --icon-bg: #EDF6F6; }
-        .sc-purple { --accent: #6D63A6; --icon-bg: #F2F0FA; }
-        .sc-orange { --accent: #A96B3B; --icon-bg: #FAF1E9; }
-        .sc-slate  { --accent: #58647A; --icon-bg: #F0F2F6; }
-
-        /* Footer */
-        .dashboard-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            margin-top: 34px;
-            padding-top: 18px;
-            border-top: 1px solid var(--border);
-            color: var(--muted);
-            font-size: .73rem;
-        }
-
-        .footer-brand {
-            color: var(--ink);
-            font-weight: 700;
-        }
-
-        /* Responsive layout */
-        @media (max-width: 1120px) {
-            :root {
-                --sidebar-width: 225px;
-            }
-
-            .topbar {
-                padding-inline: 25px;
-            }
-
-            .main-content {
-                padding: 28px 25px 24px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 760px) {
-            .app-shell {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                position: static;
-                height: auto;
-                min-height: 0;
-                overflow: visible;
-                padding: 15px 16px 13px;
-            }
-
-            .brand {
-                padding: 0 4px 15px;
-            }
-
-            .nav-label {
-                margin: 5px 5px 9px;
-            }
-
-            .side-nav {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 5px;
-            }
-
-            .side-link {
-                min-height: 39px;
-                gap: 8px;
-                padding: 8px;
-                font-size: .74rem;
-            }
-
-            .side-link.current::before {
-                top: 7px;
-                bottom: 7px;
-                left: -16px;
-            }
-
-            .side-icon {
-                width: 16px;
-                height: 16px;
-                flex-basis: 16px;
-            }
-
-            .side-icon svg {
-                width: 16px;
-                height: 16px;
-            }
-
-            .sidebar-bottom {
-                margin-top: 14px;
-                padding-top: 0;
-            }
-
-            .sidebar-divider {
-                margin-bottom: 9px;
-            }
-
-            .portal-label {
-                display: none;
-            }
-
-            .sidebar .sidebar-bottom > a.logout-btn {
-                display: grid !important;
-                grid-template-columns: 30px minmax(0, 1fr);
-                grid-template-rows: 1fr;
-                align-items: center;
-                justify-content: start;
-                column-gap: 10px;
+        /* Mobile: rail becomes a swipeable bottom bar */
+        @media (max-width: 800px) {
+            .rail,
+            .rail:hover,
+            .rail:focus-within {
+                inset: auto 0 0 0;
                 width: 100%;
-                height: 46px;
-                min-height: 46px;
-                padding: 6px 10px;
+                height: calc(68px + env(safe-area-inset-bottom));
+                flex-direction: row;
+                padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+                overflow: hidden;
+                border-top: 1px solid var(--line);
+                border-right: 0;
+                background: rgba(255, 255, 255, .97);
+                -webkit-backdrop-filter: blur(10px);
+                backdrop-filter: blur(10px);
             }
 
-            .sidebar .sidebar-bottom > a.logout-btn > .side-icon {
-                grid-column: 1;
-                grid-row: 1;
+            .rail-brand { display: none; }
+
+            .rail-nav {
+                display: flex;
+                flex: 1;
+                gap: 2px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x proximity;
             }
 
-            .sidebar .sidebar-bottom > a.logout-btn > span:last-child {
-                grid-column: 2;
-                grid-row: 1;
-                width: max-content;
-                white-space: nowrap;
+            .rail-bottom { margin: 0; padding: 0 0 0 4px; border-top: 0; border-left: 1px solid var(--line); }
+
+            .rail-bottom .rail-link,
+            .rail-bottom a.logout-btn {
+                width: auto;
+                min-width: 74px;
+                height: 56px;
+                flex-direction: column;
+                justify-content: center;
+                gap: 4px;
+                padding: 0 6px;
+                text-align: center;
             }
 
-            .topbar {
-                min-height: 55px;
-                padding-inline: 18px;
+            .rail-link span { text-align: center; }
+
+            .rail-link {
+                height: 56px;
+                min-width: 74px;
+                flex-direction: column;
+                justify-content: center;
+                gap: 4px;
+                padding: 0 6px;
+                font-size: 11px;
+                text-align: center;
+                scroll-snap-align: start;
             }
 
-            .main-content {
-                padding: 25px 18px 22px;
-            }
+            .rail-link span, .rail:hover .rail-link span, .rail:focus-within .rail-link span { opacity: 1; }
+
+            .main { margin-left: 0; padding: 20px 14px calc(96px + env(safe-area-inset-bottom)); }
+
+            .head { margin-bottom: 20px; }
+            .stamp { font-size: 12px; padding: 6px 12px; }
+
+            .bento { gap: 8px; grid-auto-rows: minmax(92px, auto); }
+            .tile { padding: 14px; border-radius: 12px; }
+            .hero { padding: 16px; }
+            .hero .t-value { font-size: clamp(3.2rem, 17vw, 4.2rem); }
+            .t-icon { width: 28px; height: 28px; flex-basis: 28px; }
+            .t-value { margin-top: 8px; font-size: 1.6rem; }
+            .quick { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; }
+            .q-list { width: 100%; }
+            .q-link { flex: 1 1 auto; justify-content: center; }
+            .btn { width: 100%; justify-content: center; min-height: 46px; }
         }
 
-        @media (max-width: 480px) {
-            .topbar-badge {
-                padding: 6px 8px;
-                font-size: .66rem;
-            }
-
-            .breadcrumbs {
-                font-size: .7rem;
-            }
-
-            .page-intro {
-                margin-bottom: 24px;
-            }
-
-            .section-head {
-                align-items: flex-start;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .stats-grid {
-                gap: 9px;
-            }
-
-            .stat-card {
-                min-height: 126px;
-                padding: 13px;
-            }
-
-            .stat-label {
-                max-width: 105px;
-                font-size: .7rem;
-            }
-
-            .stat-icon {
-                width: 28px;
-                height: 28px;
-                flex-basis: 28px;
-            }
-
-            .stat-icon svg {
-                width: 15px;
-                height: 15px;
-            }
-
-            .stat-value {
-                margin-top: 12px;
-                font-size: 1.65rem;
-            }
-
-            .side-link {
-                font-size: .7rem;
-            }
-
-            .dashboard-footer {
-                align-items: flex-start;
-                flex-direction: column;
-                gap: 6px;
-            }
+        @media (max-width: 340px) {
+            .bento { grid-template-columns: 1fr; }
+            .hero, .span2, .quick { grid-column: auto; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                scroll-behavior: auto !important;
-                transition-duration: .01ms !important;
-            }
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
         }
     </style>
 
@@ -714,318 +387,194 @@
 <body>
     {% include 'partials/messages.html' %}
 
-    <div class="app-shell">
+    <!-- Navigation rail -->
+    <aside class="rail" aria-label="Management navigation">
+        <a href="/" class="rail-brand" aria-label="GateEase home"><span>GateEase</span></a>
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
+        <nav class="rail-nav">
 
-            <!-- Text-only brand -->
-            <a href="/" class="brand" aria-label="GateEase home">
-                Gate<span>Ease</span>
+            <a href="{% url 'verify_student' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V19"/><path d="m15 8 2 2 4-4"/></svg>
+                <span>Verify Students</span>
             </a>
 
-            <p class="nav-label">Management</p>
+            <a href="{% url 'mng_mntr' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg>
+                <span>Mentors</span>
+            </a>
 
-            <nav class="side-nav" aria-label="Management navigation">
+            <a href="{% url 'mng_dep' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 21v-3h4v3"/></svg>
+                <span>Departments</span>
+            </a>
 
-                <a href="{% url 'verify_student' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3"/>
-                            <path d="M3.5 19v-1.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V19"/>
-                            <path d="m15 8 2 2 4-4"/>
-                        </svg>
-                    </span>
-                    <span>Verify Students</span>
-                </a>
+            <a href="{% url 'pass' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5z"/><path d="M4 6h16M8 10h8M8 14h6"/></svg>
+                <span>Exit Passes</span>
+            </a>
 
-                <a href="{% url 'mng_mntr' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="8" r="3.5"/>
-                            <path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/>
-                        </svg>
-                    </span>
-                    <span>Mentors</span>
-                </a>
+            <a href="{% url 'complaint_mng' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6.5A7.5 7.5 0 1 1 21 11.5Z"/><path d="M8 10h8M8 14h5"/></svg>
+                <span>Complaints</span>
+            </a>
 
-                <a href="{% url 'mng_dep' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3 21h18M5 21V7l7-4 7 4v14"/>
-                            <path d="M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 21v-3h4v3"/>
-                        </svg>
-                    </span>
-                    <span>Departments</span>
-                </a>
+            <a href="{% url 'mng_security' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>
+                <span>Security</span>
+            </a>
 
-                <a href="{% url 'pass' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5z"/>
-                            <path d="M4 6h16M8 10h8M8 14h6"/>
-                        </svg>
-                    </span>
-                    <span>Exit Passes</span>
-                </a>
+            <a href="{% url 'manage_announcements' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-5v12L3 13z"/><path d="M6 14v5h5l-2-4M21 10v6"/></svg>
+                <span>Announcements</span>
+            </a>
 
-                <a href="{% url 'complaint_mng' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M21 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6.5A7.5 7.5 0 1 1 21 11.5Z"/>
-                            <path d="M8 10h8M8 14h5"/>
-                        </svg>
-                    </span>
-                    <span>Complaints</span>
-                </a>
+            <a href="{% url 'mng_class' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5M8 13h3M8 16h3M15 13h2"/></svg>
+                <span>Classes</span>
+            </a>
 
-                <a href="{% url 'mng_security' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/>
-                            <path d="m9 12 2 2 4-4"/>
-                        </svg>
-                    </span>
-                    <span>Security</span>
-                </a>
+            <a href="{% url 'AssignClass' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M17 8h4M19 6v4"/></svg>
+                <span>Assign Class</span>
+            </a>
 
-                <a href="{% url 'manage_announcements' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="m3 11 18-5v12L3 13z"/>
-                            <path d="M6 14v5h5l-2-4M21 10v6"/>
-                        </svg>
-                    </span>
-                    <span>Announcements</span>
-                </a>
+            <a href="{% url 'assn_dep' %}" class="rail-link">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 20V8l6-4 6 4v12"/><path d="M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/><path d="m17 4 2 2 3-3"/></svg>
+                <span>Assign Department</span>
+            </a>
 
-                <a href="{% url 'mng_class' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <rect x="3" y="4" width="18" height="16" rx="2"/>
-                            <path d="M3 9h18M8 4v5M16 4v5M8 13h3M8 16h3M15 13h2"/>
-                        </svg>
-                    </span>
-                    <span>Classes</span>
-                </a>
+        </nav>
 
-                <a href="{% url 'AssignClass' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3"/>
-                            <path d="M3 20v-1a6 6 0 0 1 12 0v1M17 8h4M19 6v4"/>
-                        </svg>
-                    </span>
-                    <span>Assign Class</span>
-                </a>
+        <div class="rail-bottom">
+            <a href="{% url 'logout' %}" onclick="showLogoutModal(event);" class="rail-link logout logout-btn">
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
 
-                <a href="{% url 'assn_dep' %}" class="side-link">
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 20h16M6 20V8l6-4 6 4v12"/>
-                            <path d="M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/>
-                            <path d="m17 4 2 2 3-3"/>
-                        </svg>
-                    </span>
-                    <span>Assign Department</span>
-                </a>
+    <main class="main">
+        <div class="wrap">
 
-            </nav>
-
-            <!-- Sidebar footer and logout -->
-            <div class="sidebar-bottom">
-                <div class="sidebar-divider"></div>
-
-                <div class="portal-label">
-                    <span class="portal-dot"></span>
-                    <span>Administrator Portal</span>
+            <header class="head">
+                <div>
+                    <p class="eyebrow">Administration</p>
+                    <h1>Dashboard overview</h1>
+                    <p class="sub">A clear view of exit passes and campus accounts.</p>
                 </div>
-
-                <a
-                    href="{% url 'logout' %}"
-                    onclick="showLogoutModal(event);"
-                    class="logout-btn"
-                >
-                    <span class="side-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M10 17l5-5-5-5M15 12H3"/>
-                            <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/>
-                        </svg>
-                    </span>
-                    <span>Logout</span>
-                </a>
-            </div>
-
-        </aside>
-
-        <!-- Main workspace -->
-        <div class="workspace">
-
-            <header class="topbar">
-                <div class="breadcrumbs">
-                    <span>GateEase</span>
-                    <span class="breadcrumb-separator">/</span>
-                    <strong>Dashboard</strong>
-                </div>
-
-                <span class="topbar-badge">Admin Portal</span>
+                <span class="stamp" id="stats-time"></span>
             </header>
 
-            <main class="main-content">
+            <section class="bento" aria-label="System overview">
 
-                <section class="page-intro">
+                <!-- Pending passes: the main call to action -->
+                <div class="tile hero sc-amber">
                     <div>
-                        <p class="eyebrow">Administration</p>
-                        <h1>Dashboard overview</h1>
-                        <p class="intro-description">
-                            A clear view of exit passes and campus accounts.
-                        </p>
-                    </div>
-                </section>
-
-                <section aria-labelledby="overview-title">
-
-                    <div class="section-head">
-                        <div>
-                            <h2 class="section-title" id="overview-title">
-                                System overview
-                            </h2>
-                            <p class="section-caption">
-                                Current pass and account totals
-                            </p>
+                        <div class="tile-top">
+                            <span class="t-label">Pending passes</span>
+                            <span class="t-icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
                         </div>
-
-                        <span class="stats-timestamp" id="stats-time"></span>
+                        <strong class="t-value accent">{{ pending_passes }}</strong>
                     </div>
 
-                    <div class="stats-grid">
-
-                        <!-- Total Passes -->
-                        <div class="stat-card sc-blue">
-                            <div class="stat-top">
-                                <span class="stat-label">Total Passes</span>
-                                <span class="stat-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M6 3h9l4 4v14H6z"/>
-                                        <path d="M14 3v5h5M9 13h7M9 17h7"/>
-                                    </svg>
-                                </span>
-                            </div>
-                            <strong class="stat-value">{{ total_passes }}</strong>
-                        </div>
-
-                        <!-- Pending Passes -->
-                        <a href="{% url 'pass' %}" class="stat-card sc-amber">
-                            <div class="stat-top">
-                                <span class="stat-label">Pending Passes</span>
-                                <span class="stat-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="9"/>
-                                        <path d="M12 7v5l3 2"/>
-                                    </svg>
-                                </span>
-                            </div>
-                            <strong class="stat-value">{{ pending_passes }}</strong>
+                    <div class="hero-bottom">
+                        <a href="{% url 'pass' %}" class="btn">
+                            <span>Review passes</span>
+                            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                         </a>
 
-                        <!-- Approved Passes -->
-                        <div class="stat-card sc-green">
-                            <div class="stat-top">
-                                <span class="stat-label">Approved Passes</span>
-                                <span class="stat-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="9"/>
-                                        <path d="m8 12 2.5 2.5L16 9"/>
-                                    </svg>
-                                </span>
-                            </div>
-                            <strong class="stat-value">{{ approved_passes }}</strong>
+                        <div class="dist" id="dist" data-p="{{ pending_passes }}" data-a="{{ approved_passes }}" data-r="{{ rejected_passes }}" aria-hidden="true">
+                            <i class="d-p"></i><i class="d-a"></i><i class="d-r"></i>
                         </div>
-
-                        <!-- Rejected Passes -->
-                        <div class="stat-card sc-red">
-                            <div class="stat-top">
-                                <span class="stat-label">Rejected / Revoked</span>
-                                <span class="stat-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="9"/>
-                                        <path d="m9 9 6 6m0-6-6 6"/>
-                                    </svg>
-                                </span>
-                            </div>
-                            <strong class="stat-value">{{ rejected_passes }}</strong>
+                        <div class="legend">
+                            <span><i class="d-p"></i>Pending <b>{{ pending_passes }}</b></span>
+                            <span><i class="d-a"></i>Approved <b>{{ approved_passes }}</b></span>
+                            <span><i class="d-r"></i>Rejected <b>{{ rejected_passes }}</b></span>
                         </div>
-
-                        <!-- Scanned Out -->
-                        <div class="stat-card sc-teal">
-                            <div class="stat-top">
-                                <span class="stat-label">Scanned Out</span>
-                                <span class="stat-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3"/>
-                                        <path d="M8 12h8M12 8v8"/>
-                                    </svg>
-                                </span>
-                            </div>
-                            <strong class="stat-value">{{ scanned_passes }}</strong>
-                        </div>
-
-                        <!-- Active Students -->
-                        <a href="{% url 'verify_student' %}" class="stat-card sc-purple">
-                            <div class="stat-top">
-                                <span class="stat-label">Active Students</span>
-                                <span class="stat-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="9" cy="8" r="3"/>
-                                        <path d="M3 20v-1a6 6 0 0 1 12 0v1M16 5.5a3 3 0 0 1 0 5.8M18 14a4.5 4.5 0 0 1 3 4.3V20"/>
-                                    </svg>
-                                </span>
-                            </div>
-                            <strong class="stat-value">{{ total_students }}</strong>
-                        </a>
-
-                        <!-- Pending Students -->
-                        <a href="{% url 'verify_student' %}" class="stat-card sc-orange">
-                            <div class="stat-top">
-                                <span class="stat-label">Pending Students</span>
-                                <span class="stat-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="9" cy="8" r="3"/>
-                                        <path d="M3 20v-1a6 6 0 0 1 12 0v1M19 8v6M16 11h6"/>
-                                    </svg>
-                                </span>
-                            </div>
-                            <strong class="stat-value">{{ pending_students }}</strong>
-                        </a>
-
-                        <!-- Mentors -->
-                        <a href="{% url 'mng_mntr' %}" class="stat-card sc-slate">
-                            <div class="stat-top">
-                                <span class="stat-label">Mentors</span>
-                                <span class="stat-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="12" cy="8" r="3.5"/>
-                                        <path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/>
-                                    </svg>
-                                </span>
-                            </div>
-                            <strong class="stat-value">{{ total_mentors }}</strong>
-                        </a>
-
                     </div>
-                </section>
+                </div>
 
-                <footer class="dashboard-footer">
-                    <span>
-                        <span class="footer-brand">GateEase</span>
-                        · Smart Exit Pass Management System
-                    </span>
-                    <span>&copy; 2026 GateEase</span>
-                </footer>
+                <!-- Total Passes -->
+                <div class="tile sc-blue">
+                    <div class="tile-top">
+                        <span class="t-label">Total Passes</span>
+                        <span class="t-icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/></svg></span>
+                    </div>
+                    <strong class="t-value">{{ total_passes }}</strong>
+                </div>
 
-            </main>
+                <!-- Approved Passes -->
+                <div class="tile sc-green">
+                    <div class="tile-top">
+                        <span class="t-label">Approved Passes</span>
+                        <span class="t-icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></span>
+                    </div>
+                    <strong class="t-value">{{ approved_passes }}</strong>
+                </div>
+
+                <!-- Rejected Passes -->
+                <div class="tile sc-red">
+                    <div class="tile-top">
+                        <span class="t-label">Rejected / Revoked</span>
+                        <span class="t-icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg></span>
+                    </div>
+                    <strong class="t-value">{{ rejected_passes }}</strong>
+                </div>
+
+                <!-- Scanned Out -->
+                <div class="tile sc-teal">
+                    <div class="tile-top">
+                        <span class="t-label">Scanned Out</span>
+                        <span class="t-icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3"/><path d="M8 12h8M12 8v8"/></svg></span>
+                    </div>
+                    <strong class="t-value">{{ scanned_passes }}</strong>
+                </div>
+
+                <!-- Students: active + pending -->
+                <a href="{% url 'verify_student' %}" class="tile sc-purple">
+                    <div class="tile-top">
+                        <span class="t-label">Active Students</span>
+                        <span class="t-icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M16 5.5a3 3 0 0 1 0 5.8M18 14a4.5 4.5 0 0 1 3 4.3V20"/></svg></span>
+                    </div>
+                    <strong class="t-value">{{ total_students }}</strong>
+                </a>
+
+                <a href="{% url 'verify_student' %}" class="tile sc-orange">
+                    <div class="tile-top">
+                        <span class="t-label">Pending Students</span>
+                        <span class="t-icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M19 8v6M16 11h6"/></svg></span>
+                    </div>
+                    <strong class="t-value accent">{{ pending_students }}</strong>
+                </a>
+
+                <!-- Mentors -->
+                <a href="{% url 'mng_mntr' %}" class="tile span2 sc-slate">
+                    <div class="tile-top">
+                        <span class="t-label">Mentors</span>
+                        <span class="t-icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg></span>
+                    </div>
+                    <strong class="t-value">{{ total_mentors }}</strong>
+                </a>
+
+                <!-- Quick actions -->
+                <div class="tile quick">
+                    <span class="t-label">Quick actions</span>
+                    <div class="q-list">
+                        <a href="{% url 'verify_student' %}" class="q-link"><span>Verify students</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+                        <a href="{% url 'complaint_mng' %}" class="q-link"><span>Complaints</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+                        <a href="{% url 'manage_announcements' %}" class="q-link"><span>Announcements</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+                    </div>
+                </div>
+
+            </section>
+
+            <footer class="foot">
+                <span><b>GateEase</b> · Smart Exit Pass Management System</span>
+                <span>&copy; 2026 GateEase</span>
+            </footer>
+
         </div>
-    </div>
+    </main>
 
     {% include 'partials/logout_modal.html' %}
 
@@ -1045,6 +594,22 @@
 
         updateStatsTime();
         setInterval(updateStatsTime, 60000);
+
+        // Size the pending / approved / rejected bar from the template numbers
+        (function () {
+            const bar = document.getElementById('dist');
+            if (!bar) return;
+
+            const p = parseInt(bar.dataset.p, 10) || 0;
+            const a = parseInt(bar.dataset.a, 10) || 0;
+            const r = parseInt(bar.dataset.r, 10) || 0;
+
+            if (p + a + r === 0) { bar.style.display = 'none'; return; }
+
+            bar.querySelector('.d-p').style.flexGrow = p;
+            bar.querySelector('.d-a').style.flexGrow = a;
+            bar.querySelector('.d-r').style.flexGrow = r;
+        })();
     </script>
 </body>
 </html>

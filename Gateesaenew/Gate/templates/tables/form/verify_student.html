@@ -291,6 +291,15 @@
         });
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && editModal.classList.contains('open')) closeEditModal();
+            
+    window.addEventListener('pageshow', function (event) {
+        // Refresh only when the browser restores this page
+        // from its back-forward cache.
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+
         });
     </script>
 </body>

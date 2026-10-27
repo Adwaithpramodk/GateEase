@@ -1,245 +1,1018 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GateEase - Student Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GateEase | Student Dashboard</title>
     <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
+
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        /* Add padding to the bottom so content isn't hidden behind the fixed bottom nav */
-        .content-area { padding-bottom: 90px; }
-        
-        /* Hide scrollbar for clean look */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        
-        /* App-Style Profile Card CSS */
-        .blue-profile-card {
-            background-color: #ffffff;
-            border-radius: 28px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            border: 1px solid #e2e8f0;
-            padding: 24px;
+        :root {
+            --primary: #6D4AE5;
+            --primary-dark: #5632C9;
+            --primary-light: #EFEAFE;
+            --primary-tint: #F6F3FF;
+            --bg-page: #EEEDF8;
+            --bg-screen: #F7F6FC;
+            --surface: #FFFFFF;
+            --text-primary: #1B1840;
+            --text-secondary: #6C6A86;
+            --text-muted: #A5A3BA;
+            --accent-orange: #FF9A3D;
+            --success: #2EC27E;
+            --danger: #F25C5C;
+            --border: #E8E6F5;
+            --shadow-card: 0 6px 20px rgba(80,55,170,.10);
+            --shadow-button: 0 8px 16px rgba(109,74,229,.28);
+            --shadow-float: 0 12px 30px rgba(30,20,80,.16);
+            --sidebar-width: 250px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+            color: var(--text-primary);
+            background: var(--bg-page);
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; }
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 3px;
+        }
+
+        /* Sidebar */
+
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            width: var(--sidebar-width);
+            padding: 25px 17px 18px;
+            background: white;
+            border-right: 1px solid var(--border);
+        }
+
+        .brand {
             display: flex;
             align-items: center;
-            gap: 20px;
-            position: relative;
-            overflow: hidden;
-            margin-top: 8px;
-            margin-bottom: 32px;
+            gap: 11px;
+            padding: 0 9px;
+            margin-bottom: 34px;
         }
-        .bpc-circle {
-            position: absolute;
-            background-color: #f8fafc;
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .bpc-circle-1 {
-            top: -96px; right: -48px; width: 288px; height: 288px;
-        }
-        .bpc-circle-2 {
-            top: -32px; right: -16px; width: 160px; height: 160px;
-        }
-        .bpc-circle-3 {
-            bottom: -64px; left: -48px; width: 224px; height: 224px;
-        }
-        .bpc-img-container {
-            position: relative;
-            z-index: 10;
-            flex-shrink: 0;
-        }
-        .bpc-img {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #e2e8f0;
-            padding: 2px;
-        }
-        .bpc-avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background-color: #e0e7ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #4f46e5;
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            color: white;
+            background: var(--primary);
+            font-size: 21px;
             font-weight: 700;
-            font-size: 20px;
-            border: 2px solid #e2e8f0;
-            padding: 2px;
-            background-clip: content-box;
         }
 
-        .student-nav-item {
-            min-width: 0;
-            flex: 1 1 0;
-            gap: 3px;
-            padding: 0 2px;
+        .brand-name {
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: -.8px;
         }
 
-        .student-nav-item span {
-            max-width: 100%;
+        .brand-name span { color: var(--primary); }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .announcement-trigger {
+            position: relative;
+            width: 35px;
+            height: 35px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            color: var(--primary);
+            background: white;
+        }
+
+        .announcement-trigger:hover {
+            color: var(--primary-dark);
+            background: var(--primary-light);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 7px;
+            height: 7px;
+            border: 2px solid white;
+            border-radius: 50%;
+            background: #EF4444;
+        }
+
+        .nav-caption {
+            padding: 0 12px;
+            margin-bottom: 10px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav { display: grid; gap: 5px; }
+
+        .nav-link {
+            min-height: 46px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 13px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            transition: background .2s, color .2s;
+        }
+
+        .nav-link svg { width: 19px; height: 19px; flex-shrink: 0; }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .nav-link.active { font-weight: 700; }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sidebar-student {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 4px 15px;
+        }
+
+        .sidebar-avatar {
+            width: 39px;
+            height: 39px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
             overflow: hidden;
+            border-radius: 12px;
+            color: var(--primary);
+            background: var(--primary-light);
+            font-weight: 700;
+        }
+
+        .sidebar-avatar img, .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .sidebar-student-info { min-width: 0; }
+
+        .sidebar-student-name {
+            overflow: hidden;
+            font-size: 11px;
+            font-weight: 700;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .bpc-content {
+
+        .sidebar-student-class {
+            margin-top: 4px;
+            color: var(--text-muted);
+            font-size: 10px;
+        }
+
+        .logout-link { color: #D84A4A; }
+        .logout-link:hover { color: #B82F2F; background: #FFF0F0; }
+
+        /* Main area */
+
+        .main-area { min-height: 100vh; margin-left: var(--sidebar-width); }
+
+        .mobile-bar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .menu-btn {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--primary);
+            background: white;
+            cursor: pointer;
+        }
+
+        .mobile-brand { font-size: 18px; font-weight: 700; }
+        .mobile-brand span { color: var(--primary); }
+
+        .mobile-announcement {
             position: relative;
-            z-index: 10;
-            flex: 1;
+            width: 35px;
+            height: 35px;
+            display: grid;
+            place-items: center;
+            margin-left: auto;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            color: var(--primary);
+            background: white;
         }
-        .bpc-greeting {
-            color: #64748b;
-            font-size: 14px;
+
+        /* Travo-inspired purple header */
+
+        .hero {
+            position: relative;
+            min-height: 222px;
+            overflow: hidden;
+            color: white;
+            background: linear-gradient(180deg, #7650EA 0%, #6240D8 100%);
+        }
+
+        .hero::before, .hero::after {
+            position: absolute;
+            content: "";
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,.13);
+            border-radius: 50%;
+        }
+
+        .hero::before {
+            width: 350px;
+            height: 350px;
+            right: -85px;
+            top: -225px;
+        }
+
+        .hero::after {
+            width: 250px;
+            height: 250px;
+            right: -35px;
+            top: -175px;
+        }
+
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            padding: 29px 36px 62px;
+            margin: auto;
+        }
+
+        .hero-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .hero-eyebrow {
+            color: rgba(255,255,255,.75);
+            font-size: 10px;
             font-weight: 500;
-            margin-bottom: 4px;
-            letter-spacing: 0.025em;
+            letter-spacing: .08em;
         }
-        .bpc-name {
+
+        .hero-title {
+            margin: 6px 0 0;
+            font-size: clamp(24px, 3vw, 30px);
+            font-weight: 700;
+            letter-spacing: -.02em;
+        }
+
+        .hero-subtitle {
+            margin-top: 8px;
+            color: rgba(255,255,255,.8);
+            font-size: 12px;
+        }
+
+        .new-pass-btn {
+            min-height: 46px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 0 17px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,.75);
+            border-radius: 12px;
+            color: var(--primary-dark);
+            background: white;
+            box-shadow: var(--shadow-button);
+            font-size: 13px;
+            font-weight: 700;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .new-pass-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-float);
+        }
+
+        .new-pass-btn svg { width: 18px; height: 18px; }
+
+        .ticket-meta.current-pass-meta {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        /* White overlapping sheet */
+
+        .content-sheet {
+            position: relative;
+            z-index: 2;
+            min-height: calc(100vh - 190px);
+            padding: 0 36px 42px;
+            margin-top: -28px;
+            border-radius: 28px 28px 0 0;
+            background: var(--bg-screen);
+        }
+
+        .content-inner {
+            max-width: 1128px;
+            padding-top: 27px;
+            margin: auto;
+        }
+
+        /* Medium profile card */
+
+        .profile-card {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 17px;
+            max-width: 600px;
+            min-height: 130px;
+            padding: 20px 23px;
+            margin-bottom: 29px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: white;
+            box-shadow: var(--shadow-card);
+        }
+
+        .profile-card::after {
+            position: absolute;
+            content: "";
+            width: 125px;
+            height: 125px;
+            right: -53px;
+            bottom: -76px;
+            border: 15px solid rgba(109,74,229,.07);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .profile-avatar {
+            position: relative;
+            z-index: 1;
+            width: 76px;
+            height: 76px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 3px solid var(--primary-light);
+            border-radius: 17px;
+            color: white;
+            background: linear-gradient(145deg, #7650EA, #5632C9);
             font-size: 24px;
             font-weight: 700;
-            color: #0f172a;
-            letter-spacing: -0.025em;
-            margin-bottom: 10px;
         }
-        .bpc-badge {
-            display: inline-block;
-            background-color: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            color: #475569;
-            font-size: 14px;
-            padding: 6px 16px;
-            border-radius: 9999px;
-            font-weight: 500;
+
+        .profile-info { position: relative; z-index: 1; min-width: 0; }
+
+        .profile-label {
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+        }
+
+        .profile-name {
+            margin: 5px 0 0;
+            overflow-wrap: anywhere;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -.4px;
+        }
+
+        .profile-class {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 100%;
+            padding: 5px 9px;
+            margin-top: 8px;
+            overflow: hidden;
+            border-radius: 8px;
+            color: var(--primary);
+            background: var(--primary-light);
+            font-size: 10px;
+            font-weight: 600;
+            text-overflow: ellipsis;
+        }
+
+        /* Section headings */
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 13px;
+        }
+
+        .section-title { margin: 0; font-size: 16px; font-weight: 700; }
+        .section-description { margin: 5px 0 0; color: var(--text-secondary); font-size: 11px; }
+        .section-link { color: var(--primary); font-size: 12px; font-weight: 600; }
+        .section-link:hover { text-decoration: underline; }
+
+        /* Pass ticket */
+
+        .ticket {
+            position: relative;
+            margin-bottom: 26px;
+            overflow: hidden;
+            border-radius: 18px;
+            background: white;
+            box-shadow: var(--shadow-card);
+        }
+
+        .ticket-main { padding: 21px 23px; }
+
+        .ticket-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .eyebrow {
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .ticket-title { margin-top: 5px; font-size: 18px; font-weight: 700; }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-chip::before {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            content: "";
+        }
+
+        .status-live { color: #16865A; background: #E8FAF1; }
+        .status-empty { color: #946500; background: #FFF4D8; }
+
+        .route {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 13px;
+            padding: 22px 0 5px;
+        }
+
+        .route-point:last-child { text-align: right; }
+        .route-code { font-size: 22px; font-weight: 700; }
+        .route-label { margin-top: 3px; color: var(--text-muted); font-size: 11px; }
+
+        .route-line { display: flex; align-items: center; gap: 5px; color: var(--primary); }
+        .route-dot { width: 4px; height: 4px; border-radius: 50%; background: #BEB3F3; }
+
+        .ticket-divider { border-top: 1px dashed #D9D7E6; }
+
+        .ticket-meta {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            padding: 16px 23px 19px;
+            background: #FCFBFF;
+        }
+
+        .meta-label {
+            color: var(--text-muted);
+            font-size: 10px;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            margin-top: 5px;
+            overflow-wrap: anywhere;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .empty-message {
+            margin: 14px 0 3px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        /* Recent pass history */
+
+        .recent-card {
+            padding: 20px 22px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: white;
+            box-shadow: var(--shadow-card);
+        }
+
+        .recent-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid #F0EFF7;
+        }
+
+        .recent-row:last-child { padding-bottom: 0; border-bottom: 0; }
+
+        .recent-badge {
+            width: 39px;
+            height: 39px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .recent-info { min-width: 0; }
+        .recent-title { font-size: 12px; font-weight: 600; }
+        .recent-time { margin-top: 4px; color: var(--text-muted); font-size: 10px; }
+        .recent-arrow { margin-left: auto; color: var(--text-muted); font-size: 20px; }
+
+        .history-empty { padding: 23px 10px; text-align: center; }
+        .history-empty-title { font-size: 13px; font-weight: 600; }
+        .history-empty-text { margin-top: 6px; color: var(--text-secondary); font-size: 11px; }
+
+        /* Mobile */
+
+        .sidebar-overlay { display: none; }
+
+        @media (max-width: 900px) {
+            :root { --sidebar-width: 220px; }
+            .hero-inner { padding-right: 24px; padding-left: 24px; }
+            .content-sheet { padding-right: 24px; padding-left: 24px; }
+        }
+
+        @media (max-width: 680px) {
+            .sidebar {
+                width: min(280px, 85vw);
+                transform: translateX(-105%);
+                transition: transform .25s ease;
+                box-shadow: none;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: var(--shadow-float);
+            }
+
+            .sidebar-overlay.visible {
+                position: fixed;
+                inset: 0;
+                z-index: 90;
+                display: block;
+                background: rgba(25,20,55,.6);
+            }
+
+            .main-area { margin-left: 0; }
+            .mobile-bar { display: flex; }
+
+            .hero { min-height: 206px; }
+
+            .hero-inner { padding: 25px 18px 54px; }
+            .hero-title { font-size: 23px; }
+            .hero-subtitle { max-width: 230px; line-height: 1.7; }
+
+            .hero-top {
+                display: block;
+            }
+
+            .new-pass-btn {
+                width: 100%;
+                min-height: 42px;
+                margin-top: 18px;
+                gap: 6px;
+                padding: 0 11px;
+                font-size: 12px;
+            }
+
+            .content-sheet { padding: 0 16px 32px; }
+            .content-inner { padding-top: 22px; }
+
+            .profile-card {
+                min-height: 115px;
+                gap: 13px;
+                padding: 16px;
+                margin-bottom: 25px;
+            }
+
+            .profile-avatar { width: 64px; height: 64px; font-size: 23px; }
+            .profile-name { font-size: 16px; }
+            .profile-class { font-size: 10px; }
+
+            .ticket-main { padding: 18px 16px; }
+            .ticket-title { font-size: 15px; }
+            .ticket-meta { gap: 9px; padding: 14px 16px 16px; }
+            .ticket-meta.current-pass-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .meta-label { font-size: 9px; }
+            .meta-value { font-size: 11px; }
+            .route { gap: 8px; }
+            .route-code { font-size: 19px; }
+            .route-label { font-size: 10px; }
+
+            .recent-card { padding: 18px 16px; }
+        }
+
+        @media (max-width: 380px) {
+            .hero-top { gap: 8px; }
+            .hero-title { font-size: 20px; }
+            .new-pass-btn { padding: 0 9px; font-size: 11px; }
+            .profile-card { gap: 10px; padding: 13px; }
+            .profile-avatar { width: 55px; height: 55px; }
+            .profile-name { font-size: 14px; }
+            .status-chip { padding: 5px 7px; font-size: 10px; }
+            .ticket-meta { gap: 6px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; }
         }
     </style>
-    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Toast Messages Container -->
+<body>
     {% include 'partials/messages.html' %}
 
-    <!-- Top App Bar -->
-    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm">
-        <div class="flex items-center gap-2">
-            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-            <!-- <a href="{% url 'StudentAnnouncements' %}" class="text-indigo-500 hover:text-indigo-700 transition-colors p-2 rounded-full hover:bg-indigo-50" title="Announcements" aria-label="Announcements">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h4l4-4v10l-4-4H3z"></path><path d="M15 9.5a4 4 0 0 1 0 5"></path><path d="M18 7a8 8 0 0 1 0 10"></path></svg>
-            </a> -->
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-            </div>
-            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-900">GateEase</span>
-        </div>
-        <div class="flex items-center gap-3">
-            <span class="text-xs font-semibold tracking-wider text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded-md hidden sm:block">Student</span>
-            <a href="{% url 'logout' %}" onclick="showLogoutModal(event);" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <aside class="sidebar" id="studentSidebar" aria-label="Student navigation">
+        <div class="brand">
+            <a href="{% url 'StudentHome' %}" class="brand-name">Gate<span>Ease</span></a>
+            <a href="{% url 'StudentAnnouncements' %}" class="announcement-trigger" aria-label="View announcements">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+                {% if announcements %}<span class="notification-dot" aria-label="New announcements"></span>{% endif %}
             </a>
         </div>
-    </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 w-full max-w-3xl mx-auto p-4 content-area md:p-6 lg:p-8">
-        
-        <!-- App-Style Blue Profile Card -->
-        <div class="blue-profile-card">
-            <!-- Decorative background circles -->
-            <div class="bpc-circle bpc-circle-1"></div>
-            <div class="bpc-circle bpc-circle-2"></div>
-            <div class="bpc-circle bpc-circle-3"></div>
-            
-            <div class="bpc-img-container">
-                {% if student.Photo %}
-                    <img src="{{ student.Photo.url }}" alt="Profile" class="bpc-img">
-                {% else %}
-                    <div class="bpc-avatar">
+        <div class="nav-caption">Student Portal</div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'StudentHome' %}" class="nav-link active" aria-current="page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>
+                    <path d="M9 21v-7h6v7"/>
+                </svg>
+                Home
+            </a>
+
+            <a href="{% url 'StudentNewPass' %}" class="nav-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 7v10M7 12h10"/>
+                </svg>
+                Apply for New Pass
+            </a>
+
+            <a href="{% url 'StudentMyPasses' %}" class="nav-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6M8 13h8M8 17h6"/>
+                </svg>
+                My Passes
+            </a>
+
+            <a href="{% url 'StudentAnnouncements' %}" class="nav-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+                    <path d="M10 21h4"/>
+                </svg>
+                Announcements
+            </a>
+
+            <a href="{% url 'StudentComplaint' %}" class="nav-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Complaints & Help
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-student">
+                <div class="sidebar-avatar">
+                    {% if student.Photo %}
+                        <img src="{{ student.Photo.url }}" alt="Student photo">
+                    {% else %}
                         {{ student.name|default:"S"|make_list|first|upper }}
-                    </div>
-                {% endif %}
-            </div>
-            
-            <div class="bpc-content">
-                <p class="bpc-greeting">Hey there! 👋</p>
-                <h1 class="bpc-name">{{ student.name|default:"Student" }}</h1>
-                <div class="bpc-badge">
-                    {{ student.classs.class_name|default:"No Batch Assigned" }}
+                    {% endif %}
+                </div>
+                <div class="sidebar-student-info">
+                    <div class="sidebar-student-name">{{ student.name|default:"Student" }}</div>
+                    <div class="sidebar-student-class">{{ student.classs.class_name|default:"No class assigned" }}</div>
                 </div>
             </div>
+
+            <a href="{% url 'logout' %}" onclick="showLogoutModal(event);" class="nav-link logout-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Logout
+            </a>
+        </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="main-area">
+        <div class="mobile-bar">
+            <button class="menu-btn" type="button" id="menuToggle"
+                    aria-label="Open navigation" aria-expanded="false"
+                    aria-controls="studentSidebar">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <div class="mobile-brand">Gate<span>Ease</span></div>
+            <a href="{% url 'StudentAnnouncements' %}" class="mobile-announcement" aria-label="View announcements">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+                {% if announcements %}<span class="notification-dot" aria-label="New announcements"></span>{% endif %}
+            </a>
         </div>
 
-        <!-- Quick Actions Grid -->
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <a href="{% url 'StudentNewPass' %}" class="bg-indigo-600 text-white p-5 rounded-2xl shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all flex flex-col justify-between group h-32 active:scale-95">
-                <div class="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-lg">Apply Pass</h3>
-                </div>
-            </a>
-            
-            <a href="{% url 'StudentMyPasses' %}" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group h-32 active:scale-95">
-                <div class="bg-slate-100 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-slate-800">My Passes</h3>
-                </div>
-            </a>
-
-                <!-- <a href="{% url 'StudentAnnouncements' %}" class="col-span-2 min-w-0 bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-3 sm:gap-4 group active:scale-[0.99]">
-                    <div class="bg-amber-50 text-amber-600 w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100 transition-colors">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h4l4-4v10l-4-4H3z" /><path d="M15 9.5a4 4 0 0 1 0 5" /><path d="M18 7a8 8 0 0 1 0 10" /></svg>
+        <!-- Purple header -->
+        <header class="hero">
+            <div class="hero-inner">
+                <div class="hero-top">
+                    <div>
+                        <div class="hero-eyebrow">STUDENT PORTAL</div>
+                        <h1 class="hero-title">Your campus journey</h1>
+                        <div class="hero-subtitle">Manage your exit passes in one place.</div>
                     </div>
-                    <div class="min-w-0">
-                        <h3 class="font-semibold text-slate-800 truncate">Announcements</h3>
-                        <p class="text-xs text-slate-500 mt-1">View the latest updates from administration</p>
+
+                    <a href="{% url 'StudentNewPass' %}" class="new-pass-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        New Pass
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Overlapping white sheet -->
+        <main class="content-sheet">
+            <div class="content-inner">
+
+                <!-- Medium profile card -->
+                <section class="profile-card" aria-label="Student profile">
+                    <div class="profile-avatar">
+                        {% if student.Photo %}
+                            <img src="{{ student.Photo.url }}" alt="Student profile photo">
+                        {% else %}
+                            {{ student.name|default:"S"|make_list|first|upper }}
+                        {% endif %}
                     </div>
-                    <svg class="ml-auto flex-shrink-0 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6" /></svg>
-                </a> -->
-        </div>
 
-        <!-- Current Pass Timeline Component -->
-        {% include 'components/pass_timeline.html' %}
-    </main>
+                    <div class="profile-info">
+                        <div class="profile-label">STUDENT PROFILE</div>
+                        <h2 class="profile-name">{{ student.name|default:"Student" }}</h2>
+                        <div class="profile-class">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m2 10 10-5 10 5-10 5z"/>
+                                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                            </svg>
+                            {{ student.classs.class_name|default:"No class assigned" }}
+                        </div>
+                    </div>
+                </section>
 
-    <!-- Bottom Navigation Bar (Mobile / Tablet) -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-        <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
-            <a href="{% url 'StudentHome' %}" class="student-nav-item flex flex-col items-center justify-center h-full text-indigo-600">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                <span class="text-[10px] font-semibold mt-1">Home</span>
-            </a>
-            
-            <a href="{% url 'StudentNewPass' %}" class="student-nav-item flex flex-col items-center justify-center h-full text-slate-400 hover:text-indigo-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                <span class="text-[10px] font-medium mt-1">Apply</span>
-            </a>
-            
-            <a href="{% url 'StudentMyPasses' %}" class="student-nav-item flex flex-col items-center justify-center h-full text-slate-400 hover:text-indigo-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                <span class="text-[10px] font-medium mt-1">Passes</span>
-            </a>
-            
-            <a href="{% url 'StudentAnnouncements' %}" class="student-nav-item flex flex-col items-center justify-center h-full text-slate-400 hover:text-indigo-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h4l4-4v10l-4-4H3z"></path><path d="M15 9.5a4 4 0 0 1 0 5"></path><path d="M18 7a8 8 0 0 1 0 10"></path></svg>
-                <span class="text-[10px] font-medium mt-1">Updates</span>
-            </a>
+                <!-- Pass status -->
+                <section aria-labelledby="passHeading">
+                    <div class="section-heading">
+                        <div>
+                            <h2 class="section-title" id="passHeading">Pass Status</h2>
+                            <p class="section-description">Check your latest exit pass.</p>
+                        </div>
+                    </div>
 
-            <a href="{% url 'StudentComplaint' %}" class="student-nav-item flex flex-col items-center justify-center h-full text-slate-400 hover:text-indigo-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                <span class="text-[10px] font-medium mt-1">Complaints</span>
-            </a>
-        </div>
-    </nav>
-    
-{% include 'partials/logout_modal.html' %}
+                    {% if current_pass %}
+                    <article class="ticket">
+                        <div class="ticket-main">
+                            <div class="ticket-top">
+                                <div>
+                                    <div class="eyebrow">LATEST EXIT PASS</div>
+                                    <div class="ticket-title">Campus Exit Pass</div>
+                                </div>
+
+                                {% if current_pass.mentor_status == 'approved' and current_pass.security_status == 'approved' %}
+                                    <span class="status-chip status-live">Confirmed</span>
+                                {% else %}
+                                    <span class="status-chip status-empty">In review</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="route">
+                                <div class="route-point">
+                                    <div class="route-code">MM</div>
+                                    <div class="route-label">Mary Matha</div>
+                                </div>
+
+                                <div class="route-line" aria-hidden="true">
+                                    <span class="route-dot"></span>
+                                    <span class="route-dot"></span>
+                                    <span class="route-dot"></span>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                                    </svg>
+                                </div>
+
+                                <div class="route-point">
+                                    <div class="route-code">OUT</div>
+                                    <div class="route-label">Campus exit</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ticket-divider"></div>
+
+                        <div class="ticket-meta current-pass-meta">
+                            <div>
+                                <div class="meta-label">Expected exit</div>
+                                <div class="meta-value">{{ current_pass.time|default:"Not set" }}</div>
+                            </div>
+                            <div>
+                                <div class="meta-label">Reason</div>
+                                <div class="meta-value">{{ current_pass.reason|default:"Pass request" }}</div>
+                            </div>
+                        </div>
+                    </article>
+                    {% else %}
+                    <article class="ticket">
+                        <div class="ticket-main">
+                            <div class="ticket-top">
+                                <div>
+                                    <div class="eyebrow">CURRENT STATUS</div>
+                                    <div class="ticket-title">No active pass</div>
+                                </div>
+                                <span class="status-chip status-empty">No active pass</span>
+                            </div>
+                            <p class="empty-message">
+                                You do not currently have an active exit pass.
+                                Select New Pass to submit an exit request.
+                            </p>
+                        </div>
+                        <div class="ticket-divider"></div>
+                        <div class="ticket-meta">
+                            <div>
+                                <div class="meta-label">Status</div>
+                                <div class="meta-value">No active request</div>
+                            </div>
+                            <div>
+                                <div class="meta-label">Next step</div>
+                                <div class="meta-value">Apply for a pass</div>
+                            </div>
+                            <div>
+                                <div class="meta-label">Portal</div>
+                                <div class="meta-value">GateEase</div>
+                            </div>
+                        </div>
+                    </article>
+                    {% endif %}
+                </section>
+
+                <!-- Recent history -->
+                <section class="recent-card" aria-labelledby="historyHeading">
+                    <div class="section-heading">
+                        <div>
+                            <h2 class="section-title" id="historyHeading">Recent Pass History</h2>
+                            <p class="section-description">Your latest pass requests.</p>
+                        </div>
+                        <a href="{% url 'StudentMyPasses' %}" class="section-link">View all</a>
+                    </div>
+
+                    {% if recent_passes %}
+                    <div>
+                        {% for pass in recent_passes|slice:":3" %}
+                        <a href="{% url 'StudentMyPasses' %}" class="recent-row">
+                            <span class="recent-badge">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <path d="M14 2v6h6M8 13h8"/>
+                                </svg>
+                            </span>
+                            <span class="recent-info">
+                                <span class="recent-title">Exit pass request</span>
+                                <span class="recent-time" style="display:block">
+                                    {{ pass.created_at|date:"M d, Y · h:i A" }}
+                                </span>
+                            </span>
+                            <span class="recent-arrow" aria-hidden="true">&rsaquo;</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="history-empty">
+                        <div class="history-empty-title">No pass history yet</div>
+                        <p class="history-empty-text">Your recent pass requests will appear here.</p>
+                    </div>
+                    {% endif %}
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    {% include 'partials/logout_modal.html' %}
+
+    <script>
+        (function () {
+            const sidebar = document.getElementById('studentSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const toggle = document.getElementById('menuToggle');
+
+            function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('visible');
+                toggle.setAttribute('aria-expanded', 'true');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('visible');
+                toggle.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            }
+
+            toggle.addEventListener('click', function () {
+                sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+            });
+
+            overlay.addEventListener('click', closeSidebar);
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') closeSidebar();
+            });
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 680) closeSidebar();
+            });
+        })();
+    </script>
 </body>
 </html>

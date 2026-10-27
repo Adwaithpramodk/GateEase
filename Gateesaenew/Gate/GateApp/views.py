@@ -1155,9 +1155,9 @@ class StudentNewPass(StudentRequiredMixin, View):
             created_at__gte=one_hour_ago
         ).count()
 
-        if recent_passes_count >= 2:
-            messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
-            return redirect('StudentNewPass')
+        # if recent_passes_count >= 2:
+        #     messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
+        #     return redirect('StudentNewPass')
 
         exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
         exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
@@ -1166,13 +1166,13 @@ class StudentNewPass(StudentRequiredMixin, View):
             messages.error(request, "Exit time must be in the future")
             return redirect('StudentNewPass')
 
-        window_open  = datetime.time(10, 0)
-        window_close = datetime.time(15, 40)
-        current_time = now_local.time()
-
-        if not (window_open <= current_time <= window_close):
-            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-            return redirect('StudentNewPass')
+        # window_open  = datetime.time(10, 0)
+        # window_close = datetime.time(15, 40)
+        # current_time = now_local.time()
+        #
+        # if not (window_open <= current_time <= window_close):
+        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+        #     return redirect('StudentNewPass')
 
         formatted_time = time_obj.strftime('%I:%M %p')
 
@@ -1297,6 +1297,10 @@ class StudentMyPasses(StudentRequiredMixin, View):
 class StudentHome(StudentRequiredMixin, View):
     def get(self, request):
         user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
+        current_time = timezone.now()
+        announcements = announcementtable.objects.filter(is_active=True).filter(
+            models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=current_time)
+        )
         try:
             student = studenttable.objects.get(LOGINID_id=user_id)
             # Fetch recent passes
@@ -1307,7 +1311,7 @@ class StudentHome(StudentRequiredMixin, View):
             student = None
             recent_passes = []
             current_pass = None
-        return render(request, 'tables/form/student_home.html', {'student': student, 'recent_passes': recent_passes, 'current_pass': current_pass})
+        return render(request, 'tables/form/student_home.html', {'student': student, 'recent_passes': recent_passes, 'current_pass': current_pass, 'announcements': announcements})
 
 from django.http import JsonResponse
 from GateApp.encryption import encrypt_pass_id, decrypt_pass_id

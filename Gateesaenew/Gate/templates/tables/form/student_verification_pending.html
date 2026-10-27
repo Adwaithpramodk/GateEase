@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GateEase - Profile Verification</title>
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <link rel="manifest" href="{% url 'manifest.json' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --violet: #7622d7;
+            --violet-dark: #631bb9;
+            --lavender: #f9f5ff;
+            --lilac: #f0e6fa;
+            --periwinkle: #e6d5fe;
+            --ink: #121214;
+            --graphite: #27272a;
+            --slate: #71717a;
+            --mist: #a9a9b2;
+            --fog: #e4e4e7;
+            --display: 'Plus Jakarta Sans', sans-serif;
+            --body: 'DM Sans', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--ink);
+            background: #fff;
+            background-image: radial-gradient(ellipse 55% 45% at 90% 10%, rgba(240,230,250,.75), transparent 65%), radial-gradient(ellipse 45% 40% at 5% 90%, rgba(249,245,255,.9), transparent 60%);
+            font-family: var(--body);
+        }
+        .site-header, .page, .site-footer { width: min(100% - 64px, 1100px); margin: 0 auto; }
+        .site-header { padding: 26px 0 20px; display: flex; align-items: center; justify-content: space-between; }
+        .brand { color: var(--ink); text-decoration: none; font: 900 30px/1 var(--display); letter-spacing: -.8px; }
+        .brand span { color: var(--violet); }
+        .college-tag { padding: 6px 14px; border: 1px solid var(--periwinkle); border-radius: 999px; background: var(--lavender); color: var(--violet); font-size: 13px; font-weight: 600; }
+        .page { flex: 1; display: grid; grid-template-columns: 1fr 430px; align-items: center; gap: 76px; padding: 38px 0 64px; }
+        .intro { display: flex; flex-direction: column; gap: 18px; }
+        .eyebrow { width: fit-content; padding: 7px 13px; border: 1px solid var(--periwinkle); border-radius: 999px; background: var(--lavender); color: var(--violet); text-transform: uppercase; letter-spacing: .05em; font-size: 11px; font-weight: 700; }
+        h1, h2 { font-family: var(--display); }
+        h1 { max-width: 560px; font-size: clamp(38px, 4.7vw, 60px); line-height: 1.07; letter-spacing: -1.6px; }
+        h1 span { color: var(--violet); }
+        .intro-copy { max-width: 470px; color: var(--graphite); font-size: 17px; line-height: 1.6; }
+        .timeline { display: grid; gap: 10px; max-width: 430px; margin-top: 5px; }
+        .timeline-item { display: flex; align-items: center; gap: 12px; padding: 13px 15px; border: 1px solid var(--fog); border-radius: 10px; background: #fff; color: var(--slate); font-size: 13px; }
+        .timeline-item.current { border-color: var(--periwinkle); background: var(--lavender); color: var(--graphite); font-weight: 600; }
+        .timeline-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; background: var(--lilac); color: var(--violet); }
+        .timeline-icon svg { width: 15px; height: 15px; }
+        .status-card { padding: 36px; border: 1px solid var(--fog); border-radius: 16px; background: #fff; box-shadow: 0 12px 32px -10px rgba(118,34,215,.12); }
+        .status-icon { width: 58px; height: 58px; display: grid; place-items: center; margin-bottom: 22px; border-radius: 18px; background: var(--lilac); color: var(--violet); }
+        .status-icon svg { width: 29px; height: 29px; }
+        h2 { margin-bottom: 8px; font-size: 27px; letter-spacing: -.7px; }
+        .status-copy { color: var(--slate); font-size: 14px; line-height: 1.6; }
+        .contact-box { display: flex; align-items: flex-start; gap: 12px; margin-top: 24px; padding: 16px; border: 1px solid var(--periwinkle); border-radius: 11px; background: var(--lavender); }
+        .contact-box svg { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 2px; color: var(--violet); }
+        .contact-label { margin-bottom: 3px; color: var(--slate); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+        .contact-email { color: var(--violet); font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+        .contact-email:hover { color: var(--violet-dark); }
+        .actions { display: grid; gap: 10px; margin-top: 24px; }
+        .primary-button, .secondary-button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; border-radius: 26px; font: 700 14px var(--body); text-decoration: none; }
+        .primary-button { background: var(--violet); color: #fff; }
+        .primary-button:hover { background: var(--violet-dark); }
+        .secondary-button { border: 1px solid var(--periwinkle); color: var(--violet); background: #fff; }
+        .secondary-button:hover { background: var(--lavender); }
+        .site-footer { padding: 22px 0; border-top: 1px solid var(--fog); color: var(--slate); font-size: 12px; }
+        @media (max-width: 850px) {
+            .site-header, .page, .site-footer { width: min(100% - 32px, 620px); }
+            .page { grid-template-columns: 1fr; gap: 34px; padding: 28px 0 48px; }
+            .intro { align-items: center; text-align: center; }
+            h1 { font-size: 42px; }
+            .intro-copy { font-size: 16px; }
+            .timeline { width: 100%; text-align: left; }
+        }
+        @media (max-width: 520px) {
+            .site-header { padding-top: 20px; }
+            .college-tag { display: none; }
+            .status-card { padding: 27px 22px; }
+            h1 { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/messages.html' %}
+    <header class="site-header">
+        <a href="{% url 'landing' %}" class="brand">Gate<span>Ease</span></a>
+        <span class="college-tag">Mary Matha Arts and Science College</span>
+    </header>
+    <main class="page">
+        <section class="intro" aria-labelledby="verification-heading">
+            <p class="eyebrow">Profile review</p>
+            <h1>Your profile is <span>not verified yet.</span></h1>
+            <p class="intro-copy">
+                Your registration was received successfully. An administrator or mentor must review and approve your profile before you can access the student portal.
+            </p>
+            <div class="timeline" aria-label="Registration status">
+                <div class="timeline-item"><span class="timeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5 9.5 17 19 7"></path></svg></span><span>Registration submitted</span></div>
+                <div class="timeline-item current"><span class="timeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><span>Waiting for admin or mentor approval</span></div>
+                <div class="timeline-item"><span class="timeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M12 4l8 8-8 8"></path></svg></span><span>Student portal access</span></div>
+            </div>
+        </section>
+        <section class="status-card" aria-labelledby="verification-heading">
+            <div class="status-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-4z"></path><path d="M12 8v4"></path><circle cx="12" cy="16" r=".7" fill="currentColor"></circle></svg></div>
+            <h2 id="verification-heading">{% if status == 'Rejected' %}Profile needs attention{% else %}Verification in progress{% endif %}</h2>
+            <p class="status-copy">
+                {% if status == 'Rejected' %}
+                    Your profile was not approved. Please contact the administrator for more information and next steps.
+                {% else %}
+                    Please try signing in again after your profile has been reviewed. If you have been waiting longer than expected, contact the administrator below.
+                {% endif %}
+            </p>
+            <div class="contact-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+                <div><p class="contact-label">Contact administrator</p><a class="contact-email" href="mailto:{{ contact_email }}">{{ contact_email }}</a></div>
+            </div>
+            <div class="actions">
+                <a href="{% url 'LoginPage' %}" class="primary-button">Return to sign in</a>
+                <a href="mailto:{{ contact_email }}" class="secondary-button">Email administrator</a>
+            </div>
+        </section>
+    </main>
+    <footer class="site-footer">© 2026 Marymatha College Access System</footer>
+</body>
+</html>

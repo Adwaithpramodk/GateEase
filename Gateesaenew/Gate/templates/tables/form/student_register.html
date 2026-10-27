@@ -1,264 +1,82 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GateEase - Student Registration</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <link rel="manifest" href="{% url 'manifest.json' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            color: #0f172a;
-            padding: 20px;
-        }
-
-        .register-card {
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 480px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            padding: 40px;
-            border: 1px solid #e2e8f0;
-            margin: 20px 0;
-        }
-
-        .register-header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-
-        .register-header h1 {
-            font-size: 26px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 8px;
-        }
-
-        .register-header p {
-            color: #64748b;
-            font-size: 15px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .form-col {
-            flex: 1;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 8px;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 15px;
-            color: #1e293b;
-            transition: all 0.2s ease;
-            background-color: #f8fafc;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: #4f46e5;
-            background-color: #ffffff;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-        }
-
-        select.input-field {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200.svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-            padding-right: 40px;
-        }
-
-        input[type="file"]::file-selector-button {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: none;
-            background-color: #eef2ff;
-            color: #4f46e5;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            margin-right: 12px;
-        }
-
-        input[type="file"]::file-selector-button:hover {
-            background-color: #e0e7ff;
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 14px 16px;
-            background-color: #4f46e5;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            margin-top: 8px;
-        }
-
-        .btn-primary:hover {
-            background-color: #4338ca;
-        }
-
-        .login-footer {
-            text-align: center;
-            margin-top: 24px;
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        .login-footer a {
-            font-weight: 600;
-            color: #4f46e5;
-            text-decoration: none;
-        }
-
-        .login-footer a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 480px) {
-            .form-row {
-                flex-direction: column;
-                gap: 16px;
-            }
-        }
+        :root { --violet:#7622d7; --violet-dark:#631bb9; --lavender:#f9f5ff; --lilac:#f0e6fa; --periwinkle:#e6d5fe; --ink:#121214; --graphite:#27272a; --slate:#71717a; --mist:#a9a9b2; --fog:#e4e4e7; --display:'Plus Jakarta Sans',sans-serif; --body:'DM Sans',sans-serif; }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { min-height:100vh; color:var(--ink); background:#fff; background-image:radial-gradient(ellipse 55% 45% at 90% 10%,rgba(240,230,250,.75),transparent 65%),radial-gradient(ellipse 45% 40% at 5% 90%,rgba(249,245,255,.9),transparent 60%); font-family:var(--body); }
+        .site-header,.page,.site-footer { width:min(100% - 64px,1160px); margin:0 auto; } .site-header { padding:26px 0 20px; display:flex; align-items:center; justify-content:space-between; } .brand { color:var(--ink); text-decoration:none; font:900 30px/1 var(--display); letter-spacing:-.8px; } .brand span { color:var(--violet); } .college-tag { padding:6px 14px; border:1px solid var(--periwinkle); border-radius:999px; background:var(--lavender); color:var(--violet); font-size:13px; font-weight:600; }
+        .page { display:grid; grid-template-columns:.75fr 1.25fr; align-items:center; gap:70px; padding:30px 0 58px; } .intro { display:flex; flex-direction:column; gap:18px; } .eyebrow { width:fit-content; padding:7px 13px; border:1px solid var(--periwinkle); border-radius:999px; background:var(--lavender); color:var(--violet); text-transform:uppercase; letter-spacing:.05em; font-size:11px; font-weight:700; } h1,h2 { font-family:var(--display); } h1 { font-size:clamp(38px,4.4vw,58px); line-height:1.07; letter-spacing:-1.5px; } h1 span { color:var(--violet); } .intro-copy { max-width:410px; color:var(--graphite); font-size:17px; line-height:1.6; }
+        .benefits { display:grid; gap:10px; margin-top:7px; } .benefit { display:flex; gap:12px; align-items:center; color:var(--slate); font-size:13px; } .benefit-icon { width:28px; height:28px; display:grid; place-items:center; border-radius:8px; background:var(--lilac); color:var(--violet); } .benefit-icon svg { width:15px; height:15px; }
+        .auth-card { padding:34px 36px; border:1px solid var(--fog); border-radius:16px; background:#fff; box-shadow:0 12px 32px -10px rgba(118,34,215,.12); } .card-top { margin-bottom:24px; } h2 { margin-bottom:7px; font-size:27px; letter-spacing:-.7px; } .card-top p { color:var(--slate); font-size:14px; }
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; } .form-group { margin-bottom:17px; } .full { grid-column:1 / -1; } label { display:block; margin-bottom:8px; color:var(--graphite); font-size:13px; font-weight:700; } .input-wrap { position:relative; display:flex; align-items:center; } .input-icon { position:absolute; left:14px; display:flex; color:var(--slate); pointer-events:none; } .input-icon svg { width:16px; height:16px; }
+        input,select { width:100%; min-height:46px; padding:0 14px; border:1px solid var(--fog); border-radius:9px; outline:none; color:var(--graphite); background:#fff; font:14px var(--body); transition:border-color .2s,box-shadow .2s; } .input-wrap input { padding-left:42px; } input:focus,select:focus { border-color:var(--violet); box-shadow:0 0 0 3px rgba(118,34,215,.15); } input::placeholder { color:var(--mist); } select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:40px; }
+        .password-hint { margin-top:6px; color:var(--slate); font-size:11px; } .submit { width:100%; min-height:48px; margin-top:4px; border:0; border-radius:28px; background:var(--violet); color:#fff; font:700 15px var(--body); cursor:pointer; transition:background .15s,transform .15s; } .submit:hover { background:var(--violet-dark); transform:translateY(-1px); } .submit:disabled { opacity:.7; cursor:wait; transform:none; }
+        .login-footer { margin-top:20px; color:var(--slate); text-align:center; font-size:13px; } .login-footer a { color:var(--violet); font-weight:700; text-decoration:none; } .login-footer a:hover { text-decoration:underline; } .site-footer { padding:22px 0; border-top:1px solid var(--fog); color:var(--slate); font-size:12px; }
+        @media (max-width:900px) { .site-header,.page,.site-footer { width:min(100% - 32px,650px); } .page { grid-template-columns:1fr; gap:32px; padding-top:24px; } .intro { align-items:center; text-align:center; } .intro-copy { max-width:540px; } .benefits { text-align:left; } }
+        @media (max-width:560px) { .site-header { padding-top:20px; } .college-tag { display:none; } .auth-card { padding:27px 22px; } .form-grid { grid-template-columns:1fr; gap:0; } .full { grid-column:auto; } h1 { font-size:36px; } }
     </style>
-    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
 </head>
-
 <body>
-
     {% include 'partials/messages.html' %}
-
-    <div class="register-card">
-        <div class="register-header">
-            <h1>Create Account</h1>
-            <p>Register as a student on GateEase</p>
-        </div>
-
-        <form action="{% url 'StudentRegister' %}" method="POST">
-            {% csrf_token %}
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="name" class="form-label">Full Name</label>
-                    <input type="text" id="name" name="name" class="input-field" placeholder="John Doe" required>
+    <header class="site-header"><a href="{% url 'landing' %}" class="brand">Gate<span>Ease</span></a><span class="college-tag">Mary Matha Arts and Science College</span></header>
+    <main class="page">
+        <section class="intro" aria-labelledby="register-heading">
+            <p class="eyebrow">Student onboarding</p>
+            <h1>Start your journey with <span>GateEase.</span></h1>
+            <p class="intro-copy">Create your student account to request passes, follow approvals, and move through campus with less paperwork.</p>
+            <div class="benefits">
+                <div class="benefit"><span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-4z"></path><path d="m8 12 2.5 2.5L16 9"></path></svg></span><span>Your details stay protected</span></div>
+                <div class="benefit"><span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path></svg></span><span>One account for campus access</span></div>
+                <div class="benefit"><span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><span>Approval may be required before sign in</span></div>
+            </div>
+        </section>
+        <section class="auth-card" aria-labelledby="register-heading">
+            <div class="card-top"><h2 id="register-heading">Create student account</h2><p>Fill in your details to submit a registration request.</p></div>
+            <form action="{% url 'StudentRegister' %}" method="POST">
+                {% csrf_token %}
+                <div class="form-grid">
+                    <div class="form-group"><label for="name">Full name</label><div class="input-wrap"><span class="input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c.8-4 3.5-6 8-6s7.2 2 8 6"></path></svg></span><input type="text" id="name" name="name" placeholder="Your full name" autocomplete="name" required></div></div>
+                    <div class="form-group"><label for="admn_no">Admission number</label><div class="input-wrap"><span class="input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path></svg></span><input type="text" id="admn_no" name="admn_no" placeholder="4-digit number" pattern="[0-9]{4}" minlength="4" maxlength="4" inputmode="numeric" title="Must be exactly 4 digits (e.g. 5467)" required></div></div>
+                    <div class="form-group full"><label for="email">Email address</label><div class="input-wrap"><span class="input-icon" aria-hidden="true">@</span><input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required></div></div>
+                    <div class="form-group"><label for="phone">Phone number</label><div class="input-wrap"><span class="input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="2"></rect><path d="M10 6h4M10 18h4"></path></svg></span><input type="tel" id="phone" name="phone" placeholder="10-digit number" pattern="[0-9]{10}" inputmode="numeric" title="Enter a valid 10-digit phone number" autocomplete="tel" required></div></div>
+                    <div class="form-group"><label for="classs">Batch / class</label><select id="classs" name="classs" required><option value="" disabled selected>Select your class</option>{% for i in obj %}<option value="{{ i.id }}">{{ i.class_name }}</option>{% endfor %}</select></div>
+                    <div class="form-group"><label for="password">Password</label><div class="input-wrap"><span class="input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg></span><input type="password" id="password" name="password" placeholder="Create a password" minlength="8" autocomplete="new-password" required></div><p class="password-hint">Use at least 8 characters.</p></div>
+                    <div class="form-group"><label for="cpassword">Confirm password</label><div class="input-wrap"><span class="input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5 9.5 17 19 7"></path></svg></span><input type="password" id="cpassword" name="cpassword" placeholder="Repeat your password" minlength="8" autocomplete="new-password" required></div></div>
                 </div>
-                <div class="form-col">
-                    <label for="admn_no" class="form-label">Admission No.</label>
-                    <input type="text" id="admn_no" name="admn_no" class="input-field"
-                           placeholder="e.g. 5467"
-                           pattern="[0-9]{4}" minlength="4" maxlength="4"
-                           title="Must be exactly 4 digits (e.g. 5467)"
-                           inputmode="numeric" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="email" class="form-label">Email Address</label>
-                <input type="email" id="email" name="email" class="input-field" placeholder="john@example.com" required>
-            </div>
-
-            <div class="form-group">
-                <label for="phone" class="form-label">Phone Number</label>
-                <input type="tel" id="phone" name="phone" class="input-field" placeholder="9876543210"
-                    pattern="[0-9]{10}" title="Enter a valid 10-digit phone number" required>
-            </div>
-
-            <div class="form-group">
-                <label for="classs" class="form-label">Batch / Class</label>
-                <select id="classs" name="classs" class="input-field" required>
-                    <option value="" disabled selected>Select your class</option>
-                    {% for i in obj %}
-                    <option value="{{ i.id }}">{{ i.class_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" class="input-field" placeholder="••••••••"
-                        required minlength="6">
-                </div>
-                <div class="form-col">
-                    <label for="cpassword" class="form-label">Confirm</label>
-                    <input type="password" id="cpassword" name="cpassword" class="input-field" placeholder="••••••••"
-                        required minlength="6">
-                </div>
-            </div>
-
-            <button type="submit" class="btn-primary">Register Account</button>
-
-            <div class="login-footer">
-                Already have an account? <a href="{% url 'LoginPage' %}">Sign in</a>
-            </div>
-        </form>
-    </div>
-
+                <button type="submit" class="submit">Submit registration</button>
+                <p class="login-footer">Already have an account? <a href="{% url 'LoginPage' %}">Sign in</a></p>
+            </form>
+        </section>
+    </main>
+    <footer class="site-footer">© 2026 Marymatha College Access System</footer>
     <script>
         const form = document.querySelector('form');
-        const pwd = document.getElementById('password');
-        const cpwd = document.getElementById('cpassword');
-        const submitBtn = document.querySelector('button[type="submit"]');
-
-        form.addEventListener('submit', function (e) {
-            if (pwd.value !== cpwd.value) {
-                e.preventDefault();
-                alert('Passwords do not match. Please try again.');
-                cpwd.focus();
+        const password = document.getElementById('password');
+        const confirmation = document.getElementById('cpassword');
+        const submit = document.querySelector('.submit');
+        form.addEventListener('submit', function (event) {
+            if (password.value !== confirmation.value) {
+                event.preventDefault();
+                confirmation.setCustomValidity('Passwords do not match.');
+                confirmation.reportValidity();
+                confirmation.focus();
                 return;
             }
-
-            // Prevent double submission
-            if (submitBtn.disabled) {
-                e.preventDefault();
-                return;
-            }
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = 'Registering...';
+            confirmation.setCustomValidity('');
+            submit.disabled = true;
+            submit.textContent = 'Submitting registration...';
         });
+        confirmation.addEventListener('input', function () { confirmation.setCustomValidity(''); });
     </script>
 </body>
-
 </html>

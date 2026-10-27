@@ -218,6 +218,13 @@ class ResetPasswordWeb(View):
         messages.success(request, "Password reset successfully. Please login.")
         return redirect('LoginPage')
 
+class StudentVerificationPending(View):
+    def get(self, request):
+        return render(request, 'tables/form/student_verification_pending.html', {
+            'contact_email': settings.EMAIL_HOST_USER,
+            'status': request.GET.get('status', 'pending'),
+        })
+
 class LoginPage(View):
     def get(self,request):
         usertype = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
@@ -256,6 +263,9 @@ class LoginPage(View):
             else:
                 messages.error(request, "Login Unsuccessful")
                 return render(request, 'tables/form/login.html')
+
+            if obj.usertype in ('pending', 'Rejected'):
+                return redirect(f"/StudentVerificationPending?status={obj.usertype}")
 
             # If password is correct, generate short-lived access and persistent refresh tokens.
             refresh = create_login_tokens(obj)

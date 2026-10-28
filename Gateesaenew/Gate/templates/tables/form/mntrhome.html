@@ -1,147 +1,1823 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GateEase - Mentor Dashboard</title>
-    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .content-area { padding-bottom: 90px; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    </style>
-    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
-</head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#5E3FEF">
 
-    <!-- Toast Messages Container -->
+    <title>GateEase — Mentor Dashboard</title>
+
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
+
+    <style>
+        :root {
+            --primary: #5E3FEF;
+            --primary-dark: #4A2FD4;
+            --primary-light: #ECE8FF;
+            --primary-tint: #F5F2FF;
+            --primary-glow: rgba(94, 63, 239, .25);
+
+            --bg-app: #FFFFFF;
+            --bg-soft: #F7F6FC;
+            --surface: #FFFFFF;
+
+            --ink: #1E1B4B;
+            --text-secondary: #5F5C7A;
+            --text-muted: #9C9AB3;
+
+            --cat-blue: #4C7DF0;
+            --cat-orange: #F5A623;
+            --cat-green: #34D399;
+            --cat-red: #F87171;
+
+            --success: #22C55E;
+            --danger: #EF4444;
+            --border: #E6E3F4;
+
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --radius-pill: 999px;
+
+            --shadow-card: 0 4px 16px rgba(60, 40, 160, .08);
+            --shadow-button: 0 6px 14px rgba(94, 63, 239, .28);
+            --shadow-modal: 0 20px 50px rgba(30, 24, 80, .25);
+
+            --font: 'Nunito', 'Nunito Sans', 'Inter', system-ui, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            min-height: 100%;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            background: var(--bg-soft);
+            font-family: var(--font);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body,
+        button,
+        a {
+            font-family: var(--font);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 3px;
+        }
+
+        ::selection {
+            color: white;
+            background: var(--primary);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #D8D2F5;
+            border-radius: 999px;
+        }
+
+        /* App shell */
+
+        .app-shell {
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            z-index: 50;
+            inset: 0 auto 0 0;
+            display: flex;
+            flex-direction: column;
+            width: 264px;
+            padding: 26px 18px 20px;
+            border-right: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 0 10px;
+            margin-bottom: 37px;
+        }
+
+        .brand-name {
+            margin: 0;
+            color: var(--ink);
+            font-size: 23px;
+            font-weight: 800;
+            letter-spacing: -.8px;
+            line-height: 1.1;
+        }
+
+        .brand-caption {
+            margin: 4px 0 0;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+
+        .nav-section-label {
+            padding: 0 12px;
+            margin: 0 0 11px;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            min-height: 47px;
+            padding: 11px 13px;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 700;
+            transition: color .2s, background .2s, transform .2s;
+        }
+
+        .sidebar-link svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            stroke-width: 1.9;
+        }
+
+        .sidebar-link:hover {
+            color: var(--primary);
+            background: var(--primary-tint);
+        }
+
+        .sidebar-link.active {
+            color: var(--primary);
+            background: var(--primary-light);
+            font-weight: 800;
+        }
+
+        .sidebar-link.active svg {
+            stroke-width: 2.3;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            margin: 21px 8px;
+            background: var(--border);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+        }
+
+        .sidebar-profile {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 14px 10px 0;
+            margin-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 39px;
+            height: 39px;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 2px solid var(--primary-light);
+            border-radius: 50%;
+            color: var(--primary);
+            background: var(--primary-tint);
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .profile-name {
+            overflow: hidden;
+            margin: 0;
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 800;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .profile-role {
+            margin: 3px 0 0;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .logout-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border: 0;
+            border-radius: 11px;
+            color: var(--text-muted);
+            background: transparent;
+            cursor: pointer;
+            transition: color .2s, background .2s;
+        }
+
+        .logout-icon:hover {
+            color: var(--danger);
+            background: #FEF2F2;
+        }
+
+        /* Main content */
+
+        .main-area {
+            min-height: 100vh;
+            margin-left: 264px;
+        }
+
+        .topbar {
+            position: sticky;
+            z-index: 30;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            min-height: 76px;
+            padding: 15px 40px;
+            border-bottom: 1px solid rgba(230, 227, 244, .85);
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(14px);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            min-width: 0;
+        }
+
+        .topbar-label {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+
+        .topbar-title {
+            margin: 3px 0 0;
+            color: var(--ink);
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .role-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 12px;
+            border: 1px solid #E2DCFF;
+            border-radius: var(--radius-pill);
+            color: var(--primary);
+            background: var(--primary-tint);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .role-chip-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        .mobile-menu-button {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--ink);
+            background: white;
+            cursor: pointer;
+        }
+
+        .page-content {
+            width: 100%;
+            max-width: 1280px;
+            padding: 38px 40px 60px;
+            margin: 0 auto;
+        }
+
+        /* Welcome section */
+
+        .welcome-section {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 22px;
+            margin-bottom: 29px;
+        }
+
+        .welcome-copy {
+            min-width: 0;
+        }
+
+        .welcome-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin: 0 0 10px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+        }
+
+        .welcome-eyebrow svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .welcome-title {
+            margin: 0;
+            color: var(--ink);
+            font-size: clamp(27px, 3vw, 35px);
+            font-weight: 800;
+            letter-spacing: -1.2px;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+
+        .welcome-title .highlight {
+            color: var(--primary);
+        }
+
+        .welcome-description {
+            max-width: 500px;
+            margin: 10px 0 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .welcome-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            flex-shrink: 0;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            color: var(--text-secondary);
+            background: white;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .welcome-date svg {
+            color: var(--primary);
+        }
+
+        /* Promo banner */
+
+        .promo-banner {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 25px;
+            min-height: 174px;
+            overflow: hidden;
+            padding: 27px 30px;
+            margin-bottom: 35px;
+            border-radius: var(--radius-lg);
+            color: white;
+            background: linear-gradient(135deg, #6D4DF5 0%, #8E73FA 100%);
+        }
+
+        .promo-banner::before,
+        .promo-banner::after {
+            position: absolute;
+            content: "";
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .promo-banner::before {
+            top: -130px;
+            right: 55px;
+            width: 280px;
+            height: 280px;
+        }
+
+        .promo-banner::after {
+            top: -90px;
+            right: 95px;
+            width: 200px;
+            height: 200px;
+        }
+
+        .promo-copy {
+            position: relative;
+            z-index: 1;
+            max-width: 520px;
+        }
+
+        .promo-kicker {
+            margin: 0 0 9px;
+            color: rgba(255, 255, 255, .78);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .promo-title {
+            margin: 0;
+            color: white;
+            font-size: clamp(19px, 2.4vw, 25px);
+            font-weight: 800;
+            letter-spacing: -.5px;
+            line-height: 1.35;
+        }
+
+        .promo-description {
+            margin: 8px 0 0;
+            color: rgba(255, 255, 255, .83);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .promo-illustration {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 150px;
+            height: 120px;
+            flex-shrink: 0;
+        }
+
+        .illustration-circle {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid rgba(255, 255, 255, .9);
+            border-radius: 50%;
+            color: white;
+            box-shadow: 0 5px 15px rgba(43, 25, 125, .14);
+        }
+
+        .illustration-circle.one {
+            top: 8px;
+            left: 11px;
+            width: 53px;
+            height: 53px;
+            background: #4C7DF0;
+            transform: rotate(-10deg);
+        }
+
+        .illustration-circle.two {
+            top: 0;
+            right: 10px;
+            width: 61px;
+            height: 61px;
+            background: #F5A623;
+            transform: rotate(9deg);
+        }
+
+        .illustration-circle.three {
+            right: 35px;
+            bottom: 1px;
+            width: 57px;
+            height: 57px;
+            background: #34D399;
+            transform: rotate(-6deg);
+        }
+
+        .illustration-circle.four {
+            bottom: 9px;
+            left: 0;
+            width: 42px;
+            height: 42px;
+            background: #F87171;
+        }
+
+        .illustration-circle svg {
+            width: 26px;
+            height: 26px;
+        }
+
+        /* Section headings */
+
+        .section-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 17px;
+        }
+
+        .section-title {
+            margin: 0;
+            color: var(--ink);
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -.45px;
+        }
+
+        .section-description {
+            margin: 5px 0 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .section-count {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            color: var(--text-secondary);
+            background: white;
+            font-size: 10px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        /* Quick action cards */
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 17px;
+        }
+
+        .action-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 188px;
+            overflow: hidden;
+            padding: 21px;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            background: white;
+            transition: border-color .2s, transform .2s, box-shadow .2s;
+        }
+
+        .action-card:hover {
+            border-color: #D3C8FF;
+            box-shadow: var(--shadow-card);
+            transform: translateY(-2px);
+        }
+
+        .action-card:active {
+            transform: scale(.99);
+        }
+
+        .action-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .action-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            flex-shrink: 0;
+            border-radius: 13px;
+        }
+
+        .action-icon svg {
+            width: 23px;
+            height: 23px;
+        }
+
+        .icon-purple {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .icon-blue {
+            color: #3567D8;
+            background: #EAF0FF;
+        }
+
+        .icon-orange {
+            color: #C47A00;
+            background: #FFF3DA;
+        }
+
+        .icon-green {
+            color: #059669;
+            background: #E2F9EE;
+        }
+
+        .icon-red {
+            color: #E54848;
+            background: #FEECEC;
+        }
+
+        .action-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 31px;
+            height: 31px;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            color: var(--text-muted);
+            transition: color .2s, background .2s, border-color .2s;
+        }
+
+        .action-card:hover .action-arrow {
+            border-color: var(--primary-light);
+            color: var(--primary);
+            background: var(--primary-tint);
+        }
+
+        .action-card-bottom {
+            margin-top: auto;
+            padding-top: 22px;
+        }
+
+        .action-title {
+            margin: 0;
+            color: var(--ink);
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -.2px;
+            line-height: 1.4;
+        }
+
+        .action-description {
+            margin: 6px 0 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .action-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            width: fit-content;
+            padding: 5px 9px;
+            margin-top: 12px;
+            border-radius: var(--radius-pill);
+            color: var(--primary);
+            background: var(--primary-tint);
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .action-tag svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Featured pending card */
+
+        .action-card.featured {
+            border-color: var(--primary);
+            background: var(--primary);
+        }
+
+        .action-card.featured:hover {
+            border-color: var(--primary-dark);
+            background: var(--primary-dark);
+        }
+
+        .action-card.featured .action-icon {
+            color: white;
+            background: rgba(255, 255, 255, .17);
+        }
+
+        .action-card.featured .action-arrow {
+            border-color: rgba(255, 255, 255, .2);
+            color: white;
+            background: rgba(255, 255, 255, .12);
+        }
+
+        .action-card.featured:hover .action-arrow {
+            background: rgba(255, 255, 255, .22);
+        }
+
+        .action-card.featured .action-title {
+            color: white;
+        }
+
+        .action-card.featured .action-description {
+            color: rgba(255, 255, 255, .8);
+        }
+
+        .action-card.featured .action-tag {
+            color: white;
+            background: rgba(255, 255, 255, .16);
+        }
+
+        .pending-approvals {
+            margin-bottom: 34px;
+        }
+
+        .pending-approval-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .pending-approval-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            background: white;
+            box-shadow: var(--shadow-card);
+        }
+
+        .pending-approval-info {
+            min-width: 0;
+        }
+
+        .pending-approval-name {
+            margin: 0;
+            color: var(--ink);
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .pending-approval-meta {
+            margin: 5px 0 0;
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        .pending-approval-reason {
+            margin: 9px 0 0;
+            overflow: hidden;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pending-approval-time {
+            flex-shrink: 0;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .pending-approval-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 38px;
+            padding: 9px 13px;
+            border-radius: var(--radius-pill);
+            color: white;
+            background: var(--primary);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .pending-approval-action:hover {
+            background: var(--primary-dark);
+        }
+
+        .pending-empty {
+            padding: 27px 20px;
+            border: 1px dashed #D8D2F5;
+            border-radius: 17px;
+            color: var(--text-secondary);
+            background: var(--primary-tint);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .quick-actions {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .pending-approval-card {
+                align-items: flex-start;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .pending-approval-action {
+                width: 100%;
+            }
+        }
+
+        /* Footer */
+
+        .page-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 23px;
+            margin-top: 34px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .footer-brand {
+            color: var(--text-secondary);
+            font-weight: 800;
+        }
+
+        /* Mobile bottom navigation */
+
+        .mobile-bottom-nav {
+            display: none;
+        }
+
+        /* Mobile drawer */
+
+        .drawer-overlay {
+            position: fixed;
+            z-index: 45;
+            inset: 0;
+            background: rgba(30, 24, 80, .45);
+            backdrop-filter: blur(3px);
+        }
+
+        .drawer-overlay[hidden] {
+            display: none;
+        }
+
+        /* Responsive layout */
+
+        @media (min-width: 1500px) {
+            .page-content {
+                padding-right: 48px;
+                padding-left: 48px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .page-content {
+                padding: 30px 27px 55px;
+            }
+
+            .topbar {
+                padding-right: 27px;
+                padding-left: 27px;
+            }
+
+            .promo-banner {
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .sidebar {
+                width: 264px;
+                transform: translateX(-100%);
+                transition: transform .25s ease;
+                box-shadow: none;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: var(--shadow-modal);
+            }
+
+            .main-area {
+                margin-left: 0;
+            }
+
+            .mobile-menu-button {
+                display: inline-flex;
+            }
+
+            .topbar {
+                min-height: 70px;
+                padding: 12px 24px;
+            }
+
+            .page-content {
+                max-width: 900px;
+                padding: 30px 24px 55px;
+            }
+
+            .mobile-nav-item {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex: 1;
+                flex-direction: column;
+                gap: 4px;
+                min-width: 0;
+                min-height: 48px;
+                border-radius: 12px;
+                color: var(--text-muted);
+                font-size: 10px;
+                font-weight: 700;
+                transition: color .2s, background .2s;
+            }
+
+            .mobile-nav-item svg {
+                width: 21px;
+                height: 21px;
+            }
+
+            .mobile-nav-item.active {
+                color: var(--primary);
+            }
+
+            .mobile-nav-item:hover {
+                color: var(--primary);
+                background: var(--primary-tint);
+            }
+
+            .page-footer {
+                margin-bottom: 4px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .topbar {
+                min-height: 66px;
+                padding: 10px 16px;
+            }
+
+            .topbar-title {
+                font-size: 13px;
+            }
+
+            .topbar-label {
+                font-size: 9px;
+            }
+
+            .topbar-right {
+                gap: 8px;
+            }
+
+            .role-chip {
+                padding: 7px 9px;
+                font-size: 10px;
+            }
+
+            .topbar-avatar {
+                display: none;
+            }
+
+            .page-content {
+                padding: 26px 18px 100px;
+            }
+
+            .welcome-section {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 15px;
+                margin-bottom: 23px;
+            }
+
+            .welcome-title {
+                font-size: 28px;
+                letter-spacing: -.8px;
+            }
+
+            .welcome-description {
+                font-size: 13px;
+            }
+
+            .welcome-date {
+                padding: 9px 11px;
+            }
+
+            .promo-banner {
+                min-height: 0;
+                padding: 23px 20px;
+                margin-bottom: 29px;
+                border-radius: 17px;
+            }
+
+            .promo-copy {
+                max-width: 100%;
+            }
+
+            .promo-title {
+                font-size: 19px;
+            }
+
+            .promo-description {
+                font-size: 11px;
+            }
+
+            .promo-illustration {
+                width: 85px;
+                height: 105px;
+                margin-right: -5px;
+            }
+
+            .illustration-circle.one {
+                left: 0;
+                width: 42px;
+                height: 42px;
+            }
+
+            .illustration-circle.two {
+                right: 0;
+                width: 47px;
+                height: 47px;
+            }
+
+            .illustration-circle.three {
+                right: 11px;
+                width: 45px;
+                height: 45px;
+            }
+
+            .illustration-circle.four {
+                bottom: 5px;
+                width: 32px;
+                height: 32px;
+            }
+
+            .illustration-circle svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            .section-header {
+                align-items: flex-start;
+            }
+
+            .section-title {
+                font-size: 19px;
+            }
+
+            .actions-grid {
+                gap: 12px;
+            }
+
+            .action-card {
+                min-height: 174px;
+                padding: 15px;
+                border-radius: 15px;
+            }
+
+            .action-icon {
+                width: 41px;
+                height: 41px;
+                border-radius: 12px;
+            }
+
+            .action-icon svg {
+                width: 21px;
+                height: 21px;
+            }
+
+            .action-arrow {
+                width: 27px;
+                height: 27px;
+            }
+
+            .action-arrow svg {
+                width: 15px;
+                height: 15px;
+            }
+
+            .action-title {
+                font-size: 14px;
+            }
+
+            .action-description {
+                font-size: 11px;
+            }
+
+            .action-tag {
+                padding: 5px 7px;
+                font-size: 9px;
+            }
+
+            .page-footer {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 5px;
+                margin-top: 25px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .page-content {
+                padding-right: 13px;
+                padding-left: 13px;
+            }
+
+            .actions-grid {
+                gap: 9px;
+            }
+
+            .action-card {
+                padding: 12px;
+            }
+
+            .action-title {
+                font-size: 13px;
+            }
+
+            .promo-banner {
+                padding: 19px 15px;
+            }
+
+            .promo-illustration {
+                width: 68px;
+                flex-shrink: 0;
+            }
+
+            .welcome-title {
+                font-size: 25px;
+            }
+
+            .role-chip {
+                display: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
     {% include 'partials/messages.html' %}
 
-    <!-- Top App Bar -->
-    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm">
-        <div class="flex items-center gap-2">
-            <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-sm">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+    <div class="app-shell">
+
+        <!-- Desktop sidebar and mobile drawer -->
+        <aside class="sidebar" id="sidebar" aria-label="Mentor navigation">
+
+            <a href="{% url 'MntrHome' %}" class="brand">
+                <span>
+                    <p class="brand-name">GateEase</p>
+                    <p class="brand-caption">Mentor workspace</p>
+                </span>
+            </a>
+
+            <p class="nav-section-label">Workspace</p>
+
+            <nav class="sidebar-nav">
+                <a href="{% url 'MntrHome' %}" class="sidebar-link active" aria-current="page">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    Dashboard
+                </a>
+
+                <a href="{% url 'MentorPendingPasses' %}" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="8" y1="13" x2="16" y2="13"/>
+                        <line x1="8" y1="17" x2="16" y2="17"/>
+                    </svg>
+                    Pending Approvals
+                </a>
+
+                <a href="{% url 'verify_student_mentor' %}" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <polyline points="16 11 18 13 22 9"/>
+                    </svg>
+                    Verify Students
+                </a>
+
+                <a href="{% url 'MentorGroupPassCreate' %}" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="10" cy="7" r="4"/>
+                        <path d="M20 8v6M17 11h6"/>
+                    </svg>
+                    Group Pass
+                </a>
+
+                <a href="{% url 'MentorAnalytics' %}" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3v18h18"/>
+                        <path d="m19 9-5 5-4-4-5 5"/>
+                    </svg>
+                    Analytics
+                </a>
+
+                <a href="{% url 'MentorApprovedPasses' %}" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    Revoke Passes
+                </a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-divider"></div>
+
+                <p class="nav-section-label">Account</p>
+
+                <a href="{% url 'mentor_profile_update' %}" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M5 21v-2a7 7 0 0 1 14 0v2"/>
+                    </svg>
+                    My Profile
+                </a>
+
+                <div class="sidebar-profile">
+                    <div class="avatar">
+                        {% if mentor.image %}
+                            <img src="{{ mentor.image.url }}" alt="Mentor profile">
+                        {% else %}
+                            {{ mentor.name|default:"M"|make_list|first|upper }}
+                        {% endif %}
+                    </div>
+
+                    <div class="profile-info">
+                        <p class="profile-name">{{ mentor.name|default:"Mentor" }}</p>
+                        <p class="profile-role">Mentor account</p>
+                    </div>
+
+                    <a href="{% url 'logout' %}"
+                       onclick="showLogoutModal(event);"
+                       class="logout-icon"
+                       aria-label="Logout"
+                       title="Logout">
+                        <svg width="19" height="19" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                    </a>
+                </div>
             </div>
-            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-900">GateEase</span>
-        </div>
-        <div class="flex items-center gap-3">
-            <span class="text-xs font-semibold tracking-wider text-purple-600 uppercase bg-purple-50 px-2 py-1 rounded-md hidden sm:block">Mentor</span>
-            {% if mentor.image %}
-                <img src="{{ mentor.image.url }}" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-purple-100 shadow-sm">
-            {% else %}
-                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center border-2 border-white shadow-sm">
-                    {{ mentor.name|default:"M"|make_list|first|upper }}
-                </div>
-            {% endif %}
-            <a href="{% url 'logout' %}" onclick="showLogoutModal(event);" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            </a>
-        </div>
-    </header>
+        </aside>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 w-full max-w-3xl mx-auto p-4 content-area md:p-6 lg:p-8">
-        
-        <!-- Welcome Hero -->
-        <div class="mb-8 mt-2">
-            <h1 class="text-2xl font-bold text-slate-900">Hi, Mentor {{ mentor.name|default:"" }}</h1>
-            <p class="text-slate-500 mt-1 text-sm">Manage student approvals and track activity.</p>
+        <div class="drawer-overlay" id="drawerOverlay" hidden></div>
+
+        <!-- Main application -->
+        <div class="main-area">
+
+            <!-- Top bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button type="button" id="mobileMenuButton"
+                            class="mobile-menu-button"
+                            aria-label="Open navigation menu"
+                            aria-controls="sidebar"
+                            aria-expanded="false">
+                        <svg width="21" height="21" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="4" y1="6" x2="20" y2="6"/>
+                            <line x1="4" y1="12" x2="20" y2="12"/>
+                            <line x1="4" y1="18" x2="20" y2="18"/>
+                        </svg>
+                    </button>
+
+                    <div>
+                        <p class="topbar-label">GateEase / Workspace</p>
+                        <p class="topbar-title">Mentor Dashboard</p>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <span class="role-chip">
+                        <span class="role-chip-dot"></span>
+                        Mentor
+                    </span>
+
+                    <div class="avatar topbar-avatar">
+                        {% if mentor.image %}
+                            <img src="{{ mentor.image.url }}" alt="Mentor profile">
+                        {% else %}
+                            {{ mentor.name|default:"M"|make_list|first|upper }}
+                        {% endif %}
+                    </div>
+                </div>
+            </header>
+
+            <main class="page-content">
+
+                <!-- Welcome -->
+                <section class="welcome-section">
+                    <div class="welcome-copy">
+                        <!-- <p class="welcome-eyebrow">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round"
+                                 aria-hidden="true">
+                                <path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>
+                                <path d="m5.6 5.6 1.4 1.4m10 10 1.4 1.4m0-12.8L17 7m-10 10-1.4 1.4"/>
+                                <circle cx="12" cy="12" r="5"/>
+                            </svg>
+                            Your workspace
+                        </p> -->
+
+                        <h1 class="welcome-title">
+                            Hi, Mentor <span class="highlight">{{ mentor.name|default:"" }}</span>
+                        </h1>
+
+                        <!-- <p class="welcome-description">
+                            Manage student approvals, verify student details, and keep track of campus exit activity.
+                        </p> -->
+                    </div>
+
+                    <!-- <div class="welcome-date">
+                        <svg width="17" height="17" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round"
+                             aria-hidden="true">
+                            <rect x="3" y="4" width="18" height="17" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        Mentor portal
+                    </div> -->
+                </section>
+
+                <!-- Purple feature banner -->
+                <section class="promo-banner">
+                    <div class="promo-copy">
+                        <p class="promo-kicker">Your students, your oversight</p>
+
+                        <h2 class="promo-title">
+                            Keep every campus exit<br>
+                            organized and secure.
+                        </h2>
+
+                        <p class="promo-description">
+                            Review requests and manage student access from one place.
+                        </p>
+
+                    </div>
+
+                    <!-- Decorative vector shapes; no external assets required -->
+                    <div class="promo-illustration" aria-hidden="true">
+                        <span class="illustration-circle one">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                        </span>
+
+                        <span class="illustration-circle two">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="10" cy="7" r="4"/>
+                                <path d="M20 8v6M17 11h6"/>
+                            </svg>
+                        </span>
+
+                        <span class="illustration-circle three">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m5 12 4 4L19 6"/>
+                            </svg>
+                        </span>
+
+                        <span class="illustration-circle four">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 3v18h18"/>
+                                <path d="m19 9-5 5-4-4-5 5"/>
+                            </svg>
+                        </span>
+                    </div>
+                </section>
+
+                <section class="pending-approvals" aria-labelledby="pendingApprovalsHeading">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title" id="pendingApprovalsHeading">Pending pass approvals</h2>
+                            
+                        </div>
+                        <a href="{% url 'MentorPendingPasses' %}" class="section-link">View all</a>
+                    </div>
+
+                    <div class="pending-approval-list">
+                        {% for pass in pending_passes %}
+                            <article class="pending-approval-card">
+                                <div class="pending-approval-info">
+                                    <h3 class="pending-approval-name">{{ pass.student_id.name }}</h3>
+                                    <p class="pending-approval-meta">
+                                        {{ pass.student_id.classs.class_name|default:"No class assigned" }}
+                                        · {{ pass.created_at|date:"M d, Y" }}
+                                    </p>
+                                    <p class="pending-approval-reason">{{ pass.reason }}</p>
+                                </div>
+                                <span class="pending-approval-time">{{ pass.time|time:"H:i" }}</span>
+                                <a href="{% url 'MentorPendingPasses' %}" class="pending-approval-action">
+                                    Review
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M5 12h14"/>
+                                        <path d="m12 5 7 7-7 7"/>
+                                    </svg>
+                                </a>
+                            </article>
+                        {% empty %}
+                            <div class="pending-empty">You are all caught up. There are no pending pass approvals.</div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Quick actions -->
+                <section class="quick-actions" aria-labelledby="actionsHeading" aria-hidden="true">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title" id="actionsHeading">Your quick actions</h2>
+                            <p class="section-description">
+                                Choose a task to get started.
+                            </p>
+                        </div>
+
+                        <!-- <span class="section-count">6 actions</span> -->
+                    </div>
+
+                    <div class="actions-grid">
+
+                        <!-- Pending approvals -->
+                        <a href="{% url 'MentorPendingPasses' %}"
+                           class="action-card featured">
+                            <div class="action-card-top">
+                                <span class="action-icon">
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="8" y1="13" x2="16" y2="13"/>
+                                        <line x1="8" y1="17" x2="16" y2="17"/>
+                                    </svg>
+                                </span>
+
+                                <span class="action-arrow">
+                                    <svg width="17" height="17" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M5 12h14"/>
+                                        <path d="m12 5 7 7-7 7"/>
+                                    </svg>
+                                </span>
+                            </div>
+
+                            <div class="action-card-bottom">
+                                <h3 class="action-title">Pending Approvals</h3>
+                                <p class="action-description">Review student exit requests.</p>
+                                <span class="action-tag">Approval workspace</span>
+                            </div>
+                        </a>
+
+                        <!-- Verify students -->
+                        <a href="{% url 'verify_student_mentor' %}"
+                           class="action-card">
+                            <div class="action-card-top">
+                                <span class="action-icon icon-blue">
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <polyline points="16 11 18 13 22 9"/>
+                                    </svg>
+                                </span>
+
+                                <span class="action-arrow">
+                                    <svg width="17" height="17" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M5 12h14"/>
+                                        <path d="m12 5 7 7-7 7"/>
+                                    </svg>
+                                </span>
+                            </div>
+
+                            <div class="action-card-bottom">
+                                <h3 class="action-title">Verify Students</h3>
+                                <p class="action-description">Manage assigned student records.</p>
+                                <span class="action-tag">Student records</span>
+                            </div>
+                        </a>
+
+                        <!-- Group pass -->
+                        <a href="{% url 'MentorGroupPassCreate' %}"
+                           class="action-card">
+                            <div class="action-card-top">
+                                <span class="action-icon icon-orange">
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="10" cy="7" r="4"/>
+                                        <path d="M20 8v6M17 11h6"/>
+                                    </svg>
+                                </span>
+
+                                <span class="action-arrow">
+                                    <svg width="17" height="17" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M5 12h14"/>
+                                        <path d="m12 5 7 7-7 7"/>
+                                    </svg>
+                                </span>
+                            </div>
+
+                            <div class="action-card-bottom">
+                                <h3 class="action-title">Group Pass</h3>
+                                <p class="action-description">Create a pass for a class or group.</p>
+                                <span class="action-tag">Group management</span>
+                            </div>
+                        </a>
+
+                        <!-- Analytics -->
+                        <a href="{% url 'MentorAnalytics' %}"
+                           class="action-card">
+                            <div class="action-card-top">
+                                <span class="action-icon icon-green">
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M3 3v18h18"/>
+                                        <path d="M18 17V9"/>
+                                        <path d="M13 17V5"/>
+                                        <path d="M8 17v-4"/>
+                                    </svg>
+                                </span>
+
+                                <span class="action-arrow">
+                                    <svg width="17" height="17" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M5 12h14"/>
+                                        <path d="m12 5 7 7-7 7"/>
+                                    </svg>
+                                </span>
+                            </div>
+
+                            <div class="action-card-bottom">
+                                <h3 class="action-title">Analytics</h3>
+                                <p class="action-description">Explore class and pass reports.</p>
+                                <span class="action-tag">Reports and insights</span>
+                            </div>
+                        </a>
+
+                        <!-- Revoke passes -->
+                        <a href="{% url 'MentorApprovedPasses' %}"
+                           class="action-card">
+                            <div class="action-card-top">
+                                <span class="action-icon icon-red">
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="15" y1="9" x2="9" y2="15"/>
+                                        <line x1="9" y1="9" x2="15" y2="15"/>
+                                    </svg>
+                                </span>
+
+                                <span class="action-arrow">
+                                    <svg width="17" height="17" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M5 12h14"/>
+                                        <path d="m12 5 7 7-7 7"/>
+                                    </svg>
+                                </span>
+                            </div>
+
+                            <div class="action-card-bottom">
+                                <h3 class="action-title">Revoke Passes</h3>
+                                <p class="action-description">Manage previously approved passes.</p>
+                                <span class="action-tag">Pass management</span>
+                            </div>
+                        </a>
+
+                        <!-- Profile -->
+                        <a href="{% url 'mentor_profile_update' %}"
+                           class="action-card">
+                            <div class="action-card-top">
+                                <span class="action-icon icon-purple">
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <circle cx="12" cy="8" r="4"/>
+                                        <path d="M5 21v-2a7 7 0 0 1 14 0v2"/>
+                                    </svg>
+                                </span>
+
+                                <span class="action-arrow">
+                                    <svg width="17" height="17" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <path d="M5 12h14"/>
+                                        <path d="m12 5 7 7-7 7"/>
+                                    </svg>
+                                </span>
+                            </div>
+
+                            <div class="action-card-bottom">
+                                <h3 class="action-title">My Profile</h3>
+                                <p class="action-description">View and update mentor details.</p>
+                                <span class="action-tag">Account settings</span>
+                            </div>
+                        </a>
+
+                    </div>
+                </section>
+
+                <footer class="page-footer">
+                    <span><span class="footer-brand">GateEase</span> · Mentor workspace</span>
+                    <span>Campus exit pass management</span>
+                </footer>
+
+            </main>
         </div>
 
-        <!-- Quick Actions Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-            <a href="{% url 'MentorPendingPasses' %}" class="bg-purple-600 text-white p-6 rounded-3xl shadow-md hover:shadow-lg hover:bg-purple-700 transition-all flex flex-col justify-between group h-40 active:scale-95">
-                <div class="flex justify-between items-start">
-                    <div class="bg-white/20 w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="font-bold text-xl">Pending Approvals</h3>
-                    <p class="text-purple-100 text-sm mt-1 font-medium">Review exit requests</p>
-                </div>
-            </a>
-            
-            <a href="{% url 'verify_student_mentor' %}" class="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group h-40 active:scale-95">
-                <div class="flex justify-between items-start">
-                    <div class="bg-purple-50 text-purple-600 w-12 h-12 rounded-2xl flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="font-bold text-slate-800 text-xl">Verify Students</h3>
-                    <p class="text-slate-500 text-sm mt-1 font-medium">Manage assigned students</p>
-                </div>
-            </a>
-            
-            <a href="{% url 'MentorGroupPassCreate' %}" class="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group h-40 active:scale-95">
-                <div class="flex justify-between items-start">
-                    <div class="bg-orange-50 text-orange-600 w-12 h-12 rounded-2xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="font-bold text-slate-800 text-xl">Group Pass</h3>
-                    <p class="text-slate-500 text-sm mt-1 font-medium">Create pass for class</p>
-                </div>
-            </a>
-            
-            <a href="{% url 'MentorAnalytics' %}" class="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group h-40 active:scale-95">
-                <div class="flex justify-between items-start">
-                    <div class="bg-emerald-50 text-emerald-600 w-12 h-12 rounded-2xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="font-bold text-slate-800 text-xl">Analytics</h3>
-                    <p class="text-slate-500 text-sm mt-1 font-medium">View class reports</p>
-                </div>
-            </a>
-            
-            <a href="{% url 'MentorApprovedPasses' %}" class="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group h-40 active:scale-95">
-                <div class="flex justify-between items-start">
-                    <div class="bg-red-50 text-red-600 w-12 h-12 rounded-2xl flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="font-bold text-slate-800 text-xl">Revoke Passes</h3>
-                    <p class="text-slate-500 text-sm mt-1 font-medium">Manage approved passes</p>
-                </div>
-            </a>
-        </div>
-    </main>
+    </div>
 
-    <!-- Bottom Navigation Bar (Mobile / Tablet) -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] ">
-        <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
-            <a href="{% url 'MntrHome' %}" class="flex flex-col items-center justify-center w-full h-full text-purple-600">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                <span class="text-[10px] font-semibold mt-1">Dashboard</span>
-            </a>
-            
-            <a href="{% url 'MentorPendingPasses' %}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-purple-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                <span class="text-[10px] font-medium mt-1">Approvals</span>
-            </a>
-            
-            <a href="{% url 'verify_student_mentor' %}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-purple-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
-                <span class="text-[10px] font-medium mt-1">Verify</span>
-            </a>
-            
-            <a href="{% url 'mentor_profile_update' %}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-purple-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <span class="text-[10px] font-medium mt-1">Profile</span>
-            </a>
-        </div>
-    </nav>
-    
-{% include 'partials/logout_modal.html' %}
+    {% include 'partials/logout_modal.html' %}
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const menuButton = document.getElementById('mobileMenuButton');
+        const drawerOverlay = document.getElementById('drawerOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            drawerOverlay.hidden = false;
+            menuButton.setAttribute('aria-expanded', 'true');
+            menuButton.setAttribute('aria-label', 'Close navigation menu');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            drawerOverlay.hidden = true;
+            menuButton.setAttribute('aria-expanded', 'false');
+            menuButton.setAttribute('aria-label', 'Open navigation menu');
+            document.body.style.overflow = '';
+        }
+
+        menuButton.addEventListener('click', function () {
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+
+        drawerOverlay.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeSidebar();
+            }
+        });
+
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 1023) {
+                closeSidebar();
+            }
+        });
+
+        sidebar.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth <= 1023) {
+                    closeSidebar();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

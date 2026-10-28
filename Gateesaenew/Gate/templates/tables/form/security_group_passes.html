@@ -3,117 +3,1225 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GateEase - Group Passes</title>
-    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .content-area { padding-bottom: 90px; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Passes | GateEase</title>
     <link rel="shortcut icon" href="{% static 'favicon.png' %}">
-</head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Toast Messages Container -->
+    <style>
+        :root {
+            --primary: #5145CD;
+            --primary-dark: #4035B3;
+            --primary-light: #F0EFFF;
+            --background: #F7F8FC;
+            --surface: #FFFFFF;
+            --text: #20233A;
+            --muted: #7B8098;
+            --border: #E8EAF2;
+            --green: #16856B;
+            --red: #C94F61;
+            --shadow: 0 8px 25px rgba(42, 38, 100, .05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--background);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button:focus-visible,
+        a:focus-visible,
+        .group-card:focus-visible {
+            outline: 3px solid rgba(81, 69, 205, .35);
+            outline-offset: 3px;
+        }
+
+        svg {
+            display: block;
+            flex-shrink: 0;
+        }
+
+        /* Header */
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 76px;
+            padding: 14px 5%;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, .96);
+            backdrop-filter: blur(14px);
+        }
+
+        .brand {
+            color: var(--primary);
+            font-size: 27px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .role-badge {
+            padding: 7px 11px;
+            border: 1px solid #E5E2FF;
+            border-radius: 7px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+        }
+
+        .profile-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 43px;
+            height: 43px;
+            padding: 2px;
+            border: 2px solid #E6E2FF;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            transition: .2s;
+        }
+
+        .profile-trigger:hover {
+            border-color: var(--primary);
+            transform: scale(1.04);
+        }
+
+        .security-avatar,
+        .profile-large-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .security-avatar img,
+        .profile-large-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Profile popup */
+
+        .profile-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 110;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(20, 20, 43, .6);
+            backdrop-filter: blur(5px);
+        }
+
+        .profile-modal.visible {
+            display: flex;
+        }
+
+        .profile-card {
+            width: 100%;
+            max-width: 350px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, .22);
+            animation: profileIn .18s ease-out;
+        }
+
+        @keyframes profileIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .profile-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .profile-card-title {
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .profile-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #F8F9FC;
+            color: var(--muted);
+        }
+
+        .profile-card-body {
+            padding: 25px 22px 22px;
+            text-align: center;
+        }
+
+        .profile-large-avatar {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 15px;
+            border: 3px solid #E6E2FF;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 25px;
+        }
+
+        .profile-name {
+            overflow-wrap: anywhere;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .profile-role {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        .profile-location {
+            margin-top: 18px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: #FAFAFD;
+            text-align: left;
+        }
+
+        .profile-location-label {
+            margin-bottom: 5px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        .profile-location-value {
+            overflow-wrap: anywhere;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .profile-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            width: 100%;
+            min-height: 44px;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #F0DDE1;
+            border-radius: 9px;
+            background: #FFF6F7;
+            color: var(--red);
+            font-size: 12px;
+            font-weight: 700;
+            transition: background .2s;
+        }
+
+        .profile-logout:hover {
+            background: #FCEDEF;
+        }
+
+        /* Main content */
+
+        .main {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 35px 30px 55px;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 22px;
+            margin-bottom: 26px;
+        }
+
+        .eyebrow {
+            margin-bottom: 9px;
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .page-title {
+            font-size: clamp(25px, 3vw, 32px);
+            font-weight: 800;
+            letter-spacing: -1.1px;
+            line-height: 1.25;
+        }
+
+        .page-subtitle {
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 43px;
+            padding: 0 15px;
+            flex-shrink: 0;
+            border: 1px solid #DCD7FF;
+            border-radius: 9px;
+            background: #F7F5FF;
+            color: var(--primary-dark);
+            font-size: 12px;
+            font-weight: 700;
+            transition: background .2s, transform .2s;
+        }
+
+        .back-button:hover {
+            transform: translateY(-1px);
+            background: #ECE8FF;
+        }
+
+        /* Hero */
+
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 25px;
+            min-height: 160px;
+            margin-bottom: 30px;
+            padding: 30px;
+            border: 1px solid #E5E0FF;
+            border-radius: 15px;
+            background: linear-gradient(
+                110deg,
+                #F0EEFF 0%,
+                #F9F8FF 72%,
+                #EFEDFF 100%
+            );
+        }
+
+        .hero-copy {
+            max-width: 700px;
+        }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 13px;
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .hero-tag-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 4px rgba(22, 133, 107, .1);
+        }
+
+        .hero-title {
+            font-size: clamp(22px, 2.5vw, 29px);
+            font-weight: 800;
+            letter-spacing: -.8px;
+            line-height: 1.35;
+        }
+
+        .hero-description {
+            max-width: 600px;
+            margin-top: 9px;
+            color: #74728F;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        /* Group list */
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 17px;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .section-copy {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .section-label {
+            padding: 7px 10px;
+            border-radius: 7px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .group-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .group-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 22px;
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: white;
+            box-shadow: var(--shadow);
+            transition: border-color .2s, transform .2s, box-shadow .2s;
+            cursor: pointer;
+        }
+
+        .group-card:hover,
+        .group-card.expanded {
+            border-color: #DCD7FF;
+            box-shadow: 0 10px 28px rgba(42, 38, 100, .08);
+        }
+
+        .group-card:hover {
+            transform: translateY(-1px);
+        }
+
+        .group-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .group-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 9px;
+            border: 1px solid #E5E2FF;
+            border-radius: 7px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        .group-label svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .group-name {
+            margin-top: 13px;
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+        }
+
+        .group-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .meta-divider {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #B4B6C7;
+        }
+
+        .group-details {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .group-details strong {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .click-hint {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .chevron {
+            width: 15px;
+            height: 15px;
+            transition: transform .2s;
+        }
+
+        .group-card.expanded .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Expandable student list */
+
+        .student-details {
+            display: none;
+            margin-top: 17px;
+            padding: 16px;
+            border: 1px solid #E8E5FF;
+            border-radius: 10px;
+            background: #FAF9FF;
+        }
+
+        .group-card.expanded .student-details {
+            display: block;
+        }
+
+        .student-details-title {
+            margin-bottom: 12px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .student-list {
+            display: grid;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .student-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 11px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+        }
+
+        .student-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 27px;
+            height: 27px;
+            flex-shrink: 0;
+            border-radius: 7px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .student-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .student-name {
+            overflow-wrap: anywhere;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .student-class {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        /* Scan button */
+
+        .group-action {
+            flex-shrink: 0;
+        }
+
+        .scan-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            min-width: 150px;
+            padding: 0 17px;
+            border: 1px solid #137A59;
+            border-radius: 9px;
+            background: var(--green);
+            color: white;
+            box-shadow: 0 4px 10px rgba(22, 133, 107, .12);
+            font-size: 11px;
+            font-weight: 700;
+            transition: background .2s, transform .2s;
+        }
+
+        .scan-button:hover {
+            transform: translateY(-1px);
+            background: #116F55;
+        }
+
+        .scan-button:disabled {
+            opacity: .65;
+            cursor: wait;
+            transform: none;
+        }
+
+        /* Empty state */
+
+        .empty {
+            padding: 48px 20px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: white;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 59px;
+            height: 59px;
+            margin: 0 auto 16px;
+            border: 1px solid #E5E2FF;
+            border-radius: 15px;
+            background: #F6F4FF;
+            color: var(--primary);
+        }
+
+        .empty-icon svg {
+            width: 27px;
+            height: 27px;
+        }
+
+        .empty-title {
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .empty-copy {
+            margin-top: 7px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        /* Responsive */
+
+        @media (max-width: 700px) {
+            .topbar {
+                min-height: 68px;
+                padding: 12px 17px;
+            }
+
+            .brand {
+                font-size: 25px;
+            }
+
+            .topbar-right {
+                gap: 9px;
+            }
+
+            .role-badge {
+                display: none;
+            }
+
+            .main {
+                padding: 26px 17px 40px;
+            }
+
+            .page-heading {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 17px;
+                margin-bottom: 23px;
+            }
+
+            .back-button {
+                width: 100%;
+            }
+
+            .hero {
+                min-height: 0;
+                padding: 23px 20px;
+                margin-bottom: 25px;
+            }
+
+            .hero-title {
+                font-size: 22px;
+            }
+
+            .hero-description {
+                font-size: 11px;
+            }
+
+            .group-card {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 17px;
+                padding: 18px;
+            }
+
+            .group-action,
+            .scan-button {
+                width: 100%;
+            }
+
+            .section-head {
+                align-items: flex-start;
+            }
+
+            .student-details {
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .group-name {
+                font-size: 14px;
+            }
+
+            .section-label {
+                display: none;
+            }
+
+            .student-row {
+                align-items: flex-start;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
     {% include 'partials/messages.html' %}
 
-    <!-- Top App Bar -->
-    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm">
-        <div class="flex items-center gap-2">
-            <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-sm">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-            </div>
-            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900">GateEase</span>
-        </div>
-        <div class="flex items-center gap-3">
-            <span class="text-xs font-semibold tracking-wider text-slate-700 uppercase bg-slate-100 px-2 py-1 rounded-md hidden sm:block">Security</span>
-            {% if security.Photo %}
-                <img src="{{ security.Photo.url }}" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 shadow-sm">
-            {% else %}
-                <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center border-2 border-white shadow-sm">
-                    {{ security.name|default:"S"|make_list|first|upper }}
-                </div>
-            {% endif %}
-            <a href="{% url 'logout' %}" onclick="showLogoutModal(event);" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            </a>
+    <!-- Header -->
+    <header class="topbar">
+        <a href="{% url 'SecurityHome' %}" class="brand"
+           aria-label="GateEase Security Home">
+            GateEase
+        </a>
+
+        <div class="topbar-right">
+            <span class="role-badge">Security</span>
+
+            <button type="button"
+                    class="profile-trigger"
+                    onclick="openProfileModal()"
+                    aria-label="Open security profile"
+                    aria-haspopup="dialog"
+                    aria-controls="securityProfileModal">
+                <span class="security-avatar">
+                    {% if security.Photo %}
+                        <img src="{{ security.Photo.url }}" alt="Security profile">
+                    {% else %}
+                        {{ security.name|default:"S"|first|upper }}
+                    {% endif %}
+                </span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 w-full max-w-4xl mx-auto p-4 content-area md:p-6 lg:p-8">
-        
-        <div class="mb-6 mt-2">
-            <h1 class="text-2xl font-bold text-slate-900">Pending Group Passes</h1>
-            <p class="text-slate-500 mt-1 text-sm">Review and mark group passes as scanned.</p>
-        </div>
+    <!-- Profile popup -->
+    <div id="securityProfileModal"
+         class="profile-modal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="securityProfileTitle"
+         onclick="if(event.target===this)closeProfileModal()">
 
-        <div class="space-y-4">
-            {% if groups %}
-                {% for group in groups %}
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between">
-                    <!-- Group Info -->
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                Group Pass
-                            </span>
-                            <span class="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{{ group.class_names }}</span>
-                        </div>
-                        
-                        <h3 class="font-bold text-slate-900 text-lg leading-tight">{{ group.student_names }}</h3>
-                        
-                        <div class="mt-3 text-sm text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <p><span class="font-semibold text-slate-700">Approved by:</span> {{ group.mentor_name }}</p>
-                            <p class="mt-1"><span class="font-semibold text-slate-700">Time:</span> {{ group.date }} at {{ group.time }}</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Action -->
-                    <div class="w-full md:w-auto mt-2 md:mt-0">
-                        <form method="POST" action="{% url 'SecurityGroupPass' %}" class="w-full">
-                            {% csrf_token %}
-                            <input type="hidden" name="pass_ids" value="{{ group.pass_ids }}">
-                            <button type="submit" class="w-full bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 flex items-center justify-center gap-2 active:scale-95">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                Mark Scanned
-                            </button>
-                        </form>
-                    </div>
+        <div class="profile-card">
+            <div class="profile-card-header">
+                <h2 class="profile-card-title" id="securityProfileTitle">
+                    Security Profile
+                </h2>
+
+                <button type="button"
+                        class="profile-close"
+                        onclick="closeProfileModal()"
+                        aria-label="Close profile">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="18" height="18" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="profile-card-body">
+                <div class="profile-large-avatar">
+                    {% if security.Photo %}
+                        <img src="{{ security.Photo.url }}" alt="">
+                    {% else %}
+                        {{ security.name|default:"S"|first|upper }}
+                    {% endif %}
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-10 text-center flex flex-col items-center">
-                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800">No group passes</h3>
-                    <p class="text-slate-500 text-sm mt-1">There are no pending group passes for today.</p>
+
+                <h3 class="profile-name">
+                    {{ security.name|default:"Security Officer" }}
+                </h3>
+
+                <span class="profile-role">Security Officer</span>
+
+                <div class="profile-location">
+                    <p class="profile-location-label">Place</p>
+                    <p class="profile-location-value">
+                        {{ security.place|default:"Location not set" }}
+                    </p>
                 </div>
-            {% endif %}
+
+                <a href="{% url 'logout' %}"
+                   class="profile-logout"
+                   onclick="showLogoutModal(event)">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="17" height="17" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 17l5-5-5-5"></path>
+                        <path d="M15 12H3"></path>
+                        <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path>
+                    </svg>
+                    <span>Logout</span>
+                </a>
+            </div>
         </div>
+    </div>
+
+    <!-- Main content -->
+    <main class="main">
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">Gate operations</p>
+                <h1 class="page-title">Group Passes</h1>
+                <p class="page-subtitle">
+                    Review approved group exit passes and record student exits.
+                </p>
+            </div>
+
+            <a href="{% url 'SecurityHome' %}" class="back-button">
+                Individual Pass Scanner
+            </a>
+        </section>
+
+        <!-- Hero banner -->
+        <section class="hero">
+            <div class="hero-copy">
+                <div class="hero-tag">
+                    <span class="hero-tag-dot"></span>
+                    Group gate verification
+                </div>
+
+                <h2 class="hero-title">
+                    Verify group exits together.
+                </h2>
+
+                <p class="hero-description">
+                    Select a group card to view each student's name and class.
+                    Confirm the details before marking the associated student
+                    passes as scanned.
+                </p>
+            </div>
+        </section>
+
+        <!-- Pending group passes -->
+        <section>
+            <div class="section-head">
+                <div>
+                    <h2 class="section-title">Pending Group Passes</h2>
+                    <p class="section-copy">
+                        Group requests approved by mentors and waiting for gate processing.
+                    </p>
+                </div>
+
+                <span class="section-label">Group verification</span>
+            </div>
+
+            <div class="group-list">
+                {% if groups %}
+                    {% for group in groups %}
+                        <article class="group-card"
+                                 tabindex="0"
+                                 role="button"
+                                 aria-expanded="false"
+                                 data-students="{{ group.student_names|escape }}"
+                                 data-classes="{{ group.class_names|escape }}"
+                                 onclick="toggleGroupDetails(event, this)"
+                                 onkeydown="handleGroupCardKeydown(event, this)">
+
+                            <div class="group-info">
+                                <span class="group-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    </svg>
+                                    Group pass
+                                </span>
+
+                                <h3 class="group-name">Group exit request</h3>
+
+                                <div class="group-meta">
+                                    <span>{{ group.date }}</span>
+                                    <span class="meta-divider"></span>
+                                    <span>{{ group.time }}</span>
+                                </div>
+
+                                <p class="group-details">
+                                    <strong>Approved by:</strong>
+                                    {{ group.mentor_name }}
+                                </p>
+
+                                <p class="click-hint">
+                                    <span class="hint-text">
+                                        Click to view students and classes
+                                    </span>
+
+                                    <svg class="chevron"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m6 9 6 6 6-6"></path>
+                                    </svg>
+                                </p>
+
+                                <!-- Expanded student list -->
+                                <div class="student-details"
+                                     aria-label="Students in this group">
+                                    <h4 class="student-details-title">
+                                        Students in this group
+                                    </h4>
+                                    <ol class="student-list"></ol>
+                                </div>
+                            </div>
+
+                            <form method="POST"
+                                  action="{% url 'SecurityGroupPass' %}"
+                                  class="group-action"
+                                  onclick="event.stopPropagation()"
+                                  onsubmit="return confirmGroupScan(event, this)">
+                                {% csrf_token %}
+
+                                <input type="hidden"
+                                       name="pass_ids"
+                                       value="{{ group.pass_ids }}">
+
+                                <button type="submit" class="scan-button">
+                                    Mark Scanned
+                                </button>
+                            </form>
+                        </article>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty">
+                        <div class="empty-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.7"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            </svg>
+                        </div>
+
+                        <h3 class="empty-title">No pending group passes</h3>
+                        <p class="empty-copy">
+                            There are currently no group passes waiting for gate processing.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
     </main>
 
-    <!-- Bottom Navigation Bar (Mobile / Tablet) -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] lg:hidden">
-        <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
-            <a href="{% url 'SecurityHome' %}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                <span class="text-[10px] font-medium mt-1">Scans</span>
-            </a>
-            
-            <a href="{% url 'SecurityGroupPass' %}" class="flex flex-col items-center justify-center w-full h-full text-indigo-600">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                <span class="text-[10px] font-semibold mt-1">Group Passes</span>
-            </a>
-        </div>
-    </nav>
-    
-{% include 'partials/logout_modal.html' %}
+    {% include 'partials/logout_modal.html' %}
+
+    <script>
+        function openProfileModal() {
+            const modal = document.getElementById('securityProfileModal');
+
+            modal.classList.add('visible');
+            document.body.classList.add('modal-open');
+
+            const closeButton = modal.querySelector('.profile-close');
+
+            if (closeButton) {
+                closeButton.focus();
+            }
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('securityProfileModal');
+
+            modal.classList.remove('visible');
+
+            if (!document.querySelector('.profile-modal.visible')) {
+                document.body.classList.remove('modal-open');
+            }
+
+            const trigger = document.querySelector('.profile-trigger');
+
+            if (trigger) {
+                trigger.focus();
+            }
+        }
+
+        /*
+         * The existing view provides student_names and class_names as
+         * comma-separated strings. This function converts them to arrays.
+         */
+        function splitGroupValues(value) {
+            return (value || '')
+                .split(',')
+                .map(item => item.trim())
+                .filter(Boolean);
+        }
+
+        function populateStudentList(card) {
+            const list = card.querySelector('.student-list');
+
+            if (list.dataset.loaded === 'true') {
+                return;
+            }
+
+            const students = splitGroupValues(card.dataset.students);
+            const classes = splitGroupValues(card.dataset.classes);
+
+            list.replaceChildren();
+
+            if (!students.length) {
+                const li = document.createElement('li');
+                li.className = 'student-row';
+                li.textContent = 'Student details are not available.';
+                list.appendChild(li);
+                list.dataset.loaded = 'true';
+                return;
+            }
+
+            students.forEach((name, index) => {
+                const li = document.createElement('li');
+                li.className = 'student-row';
+
+                const number = document.createElement('span');
+                number.className = 'student-number';
+                number.textContent = String(index + 1);
+
+                const info = document.createElement('div');
+                info.className = 'student-info';
+
+                const studentName = document.createElement('p');
+                studentName.className = 'student-name';
+                studentName.textContent = name;
+
+                const studentClass = document.createElement('p');
+                studentClass.className = 'student-class';
+                studentClass.textContent =
+                    'Class: ' + (classes[index] || classes[0] || 'Not available');
+
+                info.append(studentName, studentClass);
+                li.append(number, info);
+                list.appendChild(li);
+            });
+
+            list.dataset.loaded = 'true';
+        }
+
+        function toggleGroupDetails(event, card) {
+            // Do not expand/collapse when interacting with the scan form.
+            if (event.target.closest('form, button, a, input, select, textarea')) {
+                return;
+            }
+
+            const expanded = card.classList.toggle('expanded');
+
+            card.setAttribute('aria-expanded', String(expanded));
+
+            const hint = card.querySelector('.hint-text');
+
+            if (hint) {
+                hint.textContent = expanded
+                    ? 'Click to hide student details'
+                    : 'Click to view students and classes';
+            }
+
+            if (expanded) {
+                populateStudentList(card);
+            }
+        }
+
+        function handleGroupCardKeydown(event, card) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                if (event.target.closest('form, button, a, input, select, textarea')) {
+                    return;
+                }
+
+                event.preventDefault();
+                toggleGroupDetails(event, card);
+            }
+        }
+
+        function confirmGroupScan(event, form) {
+            event.preventDefault();
+
+            const button = form.querySelector('button[type="submit"]');
+
+            if (button && button.dataset.submitting === 'true') {
+                return false;
+            }
+
+            function submitForm() {
+                if (button) {
+                    button.dataset.submitting = 'true';
+                    button.disabled = true;
+                    button.textContent = 'Processing...';
+                }
+
+                // Submit without triggering the confirmation handler again.
+                form.submit();
+            }
+
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Mark group as scanned?',
+                    text: 'This will mark all passes in this group as scanned.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, mark scanned',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#16856B',
+                    cancelButtonColor: '#7B8098',
+                    reverseButtons: true
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        submitForm();
+                    }
+                });
+            } else if (
+                window.confirm('Mark all passes in this group as scanned?')
+            ) {
+                submitForm();
+            }
+
+            return false;
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('securityProfileModal');
+
+                if (modal.classList.contains('visible')) {
+                    closeProfileModal();
+                }
+            }
+        });
+    </script>
 </body>
 </html>

@@ -1,433 +1,1689 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GateEase - Security Scanner</title>
-    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Scanner | GateEase</title>
+
+    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
+        :root {
+            --primary: #5145CD;
+            --primary-dark: #4035B3;
+            --primary-light: #F0EFFF;
+            --background: #F7F8FC;
+            --surface: #FFFFFF;
+            --text: #20233A;
+            --muted: #7B8098;
+            --border: #E8EAF2;
+            --green: #16856B;
+            --red: #C94F61;
+            --amber: #B7791F;
+            --shadow: 0 8px 25px rgba(42, 38, 100, .05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
+            min-height: 100vh;
+            background: var(--background);
+            color: var(--text);
             font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .content-area {
-            padding-bottom: 90px;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-
-        /* Overrides for html5-qrcode library */
-        #reader {
-            border: none !important;
-            border-radius: 12px;
+        body.modal-open {
             overflow: hidden;
         }
 
-        #reader__dashboard_section_csr span {
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 8px;
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline: 3px solid rgba(81, 69, 205, .35);
+            outline-offset: 3px;
+        }
+
+        svg {
             display: block;
+            flex-shrink: 0;
+        }
+
+        /* Header */
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 76px;
+            padding: 14px 5%;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, .96);
+            backdrop-filter: blur(14px);
+        }
+
+        .brand {
+            color: var(--primary);
+            font-size: 27px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .role-badge {
+            padding: 7px 11px;
+            border: 1px solid #E5E2FF;
+            border-radius: 7px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+        }
+
+        /* Clickable profile photo */
+
+        .profile-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 43px;
+            height: 43px;
+            padding: 2px;
+            border: 2px solid #E6E2FF;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            cursor: pointer;
+            transition: border-color .2s, transform .2s;
+        }
+
+        .profile-trigger:hover {
+            border-color: var(--primary);
+            transform: scale(1.04);
+        }
+
+        .security-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .security-avatar img,
+        .profile-large-avatar img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Profile popup */
+
+        .profile-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 110;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(20, 20, 43, .60);
+            backdrop-filter: blur(5px);
+        }
+
+        .profile-modal.visible {
+            display: flex;
+        }
+
+        .profile-card {
+            width: 100%;
+            max-width: 350px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, .22);
+            animation: profileIn .18s ease-out;
+        }
+
+        @keyframes profileIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .profile-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .profile-card-title {
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .profile-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #F8F9FC;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .profile-card-body {
+            padding: 25px 22px 22px;
+            text-align: center;
+        }
+
+        .profile-large-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 15px;
+            overflow: hidden;
+            border: 3px solid #E6E2FF;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 25px;
+            font-weight: 800;
+        }
+
+        .profile-name {
+            overflow-wrap: anywhere;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .profile-role {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        .profile-location {
+            margin-top: 18px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: #FAFAFD;
+            text-align: left;
+        }
+
+        .profile-location-label {
+            margin-bottom: 5px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        .profile-location-value {
+            overflow-wrap: anywhere;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .profile-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            width: 100%;
+            min-height: 44px;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #F0DDE1;
+            border-radius: 9px;
+            background: #FFF6F7;
+            color: var(--red);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .profile-logout:hover {
+            background: #FCEDEF;
+        }
+
+        /* Main content */
+
+        .main {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 35px 30px 55px;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 22px;
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            margin-bottom: 9px;
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .page-title {
+            font-size: clamp(25px, 3vw, 32px);
+            font-weight: 800;
+            letter-spacing: -1.1px;
+            line-height: 1.25;
+        }
+
+        .page-subtitle {
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .heading-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .scanner-button,
+        .group-pass-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 47px;
+            padding: 0 17px;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s, transform .2s;
+        }
+
+        .scanner-button {
+            border: 0;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 5px 13px rgba(81, 69, 205, .19);
+        }
+
+        .scanner-button:hover {
+            transform: translateY(-1px);
+            background: var(--primary-dark);
+        }
+
+        .group-pass-button {
+            border: 1px solid #DCD7FF;
+            background: #F7F5FF;
+            color: var(--primary-dark);
+        }
+
+        .group-pass-button:hover {
+            transform: translateY(-1px);
+            background: #ECE8FF;
+        }
+
+        .scanner-button svg,
+        .group-pass-button svg {
+            width: 19px;
+            height: 19px;
+        }
+
+        /* Scanner banner */
+
+        .scanner-banner {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 25px;
+            min-height: 180px;
+            margin-bottom: 30px;
+            padding: 30px;
+            overflow: hidden;
+            border: 1px solid #E5E0FF;
+            border-radius: 15px;
+            background: linear-gradient(110deg, #F0EEFF 0%, #F9F8FF 72%, #EFEDFF 100%);
+        }
+
+        .banner-copy {
+            max-width: 620px;
+        }
+
+        .banner-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 13px;
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 4px rgba(22, 133, 107, .10);
+        }
+
+        .banner-title {
+            font-size: clamp(20px, 2.5vw, 27px);
+            font-weight: 800;
+            letter-spacing: -.7px;
+            line-height: 1.4;
+        }
+
+        .banner-description {
+            max-width: 500px;
+            margin-top: 9px;
+            color: #74728F;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .banner-art {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 105px;
+            height: 105px;
+            flex-shrink: 0;
+            border: 1px solid #DED9FF;
+            border-radius: 21px;
+            background: rgba(255, 255, 255, .8);
+            color: var(--primary);
+        }
+
+        .banner-art svg {
+            width: 48px;
+            height: 48px;
+        }
+
+        /* Recent scans */
+
+        .activity-panel {
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
+        .activity-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 20px 23px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .activity-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .activity-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .activity-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .activity-title {
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .activity-subtitle {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .activity-label {
+            padding: 6px 9px;
+            border-radius: 6px;
+            background: #F4F5F9;
+            color: #777B91;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .scan-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 23px;
+            border-bottom: 1px solid #F0F1F6;
+            transition: background .2s;
+        }
+
+        .scan-row:last-child {
+            border-bottom: 0;
+        }
+
+        .scan-row:hover {
+            background: #FBFBFE;
+        }
+
+        .scan-person {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .scan-person-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            border: 1px solid #E5E2FF;
+            border-radius: 10px;
+            background: #F6F4FF;
+            color: var(--primary);
+        }
+
+        .scan-person-icon svg {
+            width: 19px;
+            height: 19px;
+        }
+
+        .scan-person-info {
+            min-width: 0;
+        }
+
+        .scan-name {
+            overflow-wrap: anywhere;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        .scan-time {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.6;
+        }
+
+        .scan-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            flex-shrink: 0;
+            border: 1px solid #D8F1E5;
+            border-radius: 7px;
+            background: #EFFAF5;
+            color: var(--green);
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .scan-status svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .empty-state {
+            padding: 48px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 59px;
+            height: 59px;
+            margin: 0 auto 16px;
+            border: 1px solid #E5E2FF;
+            border-radius: 15px;
+            background: #F6F4FF;
+            color: var(--primary);
+        }
+
+        .empty-icon svg {
+            width: 27px;
+            height: 27px;
+        }
+
+        .empty-title {
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .empty-description {
+            margin-top: 7px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        /* Shared modals */
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            overflow-y: auto;
+            background: rgba(20, 20, 43, .68);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 440px;
+            max-height: calc(100vh - 36px);
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, .7);
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, .22);
+            animation: modalIn .18s ease-out;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 20px 22px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .modal-subtitle {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .close-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: #F8F9FC;
+            color: #666B82;
+            cursor: pointer;
+        }
+
+        .close-button:hover {
+            background: #EEEEF7;
+            color: var(--text);
+        }
+
+        .close-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .modal-body {
+            padding: 21px 22px;
+        }
+
+        .scanner-frame {
+            position: relative;
+            min-height: 245px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #F7F8FC;
+        }
+
+        #reader {
+            width: 100%;
+            overflow: hidden;
+            border: none !important;
+            border-radius: 12px;
+        }
+
+        #reader video {
+            border-radius: 10px;
+        }
+
+        #reader__dashboard_section_csr span {
+            display: block;
+            margin: 8px 0;
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
         }
 
         #reader button {
-            background: #1e293b;
+            margin-top: 9px;
+            padding: 9px 13px;
+            border: 0;
+            border-radius: 7px;
+            background: var(--primary);
             color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 500;
+            font-size: 12px;
+            font-weight: 700;
             cursor: pointer;
-            margin-top: 10px;
         }
 
-        #reader button:hover {
-            background: #334155;
+        #reader select {
+            max-width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: white;
+            font-size: 12px;
+        }
+
+        .camera-loading {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 13px;
+            background: #F7F8FC;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .spinner {
+            width: 34px;
+            height: 34px;
+            border: 3px solid #DFDCFF;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin .75s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Student pass details */
+
+        .student-summary {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: #FAFAFD;
+        }
+
+        .student-photo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 57px;
+            height: 57px;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 2px solid #E3DFFF;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        img.student-photo {
+            display: block;
+            object-fit: cover;
+        }
+
+        .student-name {
+            overflow-wrap: anywhere;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .student-time {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .approved-by {
+            margin-top: 13px;
+            padding: 14px;
+            border: 1px solid #E5E2FF;
+            border-radius: 10px;
+            background: #F7F6FF;
+        }
+
+        .detail-label {
+            margin-bottom: 6px;
+            color: var(--primary);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            overflow-wrap: anywhere;
+            color: #35305F;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .warning-panel {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 13px;
+            padding: 13px;
+            border: 1px solid #F3D9A5;
+            border-radius: 10px;
+            background: #FFFAEC;
+            color: var(--amber);
+        }
+
+        .warning-panel svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .warning-title {
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .warning-text {
+            margin-top: 5px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 43px;
+            padding: 0 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .reject-button {
+            flex: 1;
+            border: 1px solid #F1D4DA;
+            background: #FFF7F8;
+            color: var(--red);
+        }
+
+        .approve-button {
+            flex: 1.6;
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .approve-button:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Scan result */
+
+        .result-card {
+            width: 100%;
+            max-width: 370px;
+            padding: 27px 23px 22px;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, .2);
+            text-align: center;
+            animation: modalIn .18s ease-out;
+        }
+
+        .result-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 51px;
+            height: 51px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+        }
+
+        .result-icon svg {
+            width: 25px;
+            height: 25px;
+        }
+
+        .result-success {
+            background: #E5F8EF;
+            color: #159D65;
+        }
+
+        .result-warning {
+            background: #FFF4D8;
+            color: #B7791F;
+        }
+
+        .result-error {
+            background: #FFE9EC;
+            color: #D34459;
+        }
+
+        .result-title {
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .result-message {
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .result-ok {
+            width: 100%;
+            min-height: 43px;
+            margin-top: 22px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+
+        @media (max-width: 700px) {
+            .topbar {
+                min-height: 68px;
+                padding: 12px 17px;
+            }
+
+            .brand {
+                font-size: 25px;
+            }
+
+            .topbar-right {
+                gap: 9px;
+            }
+
+            .role-badge {
+                display: none;
+            }
+
+            .main {
+                padding: 26px 17px 40px;
+            }
+
+            .page-heading {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 18px;
+                margin-bottom: 23px;
+            }
+
+            .heading-actions {
+                align-items: stretch;
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .scanner-button,
+            .group-pass-button {
+                width: 100%;
+            }
+
+            .scanner-banner {
+                min-height: 0;
+                padding: 23px 20px;
+                margin-bottom: 23px;
+            }
+
+            .banner-title {
+                font-size: 21px;
+            }
+
+            .banner-description {
+                font-size: 11px;
+            }
+
+            .banner-art {
+                width: 65px;
+                height: 65px;
+                border-radius: 13px;
+            }
+
+            .banner-art svg {
+                width: 32px;
+                height: 32px;
+            }
+
+            .activity-header {
+                padding: 16px;
+            }
+
+            .scan-row {
+                align-items: flex-start;
+                padding: 16px;
+            }
+
+            .scan-status {
+                padding: 6px 8px;
+            }
+
+            .activity-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .banner-art {
+                display: none;
+            }
+
+            .scan-person {
+                gap: 9px;
+            }
+
+            .scan-person-icon {
+                width: 34px;
+                height: 34px;
+            }
+
+            .scan-name {
+                font-size: 12px;
+            }
+
+            .scan-time {
+                font-size: 9px;
+            }
+
+            .scan-status {
+                font-size: 9px;
+            }
+
+            .modal-header,
+            .modal-body {
+                padding-right: 16px;
+                padding-left: 16px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
         }
     </style>
-    <link rel="shortcut icon" href="{% static 'favicon.png' %}">
 </head>
 
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
-
-    <!-- SweetAlert Messages Container (Kept for loading spinners) -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<body>
     {% include 'partials/messages.html' %}
-    <!-- Top App Bar -->
-    <header
-        class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm">
-        <div class="flex items-center gap-2">
-            <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-sm">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-                </svg>
-            </div>
-            <span
-                class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900">GateEase</span>
-        </div>
-        <div class="flex items-center gap-3">
-            <span
-                class="text-xs font-semibold tracking-wider text-slate-700 uppercase bg-slate-100 px-2 py-1 rounded-md hidden sm:block">Security</span>
-            {% if security.Photo %}
-            <img src="{{ security.Photo.url }}" alt="Profile"
-                class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 shadow-sm">
-            {% else %}
-            <div
-                class="w-10 h-10 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center border-2 border-white shadow-sm">
-                {{ security.name|default:"S"|make_list|first|upper }}
-            </div>
-            {% endif %}
-            <a href="{% url 'logout' %}" onclick="showLogoutModal(event);"
-                class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50"
-                title="Logout">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-            </a>
+
+    <!-- Header -->
+    <header class="topbar">
+        <a href="#" class="brand" aria-label="GateEase home">GateEase</a>
+
+        <div class="topbar-right">
+            <span class="role-badge">Security</span>
+
+            <button
+                type="button"
+                class="profile-trigger"
+                onclick="openProfileModal()"
+                aria-label="Open security profile"
+                aria-haspopup="dialog"
+                aria-controls="securityProfileModal"
+            >
+                <span class="security-avatar">
+                    {% if security.Photo %}
+                        <img src="{{ security.Photo.url }}" alt="Security profile">
+                    {% else %}
+                        {{ security.name|default:"S"|first|upper }}
+                    {% endif %}
+                </span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 w-full max-w-2xl mx-auto p-4 content-area md:p-6 lg:p-8">
+    <!-- Security profile popup -->
+    <div
+        id="securityProfileModal"
+        class="profile-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="securityProfileTitle"
+        onclick="if (event.target === this) closeProfileModal()"
+    >
+        <div class="profile-card">
+            <div class="profile-card-header">
+                <h2 class="profile-card-title" id="securityProfileTitle">
+                    Security Profile
+                </h2>
 
-        <div class="mb-8 mt-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900">Scan Exit Pass</h1>
-                <p class="text-slate-500 mt-1 text-sm">Duty: {{ security.name|default:"Guard" }}</p>
+                <button
+                    type="button"
+                    class="profile-close"
+                    onclick="closeProfileModal()"
+                    aria-label="Close profile"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="18" height="18" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round"
+                         aria-hidden="true">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </button>
             </div>
 
-            <button onclick="openScanner()"
-                class="bg-indigo-600 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95 w-full md:w-auto">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="9" y1="3" x2="9" y2="21"></line>
-                </svg>
-                Launch Scanner
-            </button>
-        </div>
-
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-5 border-b border-slate-100 flex items-center gap-2 bg-slate-50">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    class="text-slate-400">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <h2 class="text-lg font-bold text-slate-800">Recent Scans</h2>
-            </div>
-
-            <div class="divide-y divide-slate-100">
-                {% if recent_scans %}
-                {% for pass in recent_scans %}
-                <div class="p-5 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                    <div>
-                        <h3 class="font-bold text-slate-900 text-lg">{{ pass.student_id.name }}</h3>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">{{ pass.scanned_at|date:"M d, Y • h:i A" }}</p>
-                    </div>
-                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm border border-blue-200">
-                        Scanned
-                    </span>
+            <div class="profile-card-body">
+                <div class="profile-large-avatar">
+                    {% if security.Photo %}
+                        <img src="{{ security.Photo.url }}" alt="">
+                    {% else %}
+                        {{ security.name|default:"S"|first|upper }}
+                    {% endif %}
                 </div>
-                {% endfor %}
-                {% else %}
-                <div class="p-12 text-center flex flex-col items-center">
-                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+
+                <h3 class="profile-name">
+                    {{ security.name|default:"Security Officer" }}
+                </h3>
+
+                <span class="profile-role">Security Officer</span>
+
+                <div class="profile-location">
+                    <p class="profile-location-label">Place</p>
+                    <p class="profile-location-value">
+                        {{ security.place|default:"Location not set" }}
+                    </p>
+                </div>
+
+                <a href="{% url 'logout' %}"
+                   class="profile-logout"
+                   onclick="showLogoutModal(event)">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="17" height="17" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round"
+                         aria-hidden="true">
+                        <path d="M10 17l5-5-5-5"></path>
+                        <path d="M15 12H3"></path>
+                        <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path>
+                    </svg>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main page -->
+    <main class="main">
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">Gate operations</p>
+                <h1 class="page-title">Security Scanner</h1>
+                <p class="page-subtitle">
+                    Duty officer: {{ security.name|default:"Guard" }}.
+                    Verify student exit passes before allowing exit.
+                </p>
+            </div>
+
+            <div class="heading-actions">
+                <button type="button" onclick="openScanner()" class="scanner-button">
+                    
+                    Launch Scanner
+                </button>
+
+                <a href="{% url 'SecurityGroupPass' %}" class="group-pass-button">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round"
+                         aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                        <path d="M7 8h10M7 12h6M7 16h3"></path>
+                    </svg>
+                    Group Passes
+                </a>
+            </div>
+        </section>
+
+        <!-- Scanner banner -->
+        <section class="scanner-banner">
+            <div class="banner-copy">
+                <div class="banner-tag">
+                    <!-- <span class="status-dot"></span> -->
+                    Gate verification
+                </div>
+
+                <h2 class="banner-title">Scan. Verify. Authorise.</h2>
+
+                <p class="banner-description">
+                    Scan the QR code on a student's exit pass to check approval details.
+                    Review the pass before confirming the gate action.
+                </p>
+            </div>
+
+            <!-- <div class="banner-art" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 8V5a1 1 0 0 1 1-1h3"></path>
+                    <path d="M16 4h3a1 1 0 0 1 1 1v3"></path>
+                    <path d="M20 16v3a1 1 0 0 1-1 1h-3"></path>
+                    <path d="M8 20H5a1 1 0 0 1-1-1v-3"></path>
+                    <rect x="8" y="8" width="3" height="3"></rect>
+                    <rect x="14" y="8" width="2" height="2"></rect>
+                    <rect x="8" y="14" width="2" height="2"></rect>
+                    <path d="M14 14h2v2h-2zM18 14v5M14 18h2"></path>
+                </svg>
+            </div> -->
+        </section>
+
+        <!-- Recent scan history -->
+        <section class="activity-panel" aria-labelledby="recentScansTitle">
+            <div class="activity-header">
+                <div class="activity-heading">
+                    <div class="activity-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.8"
+                             stroke-linecap="round" stroke-linejoin="round"
+                             aria-hidden="true">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M12 7v5l3 2"></path>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-slate-800">No recent activity</h3>
-                    <p class="text-slate-500 text-sm mt-1">Passes scanned today will appear here.</p>
+
+                    <div>
+                        <h2 class="activity-title" id="recentScansTitle">Recent Scans</h2>
+                        <p class="activity-subtitle">Latest recorded pass scans</p>
+                    </div>
                 </div>
+
+                <span class="activity-label">Scan history</span>
+            </div>
+
+            <div>
+                {% if recent_scans %}
+                    {% for pass in recent_scans %}
+                        <div class="scan-row">
+                            <div class="scan-person">
+                                <div class="scan-person-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="1.8"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         aria-hidden="true">
+                                        <circle cx="12" cy="8" r="4"></circle>
+                                        <path d="M5 21v-2a7 7 0 0 1 14 0v2"></path>
+                                    </svg>
+                                </div>
+
+                                <div class="scan-person-info">
+                                    <h3 class="scan-name">{{ pass.student_id.name }}</h3>
+                                    <p class="scan-time">
+                                        {{ pass.scanned_at|date:"M d, Y • h:i A" }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <span class="scan-status">
+                                <!-- <svg xmlns="http://www.w3.org/2000/svg"
+                                     viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round"
+                                     aria-hidden="true">
+                                    <path d="m5 12 4 4L19 6"></path>
+                                </svg> -->
+                                Scanned
+                            </span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.6"
+                                 stroke-linecap="round" stroke-linejoin="round"
+                                 aria-hidden="true">
+                                <rect x="5" y="3" width="14" height="18" rx="2"></rect>
+                                <path d="M9 8h6M9 12h6M9 16h3"></path>
+                            </svg>
+                        </div>
+
+                        <h3 class="empty-title">No recent activity</h3>
+                        <p class="empty-description">
+                            Scanned exit passes will appear here when available.
+                        </p>
+                    </div>
                 {% endif %}
             </div>
-        </div>
+        </section>
     </main>
 
-    <!-- Bottom Navigation Bar (Mobile / Tablet) -->
-    <nav
-        class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] lg:hidden">
-        <div class="flex justify-around items-center h-16 max-w-3xl mx-auto px-2">
-            <a href="{% url 'SecurityHome' %}" class="flex flex-col items-center justify-center w-full h-full text-indigo-600">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                <span class="text-[10px] font-semibold mt-1">Scans</span>
-            </a>
-
-            <a href="{% url 'SecurityGroupPass' %}"
-                class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-500 transition-colors">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                </svg>
-                <span class="text-[10px] font-medium mt-1">Group Passes</span>
-            </a>
-        </div>
-    </nav>
-
-    <!-- QR Scanner Modal -->
-    <div id="qrModal"
-        class="fixed inset-0 bg-slate-900/90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-300"
-            id="qrModalContent">
-            <div class="flex justify-between items-center mb-6">
+    <!-- QR scanner modal -->
+    <div id="qrModal" class="modal-overlay"
+         role="dialog" aria-modal="true"
+         aria-labelledby="scannerModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
                 <div>
-                    <h3 class="text-xl font-bold text-slate-800">Scan QR Code</h3>
-                    <p class="text-sm text-slate-500 mt-1">Point camera at the student's pass</p>
+                    <h2 class="modal-title" id="scannerModalTitle">Scan QR Code</h2>
+                    <p class="modal-subtitle">
+                        Point the camera at the student's exit pass.
+                    </p>
                 </div>
-                <button onclick="closeScanner()"
-                    class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
+
+                <button type="button" onclick="closeScanner()"
+                        class="close-button" aria-label="Close scanner">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m18 6-12 12M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
 
-            <div class="bg-slate-50 p-2 rounded-2xl border border-slate-100 flex justify-center relative min-h-[250px]">
-                <div id="camera-loading"
-                    class="absolute inset-0 flex flex-col items-center justify-center z-10 bg-slate-50 rounded-2xl">
-                    <div
-                        class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-3">
+            <div class="modal-body">
+                <div class="scanner-frame">
+                    <div id="camera-loading" class="camera-loading">
+                        <div class="spinner"></div>
+                        <span>Initializing camera...</span>
                     </div>
-                    <span class="text-slate-500 font-semibold text-sm animate-pulse">Initializing Camera...</span>
+                    <div id="reader"></div>
                 </div>
-                <div id="reader" class="w-full relative z-20"></div>
             </div>
         </div>
     </div>
 
-    <!-- Pass Details Modal -->
-    <div id="passDetailsModal"
-        class="fixed inset-0 bg-slate-900/90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-300"
-            id="passDetailsModalContent">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-slate-800">Pass Details</h3>
-                <button onclick="closeDetailsModal()"
-                    class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
+    <!-- Pass details modal -->
+    <div id="passDetailsModal" class="modal-overlay"
+         role="dialog" aria-modal="true"
+         aria-labelledby="passDetailsTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="passDetailsTitle">Pass Details</h2>
+                    <p class="modal-subtitle">
+                        Check the student and approval information.
+                    </p>
+                </div>
+
+                <button type="button" onclick="closeDetailsModal()"
+                        class="close-button" aria-label="Close pass details">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m18 6-12 12M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
 
-            <!-- Content Area -->
-            <div id="passDetailsContent" class="space-y-4">
-                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div class="modal-body">
+                <div class="student-summary">
+                    <div id="pd-photo-placeholder" class="student-photo">S</div>
                     <img id="pd-photo" src="" alt="Student"
-                        class="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 shadow-sm hidden">
-                    <div id="pd-photo-placeholder"
-                        class="w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center border-2 border-white shadow-sm text-xl hidden">
-                        S</div>
+                         class="student-photo hidden">
+
                     <div>
-                        <h4 id="pd-name" class="font-bold text-slate-900 text-lg">Student Name</h4>
-                        <p id="pd-time" class="text-sm text-slate-500 font-medium">Time & Date</p>
+                        <h3 id="pd-name" class="student-name">Student Name</h3>
+                        <p id="pd-time" class="student-time">Time and date</p>
                     </div>
                 </div>
 
-                <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-                    <p class="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-1">Approved By</p>
-                    <p id="pd-mentor" class="font-semibold text-indigo-900">Mentor Name</p>
+                <div class="approved-by">
+                    <p class="detail-label">Approved by</p>
+                    <p id="pd-mentor" class="detail-value">Mentor Name</p>
                 </div>
 
-                <!-- Warning state -->
-                <div id="pd-warning" class="hidden p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-6 h-6 text-amber-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                            stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                            </path>
-                        </svg>
-                        <div>
-                            <h4 class="font-bold text-amber-800">Attention Needed</h4>
-                            <p id="pd-warning-text" class="text-sm text-amber-700 mt-1">This pass has already been
-                                scanned.</p>
-                        </div>
+                <div id="pd-warning" class="warning-panel hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 9v4M12 17h.01"></path>
+                        <path d="m10.3 3.9-8.5 15.1a1.8 1.8 0 0 0 1.6 2.7h17.2a1.8 1.8 0 0 0 1.6-2.7L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z"></path>
+                    </svg>
+
+                    <div>
+                        <h4 class="warning-title">Attention needed</h4>
+                        <p id="pd-warning-text" class="warning-text">
+                            Check this pass before proceeding.
+                        </p>
                     </div>
                 </div>
-            </div>
 
-            <!-- Actions -->
-            <div id="pd-actions" class="mt-8 flex gap-3">
-                <button onclick="submitScanAction('reject')"
-                    class="flex-1 bg-white border-2 border-rose-100 text-rose-600 font-bold py-3.5 px-4 rounded-xl hover:bg-rose-50 transition-colors active:scale-[0.98]">
-                    Reject
-                </button>
-                <button onclick="submitScanAction('approve')"
-                    class="flex-[2] bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 active:scale-[0.98]">
-                    Approve Pass
-                </button>
+                <div id="pd-actions" class="modal-actions">
+                    <button type="button"
+                            onclick="submitScanAction('reject')"
+                            class="action-button reject-button">
+                        Reject
+                    </button>
+
+                    <button type="button"
+                            onclick="submitScanAction('approve')"
+                            class="action-button approve-button">
+                        Approve Pass
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="scanResultModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center px-4">
-        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeResultModal()">
-        </div>
-        <div class="bg-white rounded-3xl w-full max-w-sm p-6 relative z-10 shadow-2xl transform transition-all scale-95 opacity-0 duration-200"
-            id="scanResultModalContent">
-
-            <div id="sr-icon-success"
-                class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 hidden"
-                style="background-color: #d1fae5;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 13l4 4L19 7"></path>
+    <!-- Scan result modal -->
+    <div id="scanResultModal" class="modal-overlay"
+         role="dialog" aria-modal="true"
+         aria-labelledby="sr-title">
+        <div class="result-card">
+            <div id="sr-icon-success" class="result-icon result-success hidden">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m5 12 4 4L19 6"></path>
                 </svg>
             </div>
 
-            <div id="sr-icon-warning"
-                class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 hidden"
-                style="background-color: #fef3c7;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                    </path>
+            <div id="sr-icon-warning" class="result-icon result-warning hidden">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 9v4M12 17h.01"></path>
+                    <path d="m10.3 3.9-8.5 15.1a1.8 1.8 0 0 0 1.6 2.7h17.2a1.8 1.8 0 0 0 1.6-2.7L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z"></path>
                 </svg>
             </div>
 
-            <div id="sr-icon-error" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 hidden"
-                style="background-color: #ffe4e6;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
+            <div id="sr-icon-error" class="result-icon result-error hidden">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m18 6-12 12M6 6l12 12"></path>
                 </svg>
             </div>
 
-            <h3 id="sr-title" class="text-xl font-bold text-center text-slate-800 mb-2">Title</h3>
-            <p id="sr-message" class="text-center text-slate-500 text-sm mb-6">Message</p>
+            <h3 id="sr-title" class="result-title">Result</h3>
+            <p id="sr-message" class="result-message">Scan result message.</p>
 
-            <div class="flex gap-3 w-full">
-                <button onclick="closeResultModal()" id="sr-btn"
-                    class="w-full font-bold py-3 rounded-xl transition-colors shadow-sm"
-                    style="background-color: #4f46e5; color: #ffffff;">OK</button>
-            </div>
+            <button type="button" onclick="closeResultModal()"
+                    id="sr-btn" class="result-ok">
+                OK
+            </button>
         </div>
     </div>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+
     <script>
-        let html5QrCode;
-        let currentScannedToken = null;
-        let currentPassToken = null;  // Stores the encrypted token, never the raw ID
+        let html5QrCode = null;
+        let currentPassToken = null;
+        let scannerStarting = false;
 
-        // CSRF Token Helper
+        const csrftoken = getCookie('csrftoken');
+
         function getCookie(name) {
             let cookieValue = null;
+
             if (document.cookie && document.cookie !== '') {
                 const cookies = document.cookie.split(';');
+
                 for (let i = 0; i < cookies.length; i++) {
                     const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+
+                    if (cookie.substring(0, name.length + 1) === name + '=') {
+                        cookieValue = decodeURIComponent(
+                            cookie.substring(name.length + 1)
+                        );
                         break;
                     }
                 }
             }
+
             return cookieValue;
         }
-        const csrftoken = getCookie('csrftoken');
 
-        function openScanner() {
-            const modal = document.getElementById('qrModal');
-            const modalContent = document.getElementById('qrModalContent');
-            const loading = document.getElementById('camera-loading');
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            void modal.offsetWidth;
-            modal.classList.remove('opacity-0');
-            modalContent.classList.remove('scale-95');
-            loading.style.display = 'flex';
-
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 200, height: 200 } },
-                onScanSuccess,
-                onScanFailure
-            ).then(() => { loading.style.display = 'none'; })
-                .catch(err => {
-                    console.error("Error starting scanner", err);
-                    loading.style.display = 'none';
-                    alert("Could not access back camera. Please ensure permissions are granted.");
-                });
+        function showModal(modal) {
+            if (!modal) return;
+            modal.classList.add('visible');
+            document.body.classList.add('modal-open');
         }
 
-        function closeScanner() {
+        function hideModal(modal) {
+            if (!modal) return;
+            modal.classList.remove('visible');
+
+            if (
+                !document.querySelector('.modal-overlay.visible') &&
+                !document.querySelector('.profile-modal.visible')
+            ) {
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        /* Profile popup */
+
+        function openProfileModal() {
+            const modal = document.getElementById('securityProfileModal');
+            showModal(modal);
+
+            const closeButton = modal.querySelector('.profile-close');
+            if (closeButton) closeButton.focus();
+        }
+
+        function closeProfileModal() {
+            hideModal(document.getElementById('securityProfileModal'));
+
+            const profileButton = document.querySelector('.profile-trigger');
+            if (profileButton) profileButton.focus();
+        }
+
+        /* QR scanner */
+
+        async function openScanner() {
             const modal = document.getElementById('qrModal');
-            const modalContent = document.getElementById('qrModalContent');
-            modal.classList.add('opacity-0');
-            modalContent.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                if (html5QrCode) {
-                    html5QrCode.stop().catch(err => { });
+            const loading = document.getElementById('camera-loading');
+
+            if (scannerStarting) return;
+            if (html5QrCode && html5QrCode.isScanning) return;
+
+            scannerStarting = true;
+            showModal(modal);
+            loading.style.display = 'flex';
+
+            try {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode('reader');
                 }
-            }, 300);
+
+                await html5QrCode.start(
+                    { facingMode: 'environment' },
+                    { fps: 10, qrbox: { width: 200, height: 200 } },
+                    onScanSuccess,
+                    onScanFailure
+                );
+
+                loading.style.display = 'none';
+            } catch (error) {
+                console.error('Error starting scanner:', error);
+                hideModal(modal);
+
+                Swal.fire({
+                    title: 'Camera unavailable',
+                    text: 'Could not access the camera. Check browser permissions and ensure the site uses HTTPS.',
+                    icon: 'error',
+                    confirmButtonColor: '#5145CD'
+                });
+            } finally {
+                scannerStarting = false;
+            }
+        }
+
+        async function closeScanner() {
+            hideModal(document.getElementById('qrModal'));
+
+            if (html5QrCode && html5QrCode.isScanning) {
+                try {
+                    await html5QrCode.stop();
+                } catch (error) {
+                    console.warn('Unable to stop scanner:', error);
+                }
+            }
         }
 
         function closeDetailsModal() {
-            const modal = document.getElementById('passDetailsModal');
-            const modalContent = document.getElementById('passDetailsModalContent');
-            modal.classList.add('opacity-0');
-            modalContent.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 300);
+            hideModal(document.getElementById('passDetailsModal'));
         }
 
         function closeResultModal() {
-            const modal = document.getElementById('scanResultModal');
-            const modalContent = document.getElementById('scanResultModalContent');
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            modalContent.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                location.reload();
-            }, 200);
+            hideModal(document.getElementById('scanResultModal'));
+            window.location.reload();
         }
 
-        function onScanSuccess(decodedText, decodedResult) {
+        function onScanSuccess(decodedText) {
             closeScanner();
-            currentScannedToken = decodedText;
 
-            // Show loading state
             Swal.fire({
                 title: 'Verifying QR Code...',
                 allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
+                allowEscapeKey: false,
+                didOpen: () => Swal.showLoading()
             });
 
             fetch('/WebGetPassDetails', {
@@ -436,66 +1692,94 @@
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': csrftoken
                 },
-                body: new URLSearchParams({ 'token': decodedText })
+                body: new URLSearchParams({ token: decodedText })
             })
-                .then(response => response.json())
-                .then(data => {
-                    Swal.close();
-                    if (data.success) {
-                        showPassDetails(data);
-                    } else {
-                        Swal.fire({ title: 'Error!', text: data.message, icon: 'error', confirmButtonColor: '#4f46e5' });
-                    }
-                })
-                .catch(error => {
-                    Swal.close();
-                    Swal.fire({ title: 'Error!', text: 'Failed to verify QR Code.', icon: 'error', confirmButtonColor: '#4f46e5' });
+            .then(response => {
+                if (!response.ok) throw new Error('Request failed.');
+                return response.json();
+            })
+            .then(data => {
+                Swal.close();
+
+                if (data.success) {
+                    showPassDetails(data);
+                } else {
+                    Swal.fire({
+                        title: 'Verification failed',
+                        text: data.message || 'The QR code could not be verified.',
+                        icon: 'error',
+                        confirmButtonColor: '#5145CD'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('QR verification error:', error);
+
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to verify the QR code. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#5145CD'
                 });
+            });
         }
 
         function showPassDetails(data) {
-            currentPassToken = data.pass_token;  // Store encrypted token, not raw ID
+            currentPassToken = data.pass_token;
 
-            document.getElementById('pd-name').innerText = data.student_name;
-            document.getElementById('pd-time').innerText = data.date + ' at ' + data.time;
-            document.getElementById('pd-mentor').innerText = data.mentor_name;
+            document.getElementById('pd-name').innerText =
+                data.student_name || 'Unknown student';
+
+            document.getElementById('pd-time').innerText =
+                (data.date || '') + (data.time ? ' at ' + data.time : '');
+
+            document.getElementById('pd-mentor').innerText =
+                data.mentor_name || 'Not available';
 
             const photoEl = document.getElementById('pd-photo');
             const placeholderEl = document.getElementById('pd-photo-placeholder');
+
             if (data.student_photo) {
                 photoEl.src = data.student_photo;
                 photoEl.classList.remove('hidden');
                 placeholderEl.classList.add('hidden');
+
+                photoEl.onerror = function () {
+                    photoEl.classList.add('hidden');
+                    placeholderEl.classList.remove('hidden');
+                    placeholderEl.innerText =
+                        (data.student_name || 'S').charAt(0).toUpperCase();
+                };
             } else {
                 photoEl.classList.add('hidden');
                 placeholderEl.classList.remove('hidden');
-                placeholderEl.innerText = data.student_name.charAt(0).toUpperCase();
+                placeholderEl.innerText =
+                    (data.student_name || 'S').charAt(0).toUpperCase();
             }
 
             const warningEl = document.getElementById('pd-warning');
             const warningText = document.getElementById('pd-warning-text');
             const actionsEl = document.getElementById('pd-actions');
 
-            if (data.security_status === 'scanned' || data.security_status === 'rejected') {
+            if (
+                data.security_status === 'scanned' ||
+                data.security_status === 'rejected'
+            ) {
                 warningEl.classList.remove('hidden');
-                warningText.innerText = `This pass has already been ${data.security_status}.`;
+                warningText.innerText =
+                    `This pass has already been ${data.security_status}.`;
                 actionsEl.classList.add('hidden');
             } else if (data.mentor_status !== 'approved') {
                 warningEl.classList.remove('hidden');
-                warningText.innerText = "This pass is not approved by mentor yet.";
+                warningText.innerText =
+                    'This pass has not been approved by a mentor.';
                 actionsEl.classList.add('hidden');
             } else {
                 warningEl.classList.add('hidden');
                 actionsEl.classList.remove('hidden');
             }
 
-            const modal = document.getElementById('passDetailsModal');
-            const modalContent = document.getElementById('passDetailsModalContent');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            void modal.offsetWidth;
-            modal.classList.remove('opacity-0');
-            modalContent.classList.remove('scale-95');
+            showModal(document.getElementById('passDetailsModal'));
         }
 
         function submitScanAction(action) {
@@ -504,7 +1788,8 @@
             Swal.fire({
                 title: 'Processing...',
                 allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
+                allowEscapeKey: false,
+                didOpen: () => Swal.showLoading()
             });
 
             fetch('/SecurityScanPass', {
@@ -513,57 +1798,104 @@
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': csrftoken
                 },
-                body: new URLSearchParams({ 'token': currentPassToken, 'action': action })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    closeDetailsModal();
-                    Swal.close(); // Close any loading spinners
-
-                    setTimeout(() => {
-                        const modal = document.getElementById('scanResultModal');
-                        const modalContent = document.getElementById('scanResultModalContent');
-                        const title = document.getElementById('sr-title');
-                        const message = document.getElementById('sr-message');
-                        const btn = document.getElementById('sr-btn');
-
-                        document.getElementById('sr-icon-success').classList.add('hidden');
-                        document.getElementById('sr-icon-warning').classList.add('hidden');
-                        document.getElementById('sr-icon-error').classList.add('hidden');
-
-                        if (data.success) {
-                            document.getElementById('sr-icon-success').classList.remove('hidden');
-                            title.innerText = 'Success!';
-                            message.innerText = data.message;
-                            btn.innerText = 'OK';
-                        } else if (data.is_warning) {
-                            document.getElementById('sr-icon-warning').classList.remove('hidden');
-                            title.innerText = 'Warning!';
-                            message.innerText = data.message;
-                            btn.innerText = 'OK';
-                        } else {
-                            document.getElementById('sr-icon-error').classList.remove('hidden');
-                            title.innerText = 'Error!';
-                            message.innerText = data.message;
-                            btn.innerText = 'OK';
-                        }
-
-                        modal.classList.remove('hidden');
-                        void modal.offsetWidth;
-                        modalContent.classList.remove('scale-95', 'opacity-0');
-                        modalContent.classList.add('scale-100', 'opacity-100');
-                    }, 300);
+                body: new URLSearchParams({
+                    token: currentPassToken,
+                    action: action
                 })
-                .catch(error => {
-                    Swal.fire({ title: 'Error!', text: 'Action failed.', icon: 'error', confirmButtonColor: '#4f46e5' });
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Request failed.');
+                return response.json();
+            })
+            .then(data => {
+                Swal.close();
+                closeDetailsModal();
+
+                const successIcon = document.getElementById('sr-icon-success');
+                const warningIcon = document.getElementById('sr-icon-warning');
+                const errorIcon = document.getElementById('sr-icon-error');
+
+                successIcon.classList.add('hidden');
+                warningIcon.classList.add('hidden');
+                errorIcon.classList.add('hidden');
+
+                const title = document.getElementById('sr-title');
+                const message = document.getElementById('sr-message');
+
+                if (data.success) {
+                    successIcon.classList.remove('hidden');
+                    title.innerText = 'Success';
+                    message.innerText =
+                        data.message || 'The pass was processed successfully.';
+                } else if (data.is_warning) {
+                    warningIcon.classList.remove('hidden');
+                    title.innerText = 'Attention required';
+                    message.innerText =
+                        data.message || 'Please review the pass status.';
+                } else {
+                    errorIcon.classList.remove('hidden');
+                    title.innerText = 'Action failed';
+                    message.innerText =
+                        data.message || 'The pass could not be processed.';
+                }
+
+                showModal(document.getElementById('scanResultModal'));
+            })
+            .catch(error => {
+                console.error('Pass action error:', error);
+
+                Swal.fire({
+                    title: 'Error',
+                    text: 'The action failed. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#5145CD'
                 });
+            });
         }
 
         function onScanFailure(error) {
-            // keep scanning.
+            // Individual frame failures are expected while scanning.
         }
+
+        /* Keyboard support and modal dismissal */
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+
+            const profileModal =
+                document.getElementById('securityProfileModal');
+            const resultModal =
+                document.getElementById('scanResultModal');
+            const detailsModal =
+                document.getElementById('passDetailsModal');
+            const scannerModal =
+                document.getElementById('qrModal');
+
+            if (profileModal.classList.contains('visible')) {
+                closeProfileModal();
+            } else if (resultModal.classList.contains('visible')) {
+                closeResultModal();
+            } else if (detailsModal.classList.contains('visible')) {
+                closeDetailsModal();
+            } else if (scannerModal.classList.contains('visible')) {
+                closeScanner();
+            }
+        });
+
+        /* Ensure the scanner releases the camera when the page is hidden. */
+        document.addEventListener('visibilitychange', function () {
+            if (
+                document.hidden &&
+                html5QrCode &&
+                html5QrCode.isScanning
+            ) {
+                html5QrCode.stop().catch(error => {
+                    console.warn('Unable to stop scanner:', error);
+                });
+            }
+        });
     </script>
+
     {% include 'partials/logout_modal.html' %}
 </body>
-
 </html>

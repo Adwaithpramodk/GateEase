@@ -798,9 +798,20 @@ class MntrHome(MentorRequiredMixin, View):
         user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         try:
             mentor = mentortable.objects.get(LOGINID_id=user_id)
+            assigned_classes = class_assigntable.objects.filter(
+                mentor_id=mentor
+            ).values_list('class_id', flat=True)
+            pending_passes = exitpasstable.objects.filter(
+                mentor_status='pending',
+                student_id__classs__id__in=assigned_classes
+            ).select_related('student_id', 'student_id__classs').order_by('-created_at')[:6]
         except mentortable.DoesNotExist:
             mentor = None
-        return render(request, 'tables/form/mntrhome.html', {'mentor': mentor})
+            pending_passes = []
+        return render(request, 'tables/form/mntrhome.html', {
+            'mentor': mentor,
+            'pending_passes': pending_passes,
+        })
 
 class MentorProfileUpdate(LoginRequiredMixin, View):
     def get(self, request):

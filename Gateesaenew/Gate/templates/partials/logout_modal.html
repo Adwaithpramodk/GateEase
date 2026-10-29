@@ -112,6 +112,10 @@
     function showLogoutModal(event) {
         if (event) event.preventDefault();
         const modal = document.getElementById('logoutModal');
+        if (!modal) {
+            window.location.href = "{% url 'logout' %}";
+            return false;
+        }
         modal.style.display = 'flex';
         // Small delay to trigger CSS transition
         setTimeout(() => {
@@ -121,6 +125,7 @@
 
     function closeLogoutModal() {
         const modal = document.getElementById('logoutModal');
+        if (!modal) return;
         modal.classList.remove('show');
         setTimeout(() => {
             modal.style.display = 'none';
@@ -128,9 +133,12 @@
     }
 
     // Close on backdrop click
-    document.getElementById('logoutModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeLogoutModal();
-        }
-    });
+    const logoutModal = document.getElementById('logoutModal');
+    if (logoutModal) {
+        logoutModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLogoutModal();
+            }
+        });
+    }
 </script>

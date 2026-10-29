@@ -108,7 +108,7 @@ class SecurityRequiredMixin:
         return super().dispatch(request, *args, **kwargs)
 
 class Logout(View):
-    def post(self, request):
+    def _logout(self, request):
         refresh_token = request.COOKIES.get('refresh_token')
         if refresh_token:
             try:
@@ -120,6 +120,12 @@ class Logout(View):
         response = redirect('LoginPage')
         delete_auth_cookies(response)
         return response
+
+    def get(self, request):
+        return self._logout(request)
+
+    def post(self, request):
+        return self._logout(request)
 
 #login page for admin
 class ForgotPasswordWeb(View):
@@ -753,9 +759,20 @@ class MentorApprovedPasses(MentorRequiredMixin, View):
         try:
             mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
             assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
+            now_local = timezone.localtime()
+            assigned_approved_passes = exitpasstable.objects.filter(
+                mentor_status='approved',
+                security_status='pending',
+                student_id__classs__id__in=assigned_classes
+            )
+            expired_filter = models.Q(created_at__date__lt=now_local.date()) | models.Q(
+                created_at__date=now_local.date(),
+                time__lte=now_local.time()
+            )
+            assigned_approved_passes.filter(expired_filter).delete()
 
             # Show passes that are approved by mentor but not yet scanned or cancelled
-            approved_passes = exitpasstable.objects.filter(
+            approved_passes = assigned_approved_passes.filter(
                 mentor_status='approved',
                 security_status='pending',
                 student_id__classs__id__in=assigned_classes
@@ -1159,6 +1176,10 @@ class StudentNewPass(StudentRequiredMixin, View):
 
         now_local = timezone.localtime()
 
+        if not mentor_approval_window_open():
+            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+            return redirect('StudentNewPass')
+
         # ── Limit of 2 passes per hour ──
         one_hour_ago = now_local - datetime.timedelta(hours=1)
         recent_passes_count = exitpasstable.objects.filter(
@@ -1176,14 +1197,6 @@ class StudentNewPass(StudentRequiredMixin, View):
         if exit_datetime <= now_local:
             messages.error(request, "Exit time must be in the future")
             return redirect('StudentNewPass')
-
-        # window_open  = datetime.time(10, 0)
-        # window_close = datetime.time(15, 40)
-        # current_time = now_local.time()
-        #
-        # if not (window_open <= current_time <= window_close):
-        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-        #     return redirect('StudentNewPass')
 
         formatted_time = time_obj.strftime('%I:%M %p')
 
@@ -1756,15 +1769,11 @@ class ApplypassAPI(JWTAuthMixin, APIView):
             if recent_passes_count >= 2:
                 return Response({"error": "You can only apply for 2 passes per hour. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
-            # ── Enforce application time window: 10:00 AM – 3:40 PM (IST) ──
-            # window_open  = datetime.time(10, 0)   # 10:00 AM
-            # window_close = datetime.time(15, 40)  # 3:40 PM
-            # current_time = now_local.time()
-            # if not (window_open <= current_time <= window_close):
-            #     return Response(
-            #         {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
+            if not mentor_approval_window_open():
+                return Response(
+                    {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # student_obj = studenttable.objects.get(LOGINID_id=lid)
 
@@ -2977,6 +2986,7 @@ class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
 
 class VerifyStudentMentor(MentorRequiredMixin, View):
     def get(self, request):
+        q = request.GET.get('q', '').strip()
         status = request.GET.get('status', '').strip()
         mentor_dept_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         # Use LOGINID_id or connect via LOGINID object
@@ -2993,6 +3003,13 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
 
         # Filter students strictly by the mentor's assigned classes
         students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids).order_by('-id')
+        if q:
+            students_list = students_list.filter(
+                models.Q(name__icontains=q) |
+                models.Q(email__icontains=q) |
+                models.Q(admn_no__icontains=q) |
+                models.Q(classs__class_name__icontains=q)
+            )
         students_list = filter_student_verification_status(students_list, status)
 
         paginator = Paginator(students_list, 10)
@@ -3007,7 +3024,9 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
                 'mentor_name': mentor_obj.name,
                 'class_names': class_names,
                 'mentor': mentor_obj,
-                'status': status
+                'q': q,
+                'status': status,
+                'classes': classstable.objects.all().order_by('class_name'),
             }
         )
 

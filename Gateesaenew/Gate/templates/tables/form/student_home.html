@@ -859,8 +859,18 @@
                                     <div class="ticket-title">Campus Exit Pass</div>
                                 </div>
 
-                                {% if current_pass.mentor_status == 'approved' and current_pass.security_status == 'approved' %}
-                                    <span class="status-chip status-live">Confirmed</span>
+                                {% if current_pass.mentor_status == 'rejected' or current_pass.security_status == 'rejected' %}
+                                    <span class="status-chip status-empty">Rejected</span>
+                                {% elif current_pass.mentor_status == 'cancelled' %}
+                                    <span class="status-chip status-empty">Cancelled</span>
+                                {% elif current_pass.mentor_status == 'revoked' %}
+                                    <span class="status-chip status-empty">Revoked</span>
+                                {% elif current_pass.mentor_status == 'approved' %}
+                                    {% if current_pass.security_status == 'approved' or current_pass.security_status == 'scanned' %}
+                                        <span class="status-chip status-live">Confirmed</span>
+                                    {% else %}
+                                        <span class="status-chip status-live">Approved</span>
+                                    {% endif %}
                                 {% else %}
                                     <span class="status-chip status-empty">In review</span>
                                 {% endif %}

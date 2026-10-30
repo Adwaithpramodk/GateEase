@@ -1693,6 +1693,86 @@
             }
 
         }
+        
+/* Mobile fix: make the complete group pass form scrollable */
+@media (max-width: 760px) {
+
+    .group-form {
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Remove the separate nested scrolling area */
+    .student-list-scroll {
+        flex: none !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overscroll-behavior: auto;
+    }
+
+    /* Keep the footer in normal page flow */
+    .form-footer {
+        position: relative !important;
+        bottom: auto;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        width: 100%;
+        padding: 15px 14px
+            calc(15px + env(safe-area-inset-bottom));
+        background: #FFFFFF;
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -4px 12px rgba(30, 27, 75, 0.025);
+    }
+
+    .footer-summary {
+        width: 100%;
+        flex: none;
+    }
+
+    .footer-summary span {
+        display: block;
+    }
+
+    /* Full-width approve button */
+    .btn-submit {
+        width: 100%;
+        min-height: 48px;
+        flex-shrink: 0;
+        justify-content: center;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .page-content {
+        padding-bottom: 30px;
+    }
+}
+
+/* Very narrow screens */
+@media (max-width: 340px) {
+    .form-footer {
+        padding: 13px 10px
+            calc(13px + env(safe-area-inset-bottom));
+    }
+
+    .btn-submit {
+        width: 100%;
+        min-height: 46px;
+        font-size: 12px;
+        padding: 0 10px;
+    }
+
+    .footer-summary span {
+        display: block;
+    }
+}
 
     </style>
 

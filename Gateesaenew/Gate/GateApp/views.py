@@ -16,7 +16,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.db import IntegrityError, transaction
 from django.db import models as models
 from .auth_tokens import delete_auth_cookies, create_login_tokens, rotate_refresh_token, set_auth_cookies
-
+from django.views.decorators.http import require_GET    
+from django.db.models import Q
 logger = logging.getLogger(__name__)
 
 

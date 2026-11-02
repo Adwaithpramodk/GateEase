@@ -14,6 +14,22 @@ class ApplyPassPage extends StatefulWidget {
 }
 
 class _ApplyPassPageState extends State<ApplyPassPage> {
+  // Exact color tokens extracted from student_home.html.
+  static const Color _webPrimary = Color(0xFF6D4AE5);
+  static const Color _webPrimaryDark = Color(0xFF5632C9);
+  static const Color _webPrimaryLight = Color(0xFFEFEAFE);
+  static const Color _webPrimaryTint = Color(0xFFF6F3FF);
+  static const Color _webBackground = Color(0xFFEEEDF8);
+  static const Color _webScreen = Color(0xFFF7F6FC);
+  static const Color _webSurface = Color(0xFFFFFFFF);
+  static const Color _webTextPrimary = Color(0xFF1B1840);
+  static const Color _webTextSecondary = Color(0xFF6C6A86);
+  static const Color _webTextMuted = Color(0xFFA5A3BA);
+  static const Color _webAccentOrange = Color(0xFFFF9A3D);
+  static const Color _webSuccess = Color(0xFF2EC27E);
+  static const Color _webDanger = Color(0xFFF25C5C);
+  static const Color _webBorder = Color(0xFFE8E6F5);
+  static const Color _webSurfaceAlt = Color(0xFFF6F3FF);
   final TextEditingController reasonController = TextEditingController();
   int _hour = 8;
   int _minute = 0;
@@ -64,7 +80,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a reason for the pass'),
-          backgroundColor: Colors.red,
+          backgroundColor: _webDanger,
         ),
       );
       return;
@@ -75,7 +91,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select exit time'),
-          backgroundColor: Colors.red,
+          backgroundColor: _webDanger,
         ),
       );
       return;
@@ -95,7 +111,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pass applied successfully!'),
-            backgroundColor: AppTheme.success,
+            backgroundColor: _webSuccess,
           ),
         );
         Navigator.pop(context);
@@ -112,7 +128,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMsg),
-            backgroundColor: Colors.red,
+            backgroundColor: _webDanger,
           ),
         );
       }
@@ -121,204 +137,471 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
 
   @override
   Widget build(BuildContext context) {
+    final studentName = details?['name']?.toString() ?? 'Loading student details...';
+    final department = details?['dept']?.toString() ?? 'Student';
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: _webBackground,
       appBar: AppBar(
-        title: const Text('Apply New Pass'),
-        backgroundColor: AppTheme.background,
+        backgroundColor: _webSurface,
+        foregroundColor: _webPrimary,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        titleSpacing: 4,
+        title: const Text(
+          'Apply New Pass',
+          style: TextStyle(
+            color: _webTextPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.2,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: _webPrimary),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 🔹 Info Header Card (Deep Indigo Gradient)
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppTheme.primary, AppTheme.headerBottom],
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primary.withValues(alpha: 0.25),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header card uses the same gradient and purple palette as Student Home.
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF7650EA), Color(0xFF6240D8)],
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Application Date',
-                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x295032AA),
+                      blurRadius: 20,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -48,
+                      top: -65,
+                      child: Container(
+                        width: 150,
+                        height: 150,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          todayDate,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            width: 1.4,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Divider(color: Colors.white24, height: 1),
-                  ),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.exit_to_app_rounded,
+                                color: Colors.white,
+                                size: 21,
+                              ),
+                            ),
+                            const SizedBox(width: 11),
+                            const Expanded(
+                              child: Text(
+                                'NEW EXIT PASS',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.15,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                todayDate,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: CircleAvatar(
-                          radius: 32,
-                          backgroundColor: Colors.white.withValues(alpha: 0.15),
-                          backgroundImage: details?['Photo'] != null
-                              ? NetworkImage('$baseurl${details!['Photo']}')
-                              : null,
-                          child: details?['Photo'] == null
-                              ? const Icon(Icons.person_rounded, color: Colors.white, size: 32)
-                              : null,
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Apply for an exit pass',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            height: 1.2,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'Add your reason and exit time.',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.82),
+                            fontSize: 11,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Divider(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          height: 1,
+                        ),
+                        const SizedBox(height: 15),
+                        Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.17),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: details?['Photo'] != null &&
+                                  details!['Photo'].toString().isNotEmpty
+                                  ? Image.network(
+                                details!['Photo'].toString().startsWith('http')
+                                    ? details!['Photo'].toString()
+                                    : '$baseurl${details!['Photo']}',
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(
+                                  Icons.person_rounded,
+                                  color: Colors.white,
+                                ),
+                              )
+                                  : const Icon(
+                                Icons.person_rounded,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 11),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    studentName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    department,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.78),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.verified_user_outlined,
+                              color: Colors.white70,
+                              size: 19,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 23),
+
+              // Form container.
+              Container(
+                padding: const EdgeInsets.fromLTRB(17, 20, 17, 18),
+                decoration: BoxDecoration(
+                  color: _webSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _webBorder),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A5037AA),
+                      blurRadius: 18,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: _webPrimaryLight,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.edit_document,
+                            color: _webPrimary,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Pass Information',
+                            style: TextStyle(
+                              color: _webTextPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _webPrimaryLight,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'Required',
+                            style: TextStyle(
+                              color: _webPrimaryDark,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _sectionLabel('Why are you leaving?'),
+                    TextField(
+                      controller: reasonController,
+                      maxLines: 4,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: const TextStyle(
+                        color: _webTextPrimary,
+                        fontSize: 14,
+                        height: 1.45,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Enter a valid reason for your exit pass...',
+                        hintStyle: const TextStyle(
+                          color: _webTextSecondary,
+                          fontSize: 13,
+                        ),
+                        alignLabelWithHint: true,
+                        filled: true,
+                        fillColor: _webPrimaryTint,
+                        contentPadding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(13),
+                          borderSide: const BorderSide(color: _webBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(13),
+                          borderSide: const BorderSide(color: _webBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(13),
+                          borderSide: const BorderSide(
+                            color: _webPrimary,
+                            width: 1.4,
+                          ),
+                        ),
+                        prefixIcon: const Padding(
+                          padding: EdgeInsets.only(bottom: 60),
+                          child: Icon(
+                            Icons.notes_rounded,
+                            color: _webPrimary,
+                            size: 20,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                    const SizedBox(height: 22),
+                    _sectionLabel('Exit Time'),
+                    GestureDetector(
+                      onTap: _showTimePicker,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 13,
+                          vertical: 13,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _webPrimaryTint,
+                          borderRadius: BorderRadius.circular(13),
+                          border: Border.all(
+                            color: _timeSelected ? _webPrimary : _webBorder,
+                            width: _timeSelected ? 1.3 : 1,
+                          ),
+                        ),
+                        child: Row(
                           children: [
-                            Text(
-                              details?['name'] ?? 'Loading...',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 18,
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: _webPrimaryLight,
+                                borderRadius: BorderRadius.circular(11),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              child: const Icon(
+                                Icons.schedule_rounded,
+                                color: _webPrimary,
+                                size: 20,
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              details?['dept'] ?? '',
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.w500),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _timeSelected
+                                        ? '${_hour.toString().padLeft(2, "0")}:${_minute.toString().padLeft(2, "0")} $_period'
+                                        : 'Select your exit time',
+                                    style: TextStyle(
+                                      color: _timeSelected
+                                          ? _webTextPrimary
+                                          : _webTextSecondary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  const Text(
+                                    'Permitted: 10:00 AM – 03:40 PM',
+                                    style: TextStyle(
+                                      color: _webTextSecondary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: _webPrimary,
+                              size: 22,
                             ),
                           ],
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 23),
+                    SizedBox(
+                      height: 52,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [_webPrimary, _webPrimaryDark],
+                          ),
+                          borderRadius: BorderRadius.circular(13),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x295032AA),
+                              blurRadius: 12,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: applyPass,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.send_rounded, size: 17),
+                              SizedBox(width: 9),
+                              Text(
+                                'Submit Application',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 17),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: _webTextSecondary,
+                    size: 14,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Your request will be sent to your mentor for approval.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _webTextSecondary.withValues(alpha: 0.9),
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 36),
-
-            // 🔹 Reason Field
-            _sectionLabel('Why are you leaving?'),
-            TextField(
-              controller: reasonController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Enter a valid reason for your exit pass...',
-                alignLabelWithHint: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-                ),
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.only(bottom: 60),
-                  child: Icon(Icons.edit_note_rounded),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 28),
-
-            // 🔹 Time Field
-            _sectionLabel('Exit Time'),
-            GestureDetector(
-              onTap: _showTimePicker,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(color: AppTheme.primary.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _timeSelected ? AppTheme.primaryLight : AppTheme.surfaceAlt,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.access_time_filled_rounded,
-                        color: _timeSelected ? AppTheme.primary : AppTheme.textMuted,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      _timeSelected
-                          ? '${_hour.toString().padLeft(2, "0")}:${_minute.toString().padLeft(2, "0")} $_period'
-                          : 'Tap to select time',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: _timeSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: _timeSelected ? AppTheme.textPrimary : AppTheme.textMuted,
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 48),
-
-            // 🔹 Apply Button
-            ElevatedButton(
-              onPressed: applyPass,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Submit Application'),
-            ),
-            const SizedBox(height: 32),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -326,13 +609,13 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
 
   Widget _sectionLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 4),
+      padding: const EdgeInsets.only(bottom: 10, left: 2),
       child: Text(
         text,
         style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: _webTextPrimary,
         ),
       ),
     );
@@ -349,23 +632,23 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
       builder: (_) => StatefulBuilder(
         builder: (bsCtx, bsSetState) => Container(
           decoration: const BoxDecoration(
-            color: AppTheme.background,
+            color: _webScreen,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 12),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: _webBorder, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 24),
-              const Text('Select Exit Time', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+              const Text('Select Exit Time', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _webTextPrimary)),
               const SizedBox(height: 8),
               const Text(
                 'Permitted: 10:00 AM - 03:40 PM',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _webPrimary),
               ),
               const SizedBox(height: 32),
-              
+
               // Pickers
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -373,21 +656,21 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                   _timePickerColumn('Hour', 1, 12, tempHour, (val) => bsSetState(() => tempHour = val)),
                   const Padding(
                     padding: EdgeInsets.only(top: 25, left: 8, right: 8),
-                    child: Text(':', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    child: Text(':', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: _webPrimary)),
                   ),
                   _timePickerColumn(
-                    'Min', 
-                    0, 
-                    (tempPeriod == 'PM' && tempHour == 3) ? 40 : 59, 
-                    tempMinute > ((tempPeriod == 'PM' && tempHour == 3) ? 40 : 59) ? ((tempPeriod == 'PM' && tempHour == 3) ? 40 : 59) : tempMinute, 
-                    (val) => bsSetState(() => tempMinute = val), 
-                    zeroPad: true
+                      'Min',
+                      0,
+                      (tempPeriod == 'PM' && tempHour == 3) ? 40 : 59,
+                      tempMinute > ((tempPeriod == 'PM' && tempHour == 3) ? 40 : 59) ? ((tempPeriod == 'PM' && tempHour == 3) ? 40 : 59) : tempMinute,
+                          (val) => bsSetState(() => tempMinute = val),
+                      zeroPad: true
                   ),
                   const SizedBox(width: 24),
                   // AM/PM Toggle
                   Column(
                     children: [
-                      const Text('Period', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
+                      const Text('Period', style: TextStyle(color: _webTextSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
                       _periodButton('AM', tempPeriod == 'AM', () => bsSetState(() {
                         tempPeriod = 'AM';
@@ -403,41 +686,60 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Time Restriction: 10:00 AM to 3:40 PM
-                    int hour24 = tempHour;
-                    if (tempPeriod == 'PM' && tempHour != 12) hour24 += 12;
-                    if (tempPeriod == 'AM' && tempHour == 12) hour24 = 0;
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Time Restriction: 10:00 AM to 3:40 PM
+                      int hour24 = tempHour;
+                      if (tempPeriod == 'PM' && tempHour != 12) hour24 += 12;
+                      if (tempPeriod == 'AM' && tempHour == 12) hour24 = 0;
 
-                    final totalMinutes = hour24 * 60 + tempMinute;
-                    const startMinutes = 10 * 60; // 10:00 AM
-                    const endMinutes = 15 * 60 + 40; // 3:40 PM
+                      final totalMinutes = hour24 * 60 + tempMinute;
+                      const startMinutes = 10 * 60; // 10:00 AM
+                      const endMinutes = 15 * 60 + 40; // 3:40 PM
 
-                    if (totalMinutes < startMinutes || totalMinutes > endMinutes) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Exit time must be between 10:00 AM and 03:40 PM'),
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
-                      return;
-                    }
+                      if (totalMinutes < startMinutes || totalMinutes > endMinutes) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Exit time must be between 10:00 AM and 03:40 PM'),
+                            backgroundColor: _webDanger,
+                          ),
+                        );
+                        return;
+                      }
 
-                    setState(() {
-                      _hour = tempHour;
-                      _minute = tempMinute;
-                      _period = tempPeriod;
-                      _timeSelected = true;
-                    });
-                    Navigator.pop(bsCtx);
-                  },
-                  child: const Text('Confirm Time'),
+                      setState(() {
+                        _hour = tempHour;
+                        _minute = tempMinute;
+                        _period = tempPeriod;
+                        _timeSelected = true;
+                      });
+                      Navigator.pop(bsCtx);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _webPrimary,
+                      foregroundColor: _webSurface,
+                      disabledBackgroundColor: _webPrimary.withValues(alpha: 0.45),
+                      disabledForegroundColor: Colors.white,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    child: const Text('Confirm Time'),
+                  ),
                 ),
               ),
             ],
@@ -450,7 +752,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
   Widget _timePickerColumn(String label, int min, int max, int value, ValueChanged<int> onChanged, {bool zeroPad = false}) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(color: _webTextSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         NumberPicker(
           value: value,
@@ -459,8 +761,8 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
           zeroPad: zeroPad,
           itemHeight: 60,
           itemWidth: 80,
-          selectedTextStyle: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primary),
-          textStyle: const TextStyle(fontSize: 20, color: Colors.grey),
+          selectedTextStyle: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: _webPrimary),
+          textStyle: const TextStyle(fontSize: 20, color: _webTextMuted),
           onChanged: onChanged,
         ),
       ],
@@ -474,15 +776,15 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primary : Colors.white,
+          color: isSelected ? _webPrimary : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? AppTheme.primary : Colors.grey.shade200),
-          boxShadow: isSelected ? [BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+          border: Border.all(color: isSelected ? _webPrimary : _webBorder),
+          boxShadow: isSelected ? [BoxShadow(color: _webPrimary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppTheme.textSecondary,
+            color: isSelected ? Colors.white : _webTextSecondary,
             fontWeight: FontWeight.bold,
           ),
         ),

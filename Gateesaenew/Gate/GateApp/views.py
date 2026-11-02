@@ -3113,3 +3113,24 @@ class SecurityGroupPass(SecurityRequiredMixin, View):
                     pass
             messages.success(request, f"{count} passes scanned successfully.")
         return redirect('SecurityGroupPass')
+
+@require_GET
+def ViewannouncementAPI(request):
+    announcements = announcementtable.objects.filter(
+        is_active=True
+    ).filter(
+        Q(expires_at__isnull=True) |
+        Q(expires_at__gt=timezone.now())
+    ).order_by('-created_at')
+
+    data = list(
+        announcements.values(
+            'id',
+            'title',
+            'message',
+            'created_at',
+            'expires_at'
+        )
+    )
+
+    return JsonResponse(data, safe=False)

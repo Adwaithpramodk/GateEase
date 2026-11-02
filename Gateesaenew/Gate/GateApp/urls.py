@@ -123,7 +123,7 @@ urlpatterns = [
     path('register_device_token/', RegisterDeviceTokenAPI.as_view()),
     path('update_device_token/', UpdateDeviceTokenAPI.as_view()),
     path('delete_device_token/', DeleteDeviceTokenAPI.as_view()),
-
+    path('ViewannouncementAPI',views.ViewannouncementAPI,name='ViewannouncementAPI'),
 
 
 

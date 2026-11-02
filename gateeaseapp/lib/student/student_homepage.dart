@@ -698,14 +698,8 @@ class _StudentHomePageState extends State<StudentHomePage>
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
-  void _showAnnouncementsNotice() {
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Connect the Flutter announcements screen to this menu item.'),
-      ),
-    );
-  }
+
+
 
   Widget _buildProfileCard() {
     final studentName = details?['name']?.toString() ?? 'Loading...';

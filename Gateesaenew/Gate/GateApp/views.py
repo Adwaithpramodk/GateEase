@@ -2095,15 +2095,26 @@ class RejectExitPassAPI(JWTAuthMixin, APIView):
 #checking pass is already scanned or not for security
 class CheckPassStatus(JWTAuthMixin, APIView):
     def post(self, request):
-        pass_id = request.data.get("pass_id")
+        token = request.data.get("token")
+        pass_id = decrypt_pass_id(token) if token else request.data.get("pass_id")
 
         try:
-            exit_pass = exitpasstable.objects.get(id=pass_id)
+            exit_pass = exitpasstable.objects.select_related(
+                'student_id', 'student_id__classs', 'mentor_id'
+            ).get(id=pass_id)
+            student_class = exit_pass.student_id.classs.class_name if exit_pass.student_id.classs else '-'
             return Response({
+                "pass_id": exit_pass.id,
+                "name": exit_pass.student_id.name,
+                "reason": exit_pass.reason or '-',
+                "time": exit_pass.time.strftime("%I:%M %p") if exit_pass.time else '-',
+                "approved_at": exit_pass.approved_at,
+                "class": student_class,
+                "mentor": exit_pass.mentor_id.name if exit_pass.mentor_id else 'Unknown',
                 "security_status": exit_pass.security_status,
                 "mentor_status": exit_pass.mentor_status
             }, status=200)
-        except exitpasstable.DoesNotExist:
+        except (exitpasstable.DoesNotExist, TypeError, ValueError):
             return Response({"error": "Pass not found"}, status=404)
 
 #student list api for mentor class wise display
@@ -2308,6 +2319,9 @@ class GenerateQRCodeAPI(JWTAuthMixin, APIView):
         except exitpasstable.DoesNotExist:
             return Response({"error": "Pass not found"}, status=404)
 
+        if str(exit_pass.student_id.LOGINID_id) != str(request.auth.get('login_id')):
+            return Response({"error": "Unauthorized"}, status=403)
+
         # Group passes don't need QR codes
         if exit_pass.is_group_pass:
             return Response({
@@ -2346,30 +2360,9 @@ class GenerateQRCodeAPI(JWTAuthMixin, APIView):
         # If time_until_exit is negative or very small, we're at or past exit time - allow generation
         print(f"[QR Generation] Time check passed - allowing QR generation")
 
-        # If QR already exists and is still valid, return it
-        if exit_pass.qrcode:
-            return Response({
-                "message": "QR code already generated",
-                "qrcode_url": exit_pass.qrcode.url
-            }, status=200)
-
-        # Generate QR code
-        import hmac
-        import hashlib
-        from django.conf import settings
-
-        signature = hmac.new(
-            settings.SECRET_KEY.encode(),
-            str(exit_pass.id).encode(),
-            hashlib.sha256
-        ).hexdigest()
-
-        qr_data = {
-            "pass_id": exit_pass.id,
-            "signature": signature
-        }
-
-        qr = qrcode.make(json.dumps(qr_data))
+        # Keep the app QR payload identical to the web student QR payload.
+        token = encrypt_pass_id(exit_pass.id)
+        qr = qrcode.make(token)
         buffer = BytesIO()
         qr.save(buffer, format="PNG")
         buffer.seek(0)
@@ -2528,18 +2521,20 @@ class AcceptPass(JWTAuthMixin, APIView):
         if request.auth.get('usertype') != 'security':
             return Response({'error': 'Unauthorized'}, status=403)
 
-        pass_id = request.data.get('pass_id')
+        token = request.data.get('token')
+        pass_id = decrypt_pass_id(token) if token else request.data.get('pass_id')
         provided_signature = request.data.get('signature')
 
         if not pass_id:
             return Response({'error': 'pass_id required'}, status=400)
 
-        import hmac
-        import hashlib
-        from django.conf import settings
-
-        # Verify Signature (prevent spoofing)
-        if provided_signature:
+        # Fernet tokens are authenticated and enforce the same TTL as web QR codes.
+        if token and decrypt_pass_id(token) != int(pass_id):
+            return Response({'error': 'Invalid or expired QR Code'}, status=403)
+        if not token and provided_signature:
+            import hmac
+            import hashlib
+            from django.conf import settings
             expected_signature = hmac.new(
                 settings.SECRET_KEY.encode(),
                 str(pass_id).encode(),
@@ -2547,7 +2542,7 @@ class AcceptPass(JWTAuthMixin, APIView):
             ).hexdigest()
             if not hmac.compare_digest(provided_signature, expected_signature):
                 return Response({'error': 'Invalid QR Code Signature'}, status=403)
-        else:
+        elif not token:
             # If no signature is provided, we can either block it or allow it for backwards compatibility
             # Since the requirement is to protect it, we should enforce it.
             return Response({'error': 'Signature required for QR scanning'}, status=403)
@@ -2567,17 +2562,19 @@ class RejectPass(JWTAuthMixin, APIView):
         if request.auth.get('usertype') != 'security':
             return Response({'error': 'Unauthorized'}, status=403)
 
-        pass_id = request.data.get('pass_id')
+        token = request.data.get('token')
+        pass_id = decrypt_pass_id(token) if token else request.data.get('pass_id')
         provided_signature = request.data.get('signature')
 
         if not pass_id:
             return Response({'error': 'pass_id required'}, status=400)
 
-        import hmac
-        import hashlib
-        from django.conf import settings
-
-        if provided_signature:
+        if token and decrypt_pass_id(token) != int(pass_id):
+            return Response({'error': 'Invalid or expired QR Code'}, status=403)
+        if not token and provided_signature:
+            import hmac
+            import hashlib
+            from django.conf import settings
             expected_signature = hmac.new(
                 settings.SECRET_KEY.encode(),
                 str(pass_id).encode(),
@@ -2585,7 +2582,7 @@ class RejectPass(JWTAuthMixin, APIView):
             ).hexdigest()
             if not hmac.compare_digest(provided_signature, expected_signature):
                 return Response({'error': 'Invalid QR Code Signature'}, status=403)
-        else:
+        elif not token:
             return Response({'error': 'Signature required for QR scanning'}, status=403)
 
         try:

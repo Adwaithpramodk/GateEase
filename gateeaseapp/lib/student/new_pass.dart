@@ -3,7 +3,6 @@ import 'package:numberpicker/numberpicker.dart';
 import 'package:dio/dio.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
-import 'package:gateeaseapp/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApplyPassPage extends StatefulWidget {
@@ -25,11 +24,9 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
   static const Color _webTextPrimary = Color(0xFF1B1840);
   static const Color _webTextSecondary = Color(0xFF6C6A86);
   static const Color _webTextMuted = Color(0xFFA5A3BA);
-  static const Color _webAccentOrange = Color(0xFFFF9A3D);
   static const Color _webSuccess = Color(0xFF2EC27E);
   static const Color _webDanger = Color(0xFFF25C5C);
   static const Color _webBorder = Color(0xFFE8E6F5);
-  static const Color _webSurfaceAlt = Color(0xFFF6F3FF);
   final TextEditingController reasonController = TextEditingController();
   int _hour = 8;
   int _minute = 0;

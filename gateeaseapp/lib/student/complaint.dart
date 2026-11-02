@@ -113,9 +113,13 @@ class _ComplaintPageState extends State<ComplaintPage> {
     }
 
     if (lid == null) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Unable to identify your student account. Please log in again.'),
+          content: Text(
+            'Unable to identify your student account. Please log in again.',
+          ),
           backgroundColor: dangerColor,
         ),
       );

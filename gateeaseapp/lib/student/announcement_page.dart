@@ -10,9 +10,8 @@ class AnnouncementPage extends StatefulWidget {
 
 class _AnnouncementPageState extends State<AnnouncementPage> {
   static const Color primary = Color(0xFF6D4AE5);
-  static const Color primaryDark = Color(0xFF5632C9);
+
   static const Color primaryLight = Color(0xFFEFEAFE);
-  static const Color screenColor = Color(0xFFF7F6FC);
   static const Color pageColor = Color(0xFFEEEDF8);
   static const Color ink = Color(0xFF1B1840);
   static const Color muted = Color(0xFF6C6A86);

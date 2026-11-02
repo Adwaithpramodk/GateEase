@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/theme/app_theme.dart';
@@ -32,19 +31,20 @@ class _ScanQrPageState extends State<ScanQrPage> {
               scanned = true;
 
               try {
-                final Map<String, dynamic> data = jsonDecode(code);
-                final int passId = data['pass_id'];
+                final statusCheck = await dio.post(
+                  '$baseurl/CheckPassStatus',
+                  data: {'token': code},
+                );
+                if (statusCheck.statusCode != 200 ||
+                    statusCheck.data is! Map<String, dynamic>) {
+                  throw Exception('Invalid QR Code');
+                }
+                final data = statusCheck.data as Map<String, dynamic>;
                 final String name = data['name']?.toString() ?? '-';
                 final String reason = data['reason']?.toString() ?? '-';
                 final String time = data['time']?.toString() ?? '-';
                 final String mentor = data['mentor']?.toString() ?? '-';
-
-                String studentClass = '-';
-                if (data['class'] is Map) {
-                  studentClass = data['class']['name']?.toString() ?? '-';
-                } else {
-                  studentClass = data['class']?.toString() ?? '-';
-                }
+                final String studentClass = data['class']?.toString() ?? '-';
 
                 final String approvedAtRaw =
                     data['approved_at']?.toString() ?? '-';
@@ -56,29 +56,21 @@ class _ScanQrPageState extends State<ScanQrPage> {
                       '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}';
                 }
 
-                // Duplicate scan check
-                try {
-                  final statusCheck = await dio.post(
-                    '$baseurl/CheckPassStatus',
-                    data: {'pass_id': passId},
-                  );
-                  if (!context.mounted) return;
-                  if (statusCheck.statusCode == 200 &&
-                      statusCheck.data['security_status'] != 'pending') {
-                    await _showAlreadyScannedDialog();
-                    return;
-                  }
-                } catch (_) {}
+                if (!context.mounted) return;
+                if (data['security_status'] != 'pending') {
+                  await _showAlreadyScannedDialog();
+                  return;
+                }
 
                 if (!context.mounted) return;
                 await _showPassDialog(
-                  passId: passId,
                   name: name,
                   reason: reason,
                   time: time,
                   approvedDate: approvedDate,
                   studentClass: studentClass,
                   mentor: mentor,
+                  token: code,
                 );
               } catch (e) {
                 scanned = false;
@@ -282,7 +274,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
   }
 
   Future<void> _showPassDialog({
-    required int passId,
+    required String token,
     required String name,
     required String reason,
     required String time,
@@ -355,7 +347,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
                       onPressed: () async {
                         final nav = Navigator.of(context);
                         await dio.post('$baseurl/RejectPass',
-                            data: {'pass_id': passId});
+                            data: {'token': token});
                         nav.pop();
                         nav.pop();
                       },
@@ -377,7 +369,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
                       onPressed: () async {
                         final nav = Navigator.of(context);
                         await dio.post('$baseurl/AcceptPass',
-                            data: {'pass_id': passId});
+                            data: {'token': token});
                         nav.pop();
                         nav.pop();
                       },

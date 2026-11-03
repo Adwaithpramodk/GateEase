@@ -26,6 +26,47 @@ def mentor_approval_window_open():
     return datetime.time(10, 0) <= current_time <= datetime.time(15, 40)
 
 
+def notify_assigned_mentors_about_pass(exit_pass, student_obj, reason):
+    student_class = student_obj.classs
+    if not student_class:
+        logger.warning("Student %s is not assigned to a class", student_obj.name)
+        return
+
+    assignments = class_assigntable.objects.filter(
+        class_id=student_class
+    ).select_related('mentor_id')
+    if not assignments.exists():
+        logger.warning("No mentor assigned to class %s", student_class.class_name)
+        return
+
+    from GateApp.services.notification_service import send_notification_to_mentor
+
+    for assignment in assignments:
+        mentor = assignment.mentor_id
+        device_tokens = list(
+            MentorDeviceToken.objects.filter(
+                mentor=mentor,
+                is_active=True,
+            ).values_list('device_token', flat=True)
+        )
+        if not device_tokens:
+            logger.warning("No active device tokens found for mentor %s", mentor.name)
+            continue
+
+        sent_count = send_notification_to_mentor(
+            device_tokens=device_tokens,
+            student_name=student_obj.name,
+            class_name=student_class.class_name,
+            reason=reason,
+            pass_id=exit_pass.id,
+        )
+        logger.info(
+            "Sent pass notification to %s device(s) for mentor %s",
+            sent_count,
+            mentor.name,
+        )
+
+
 # Create your views here.
 
 # Landing page view - Entry point for the application
@@ -1215,7 +1256,7 @@ class StudentNewPass(StudentRequiredMixin, View):
             student_id=student_obj,
             created_at__gte=one_hour_ago
         ).count()
-
+#########web student pass limit 2 per hour
         # if recent_passes_count >= 2:
         #     messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
         #     return redirect('StudentNewPass')
@@ -1230,13 +1271,17 @@ class StudentNewPass(StudentRequiredMixin, View):
         formatted_time = time_obj.strftime('%I:%M %p')
 
         try:
-            exitpasstable.objects.create(
+            exit_pass = exitpasstable.objects.create(
                 student_id=student_obj,
                 reason=reason,
                 time=time_obj,
                 mentor_status='pending',
                 security_status='pending'
             )
+            try:
+                notify_assigned_mentors_about_pass(exit_pass, student_obj, reason)
+            except Exception:
+                logger.exception("Failed to notify mentors about web pass %s", exit_pass.id)
             messages.success(request, "Pass applied successfully!")
             return redirect('StudentHome')
         except Exception as e:
@@ -1378,6 +1423,14 @@ class WebGenerateQRCode(StudentRequiredMixin, View):
             return HttpResponse("Invalid Token", status=400)
         try:
             exit_pass = exitpasstable.objects.get(id=pass_id, student_id__LOGINID_id=(getattr(request, 'jwt_user_id', None) or request.session.get('user_id')))
+            now = timezone.localtime()
+            exit_date = timezone.localtime(exit_pass.created_at).date()
+            exit_datetime = timezone.make_aware(
+                datetime.datetime.combine(exit_date, exit_pass.time),
+                timezone.get_current_timezone(),
+            )
+            if now >= exit_datetime + datetime.timedelta(minutes=15):
+                return HttpResponse("QR code expired", status=410)
             qr = qrcode.make(token)
             buffer = BytesIO()
             qr.save(buffer, format="PNG")
@@ -2372,7 +2425,7 @@ class GenerateQRCodeAPI(JWTAuthMixin, APIView):
         now = timezone.localtime()
 
         exit_datetime = datetime.datetime.combine(
-            now.date(),
+            timezone.localtime(exit_pass.created_at).date(),
             exit_pass.time
         )
         exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
@@ -2389,8 +2442,11 @@ class GenerateQRCodeAPI(JWTAuthMixin, APIView):
                 "exit_time": exit_pass.time.strftime("%I:%M %p")
             }, status=403)
 
-        # If time_until_exit is negative or very small, we're at or past exit time - allow generation
-        print(f"[QR Generation] Time check passed - allowing QR generation")
+        if time_until_exit <= -15:
+            return Response({
+                "error": "QR code expired",
+                "message": "QR code is no longer available 15 minutes after the requested exit time",
+            }, status=400)
 
         # Keep the app QR payload identical to the web student QR payload.
         token = encrypt_pass_id(exit_pass.id)

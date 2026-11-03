@@ -508,7 +508,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                                   ),
                                   const SizedBox(height: 3),
                                   const Text(
-                                    'Permitted: 10:00 AM – 03:40 PM',
+                                    'Select your preferred exit time',
                                     style: TextStyle(
                                       color: _webTextSecondary,
                                       fontSize: 11,
@@ -641,7 +641,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
               const Text('Select Exit Time', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _webTextPrimary)),
               const SizedBox(height: 8),
               const Text(
-                'Permitted: 10:00 AM - 03:40 PM',
+                'Select any valid exit time',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _webPrimary),
               ),
               const SizedBox(height: 32),
@@ -656,12 +656,12 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                     child: Text(':', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: _webPrimary)),
                   ),
                   _timePickerColumn(
-                      'Min',
-                      0,
-                      (tempPeriod == 'PM' && tempHour == 3) ? 40 : 59,
-                      tempMinute > ((tempPeriod == 'PM' && tempHour == 3) ? 40 : 59) ? ((tempPeriod == 'PM' && tempHour == 3) ? 40 : 59) : tempMinute,
-                          (val) => bsSetState(() => tempMinute = val),
-                      zeroPad: true
+                    'Min',
+                    0,
+                    59,
+                    tempMinute,
+                    (val) => bsSetState(() => tempMinute = val),
+                    zeroPad: true,
                   ),
                   const SizedBox(width: 24),
                   // AM/PM Toggle
@@ -669,16 +669,17 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                     children: [
                       const Text('Period', style: TextStyle(color: _webTextSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-                      _periodButton('AM', tempPeriod == 'AM', () => bsSetState(() {
-                        tempPeriod = 'AM';
-                        if (tempHour < 10) tempHour = 10;
-                        if (tempHour > 11) tempHour = 10;
-                      })),
+                      _periodButton(
+                        'AM',
+                        tempPeriod == 'AM',
+                        () => bsSetState(() => tempPeriod = 'AM'),
+                      ),
                       const SizedBox(height: 8),
-                      _periodButton('PM', tempPeriod == 'PM', () => bsSetState(() {
-                        tempPeriod = 'PM';
-                        if (tempHour > 3 && tempHour != 12) tempHour = 12;
-                      })),
+                      _periodButton(
+                        'PM',
+                        tempPeriod == 'PM',
+                        () => bsSetState(() => tempPeriod = 'PM'),
+                      ),
                     ],
                   ),
                 ],
@@ -693,25 +694,9 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                   height: 52,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Time Restriction: 10:00 AM to 3:40 PM
-                      int hour24 = tempHour;
-                      if (tempPeriod == 'PM' && tempHour != 12) hour24 += 12;
-                      if (tempPeriod == 'AM' && tempHour == 12) hour24 = 0;
-
-                      final totalMinutes = hour24 * 60 + tempMinute;
-                      const startMinutes = 10 * 60; // 10:00 AM
-                      const endMinutes = 15 * 60 + 40; // 3:40 PM
-
-                      if (totalMinutes < startMinutes || totalMinutes > endMinutes) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Exit time must be between 10:00 AM and 03:40 PM'),
-                            backgroundColor: _webDanger,
-                          ),
-                        );
-                        return;
-                      }
-
+                      // No client-side time-range restriction.
+                      // The Django backend remains responsible for validating
+                      // the permitted application and exit-time window.
                       setState(() {
                         _hour = tempHour;
                         _minute = tempMinute;

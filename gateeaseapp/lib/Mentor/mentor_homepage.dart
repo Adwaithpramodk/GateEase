@@ -176,7 +176,9 @@ class _MentorHomePageState extends State<MentorHomePage> {
         key: _scaffoldKey,
         backgroundColor: AppTheme.background,
         drawer: _buildDrawer(),
-        body: isAnalyticsLoading
+        body: SafeArea(
+        top: false,
+        child: isAnalyticsLoading
             ? const Center(
                 child: CircularProgressIndicator(color: AppTheme.primary),
               )
@@ -231,6 +233,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
                   ],
                 ),
               ),
+      ),
       ),
     );
   }

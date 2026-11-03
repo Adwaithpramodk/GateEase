@@ -26,6 +26,20 @@ def mentor_approval_window_open():
     return datetime.time(10, 0) <= current_time <= datetime.time(15, 40)
 
 
+def pass_expired(exit_pass, now=None):
+    """Return whether a pass is past its 15-minute scan grace period."""
+    if not exit_pass.created_at or not exit_pass.time:
+        return False
+    now = now or timezone.localtime()
+    pass_date = timezone.localtime(exit_pass.created_at).date()
+    exit_datetime = datetime.datetime.combine(pass_date, exit_pass.time)
+    exit_datetime = timezone.make_aware(
+        exit_datetime,
+        timezone.get_current_timezone(),
+    )
+    return now >= exit_datetime + datetime.timedelta(minutes=15)
+
+
 def notify_assigned_mentors_about_pass(exit_pass, student_obj, reason):
     student_class = student_obj.classs
     if not student_class:
@@ -1246,9 +1260,9 @@ class StudentNewPass(StudentRequiredMixin, View):
 
         now_local = timezone.localtime()
 
-        # if not mentor_approval_window_open():
-        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-        #     return redirect('StudentNewPass')
+        if not mentor_approval_window_open():
+            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+            return redirect('StudentNewPass')
 
         # ── Limit of 2 passes per hour ──
         one_hour_ago = now_local - datetime.timedelta(hours=1)
@@ -1257,9 +1271,9 @@ class StudentNewPass(StudentRequiredMixin, View):
             created_at__gte=one_hour_ago
         ).count()
 #########web student pass limit 2 per hour
-        # if recent_passes_count >= 2:
-        #     messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
-        #     return redirect('StudentNewPass')
+        if recent_passes_count >= 2:
+            messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
+            return redirect('StudentNewPass')
 
         exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
         exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
@@ -1848,14 +1862,26 @@ class ApplypassAPI(JWTAuthMixin, APIView):
                 created_at__gte=one_hour_ago
             ).count()
 ######start
-            # if recent_passes_count >= 2:
-            #     return Response({"error": "You can only apply for 2 passes per hour. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            if recent_passes_count >= 2:
+                return Response({"error": "You can only apply for 2 passes per hour. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
-            # if not mentor_approval_window_open():
-            #     return Response(
-            #         {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
+            if not mentor_approval_window_open():
+                return Response(
+                    {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            duplicate_window = now_local - datetime.timedelta(seconds=15)
+            if exitpasstable.objects.filter(
+                student_id=student_obj,
+                reason=reason,
+                time=time_obj,
+                created_at__gte=duplicate_window,
+            ).exists():
+                return Response(
+                    {"error": "This pass application was already submitted."},
+                    status=status.HTTP_409_CONFLICT,
+                )
 #######end 
             # student_obj = studenttable.objects.get(LOGINID_id=lid)
 
@@ -2182,11 +2208,23 @@ class CheckPassStatus(JWTAuthMixin, APIView):
     def post(self, request):
         token = request.data.get("token")
         pass_id = decrypt_pass_id(token) if token else request.data.get("pass_id")
+        if not pass_id:
+            return Response({"error": "Invalid QR code"}, status=400)
 
         try:
             exit_pass = exitpasstable.objects.select_related(
                 'student_id', 'student_id__classs', 'mentor_id'
             ).get(id=pass_id)
+            if pass_expired(exit_pass) and exit_pass.security_status == 'pending':
+                return Response(
+                    {"error": "This pass has expired and cannot be scanned."},
+                    status=status.HTTP_410_GONE,
+                )
+            if exit_pass.mentor_status != 'approved':
+                return Response(
+                    {"error": "This pass has not been approved by a mentor."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             student_class = exit_pass.student_id.classs.class_name if exit_pass.student_id.classs else '-'
             return Response({
                 "pass_id": exit_pass.id,
@@ -2242,6 +2280,8 @@ class GroupPassAPI(JWTAuthMixin, APIView):
         try:
             student_ids = request.data.get('student_ids', [])
             reason = request.data.get('reason', 'Group Pass')
+            if not isinstance(student_ids, list) or not student_ids:
+                return Response({'error': 'Select at least one student'}, status=400)
 
             if not mentor_approval_window_open():
                 return Response(
@@ -2250,18 +2290,33 @@ class GroupPassAPI(JWTAuthMixin, APIView):
                 )
 
             try:
-                mentor = mentortable.objects.get(LOGINID=lid)
+                mentor = mentortable.objects.get(LOGINID_id=lid)
             except mentortable.DoesNotExist:
-                 return Response({'error': 'Mentor not found'}, status=404)
+                return Response({'error': 'Mentor not found'}, status=404)
 
             now = timezone.localtime()
             current_time = now.time()
+            student_ids = list(dict.fromkeys(student_ids))
+            assigned_class_ids = set(
+                class_assigntable.objects.filter(
+                    mentor_id=mentor
+                ).values_list('class_id', flat=True)
+            )
+            students = list(
+                studenttable.objects.filter(
+                    id__in=student_ids,
+                    classs_id__in=assigned_class_ids,
+                )
+            )
+            if len(students) != len(student_ids):
+                return Response(
+                    {'error': 'One or more selected students are not assigned to this mentor.'},
+                    status=400,
+                )
 
-            count = 0
-            for sid in student_ids:
-                try:
-                    student = studenttable.objects.get(id=sid)
-                    exitpasstable.objects.create(
+            with transaction.atomic():
+                exitpasstable.objects.bulk_create([
+                    exitpasstable(
                         student_id=student,
                         mentor_id=mentor,
                         reason=reason,
@@ -2269,13 +2324,15 @@ class GroupPassAPI(JWTAuthMixin, APIView):
                         mentor_status='approved',
                         security_status='pending',
                         approved_at=now,
-                        is_group_pass=True
+                        is_group_pass=True,
                     )
-                    count += 1
-                except Exception as inner_e:
-                    print(f"Error for student {sid}: {inner_e}")
+                    for student in students
+                ])
 
-            return Response({'message': f'Group Pass Approved for {count} students'}, status=200)
+            return Response(
+                {'message': f'Group Pass Approved for {len(students)} students'},
+                status=200,
+            )
 
         except Exception as e:
             return Response({'error': str(e)}, status=400)
@@ -2470,6 +2527,7 @@ class SecurityApprovedPassAPI(JWTAuthMixin, APIView):
             return Response({'error': 'Unauthorized'}, status=403)
         passes = exitpasstable.objects.filter(
             mentor_status='approved',  # not scanned yet
+            security_status='pending',
         ).select_related('student_id')
 
         data = []
@@ -2644,13 +2702,19 @@ class AcceptPass(JWTAuthMixin, APIView):
             return Response({'error': 'Signature required for QR scanning'}, status=403)
 
         try:
-            obj = exitpasstable.objects.get(id=pass_id)
+            with transaction.atomic():
+                obj = exitpasstable.objects.select_for_update().get(id=pass_id)
+                if obj.mentor_status != 'approved':
+                    return Response({'error': 'Pass is not approved by mentor'}, status=400)
+                if pass_expired(obj):
+                    return Response({'error': 'This pass has expired'}, status=410)
+                if obj.security_status != 'pending':
+                    return Response({'error': 'Pass has already been processed'}, status=409)
+                obj.security_status = 'scanned'
+                obj.scanned_at = timezone.now()
+                obj.save(update_fields=['security_status', 'scanned_at'])
         except exitpasstable.DoesNotExist:
             return Response({'error': 'Pass not found'}, status=404)
-
-        obj.security_status = 'scanned'
-        obj.scanned_at = timezone.now()
-        obj.save()
         return Response(status=status.HTTP_200_OK)
 
 class RejectPass(JWTAuthMixin, APIView):
@@ -2682,12 +2746,18 @@ class RejectPass(JWTAuthMixin, APIView):
             return Response({'error': 'Signature required for QR scanning'}, status=403)
 
         try:
-            obj = exitpasstable.objects.get(id=pass_id)
+            with transaction.atomic():
+                obj = exitpasstable.objects.select_for_update().get(id=pass_id)
+                if obj.mentor_status != 'approved':
+                    return Response({'error': 'Pass is not approved by mentor'}, status=400)
+                if pass_expired(obj):
+                    return Response({'error': 'This pass has expired'}, status=410)
+                if obj.security_status != 'pending':
+                    return Response({'error': 'Pass has already been processed'}, status=409)
+                obj.security_status = 'rejected'
+                obj.save(update_fields=['security_status'])
         except exitpasstable.DoesNotExist:
             return Response({'error': 'Pass not found'}, status=404)
-
-        obj.security_status = 'rejected'
-        obj.save()
         return Response(status=status.HTTP_200_OK)
 
 #security group pass list

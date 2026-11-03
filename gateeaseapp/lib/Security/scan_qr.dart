@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/theme/app_theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -50,8 +51,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
                     data['approved_at']?.toString() ?? '-';
                 String approvedDate = '-';
                 if (approvedAtRaw != '-') {
-                  final DateTime dt =
-                      DateTime.parse(approvedAtRaw).toLocal();
+                  final DateTime dt = DateTime.parse(approvedAtRaw).toLocal();
                   approvedDate =
                       '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}';
                 }
@@ -76,8 +76,16 @@ class _ScanQrPageState extends State<ScanQrPage> {
                 scanned = false;
                 debugPrint('QR ERROR: $e');
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid QR Code')));
+                var errorMessage = 'Invalid QR Code';
+                if (e is DioException && e.response?.data is Map) {
+                  errorMessage =
+                      e.response?.data['error']?.toString() ??
+                      e.response?.data['message']?.toString() ??
+                      errorMessage;
+                }
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(errorMessage)));
               }
             },
           ),
@@ -85,18 +93,22 @@ class _ScanQrPageState extends State<ScanQrPage> {
           // Top bar
           SafeArea(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _iconBtn(Icons.arrow_back_ios_new_rounded,
-                      () => Navigator.pop(context)),
-                  const Text('Scan QR Code',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 17)),
+                  _iconBtn(
+                    Icons.arrow_back_ios_new_rounded,
+                    () => Navigator.pop(context),
+                  ),
+                  const Text(
+                    'Scan QR Code',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                    ),
+                  ),
                   _iconBtn(
                     _torchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
                     () {
@@ -120,8 +132,9 @@ class _ScanQrPageState extends State<ScanQrPage> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                        color: AppTheme.primary.withValues(alpha: 0.8),
-                        width: 3),
+                      color: AppTheme.primary.withValues(alpha: 0.8),
+                      width: 3,
+                    ),
                   ),
                   child: Stack(
                     children: [
@@ -133,12 +146,15 @@ class _ScanQrPageState extends State<ScanQrPage> {
                 const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 10),
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2)),
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: const Text(
                     'Point camera at student QR code',
@@ -166,8 +182,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
-          border:
-              Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         ),
         child: Icon(icon, color: Colors.white, size: 20),
       ),
@@ -181,42 +196,48 @@ class _ScanQrPageState extends State<ScanQrPage> {
     return [
       // Top-left
       Positioned(
-          top: 0,
-          left: 0,
-          child: _corner(size, thickness, color,
-              top: true, left: true)),
+        top: 0,
+        left: 0,
+        child: _corner(size, thickness, color, top: true, left: true),
+      ),
       // Top-right
       Positioned(
-          top: 0,
-          right: 0,
-          child: _corner(size, thickness, color,
-              top: true, left: false)),
+        top: 0,
+        right: 0,
+        child: _corner(size, thickness, color, top: true, left: false),
+      ),
       // Bottom-left
       Positioned(
-          bottom: 0,
-          left: 0,
-          child: _corner(size, thickness, color,
-              top: false, left: true)),
+        bottom: 0,
+        left: 0,
+        child: _corner(size, thickness, color, top: false, left: true),
+      ),
       // Bottom-right
       Positioned(
-          bottom: 0,
-          right: 0,
-          child: _corner(size, thickness, color,
-              top: false, left: false)),
+        bottom: 0,
+        right: 0,
+        child: _corner(size, thickness, color, top: false, left: false),
+      ),
     ];
   }
 
-  Widget _corner(double size, double thickness, Color color,
-      {required bool top, required bool left}) {
+  Widget _corner(
+    double size,
+    double thickness,
+    Color color, {
+    required bool top,
+    required bool left,
+  }) {
     return SizedBox(
       width: size,
       height: size,
       child: CustomPaint(
         painter: _CornerPainter(
-            color: color,
-            thickness: thickness,
-            top: top,
-            left: left),
+          color: color,
+          thickness: thickness,
+          top: top,
+          left: left,
+        ),
       ),
     );
   }
@@ -226,8 +247,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: AppTheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(28),
@@ -241,22 +261,26 @@ class _ScanQrPageState extends State<ScanQrPage> {
                   color: AppTheme.errorLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.warning_rounded,
-                    color: AppTheme.error, size: 30),
+                child: const Icon(
+                  Icons.warning_rounded,
+                  color: AppTheme.error,
+                  size: 30,
+                ),
               ),
               const SizedBox(height: 16),
-              const Text('Already Scanned',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                  )),
+              const Text(
+                'Already Scanned',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                ),
+              ),
               const SizedBox(height: 8),
               const Text(
                 'This pass has already been scanned by security.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 13),
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -286,8 +310,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: AppTheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -304,23 +327,31 @@ class _ScanQrPageState extends State<ScanQrPage> {
                       color: AppTheme.primaryLight,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.qr_code_2_rounded,
-                        color: AppTheme.primary, size: 22),
+                    child: const Icon(
+                      Icons.qr_code_2_rounded,
+                      color: AppTheme.primary,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Pass Details',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 18,
-                            color: AppTheme.textPrimary,
-                          )),
-                      Text('Verify before approving',
-                          style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12)),
+                      Text(
+                        'Pass Details',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Verify before approving',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -335,9 +366,10 @@ class _ScanQrPageState extends State<ScanQrPage> {
               _detailRow('Time', time, Icons.access_time_rounded),
               _detailRow('Date', approvedDate, Icons.calendar_today_rounded),
               _detailRow(
-                  'Approved by',
-                  mentor == 'Unknown' ? 'Admin' : mentor,
-                  Icons.verified_rounded),
+                'Approved by',
+                mentor == 'Unknown' ? 'Admin' : mentor,
+                Icons.verified_rounded,
+              ),
 
               const SizedBox(height: 20),
               Row(
@@ -345,42 +377,77 @@ class _ScanQrPageState extends State<ScanQrPage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () async {
-                        final nav = Navigator.of(context);
-                        await dio.post('$baseurl/RejectPass',
-                            data: {'token': token});
-                        nav.pop();
-                        nav.pop();
+                        final rootNavigator = Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        );
+                        final pageNavigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          await dio.post(
+                            '$baseurl/RejectPass',
+                            data: {'token': token},
+                          );
+                          rootNavigator.pop();
+                          pageNavigator.pop();
+                        } catch (e) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Unable to reject this pass'),
+                            ),
+                          );
+                        }
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.error,
                         side: const BorderSide(color: AppTheme.error),
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text('Reject',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      child: const Text(
+                        'Reject',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        final nav = Navigator.of(context);
-                        await dio.post('$baseurl/AcceptPass',
-                            data: {'token': token});
-                        nav.pop();
-                        nav.pop();
+                        final rootNavigator = Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        );
+                        final pageNavigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          await dio.post(
+                            '$baseurl/AcceptPass',
+                            data: {'token': token},
+                          );
+                          rootNavigator.pop();
+                          pageNavigator.pop();
+                        } catch (e) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Unable to accept this pass'),
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.success,
                         minimumSize: const Size(0, 50),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text('Accept',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      child: const Text(
+                        'Accept',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],
@@ -399,19 +466,24 @@ class _ScanQrPageState extends State<ScanQrPage> {
         children: [
           Icon(icon, size: 16, color: AppTheme.primary),
           const SizedBox(width: 10),
-          Text('$label:  ',
-              style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500)),
+          Text(
+            '$label:  ',
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: AppTheme.textPrimary,
-                ),
-                overflow: TextOverflow.ellipsis),
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: AppTheme.textPrimary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -450,20 +522,30 @@ class _CornerPainter extends CustomPainter {
       canvas.drawLine(Offset.zero, Offset(size.width, 0), paint);
       canvas.drawLine(Offset.zero, Offset(0, size.height), paint);
     } else if (top && !left) {
+      canvas.drawLine(Offset(size.width, 0), Offset(0, 0), paint);
       canvas.drawLine(
-          Offset(size.width, 0), Offset(0, 0), paint);
-      canvas.drawLine(
-          Offset(size.width, 0), Offset(size.width, size.height), paint);
+        Offset(size.width, 0),
+        Offset(size.width, size.height),
+        paint,
+      );
     } else if (!top && left) {
       canvas.drawLine(
-          Offset(0, size.height), Offset(size.width, size.height), paint);
-      canvas.drawLine(
-          Offset(0, size.height), Offset(0, 0), paint);
+        Offset(0, size.height),
+        Offset(size.width, size.height),
+        paint,
+      );
+      canvas.drawLine(Offset(0, size.height), Offset(0, 0), paint);
     } else {
-      canvas.drawLine(Offset(size.width, size.height),
-          Offset(0, size.height), paint);
-      canvas.drawLine(Offset(size.width, size.height),
-          Offset(size.width, 0), paint);
+      canvas.drawLine(
+        Offset(size.width, size.height),
+        Offset(0, size.height),
+        paint,
+      );
+      canvas.drawLine(
+        Offset(size.width, size.height),
+        Offset(size.width, 0),
+        paint,
+      );
     }
   }
 

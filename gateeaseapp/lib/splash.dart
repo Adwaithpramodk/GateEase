@@ -59,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen>
     final savedLid = prefs.getInt('lid');
     final savedType = prefs.getString('usertype');
 
-    await Future.delayed(const Duration(milliseconds: 1600));
+    await Future.delayed(const Duration(milliseconds: 1200));
 
     if (!mounted) return;
 

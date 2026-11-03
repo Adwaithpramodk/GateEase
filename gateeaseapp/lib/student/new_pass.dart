@@ -32,6 +32,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
   int _minute = 0;
   String _period = 'AM';
   bool _timeSelected = false;
+  bool _isSubmitting = false;
 
   // Use the global dio instance (with JWT interceptor) instead of a bare local one
 
@@ -72,6 +73,8 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
   }
 
   Future<void> applyPass() async {
+    if (_isSubmitting) return;
+
     // Validate reason
     if (reasonController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -101,6 +104,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
       'time': formattedTime,
     };
 
+    setState(() => _isSubmitting = true);
     try {
       final response = await dio.post('$baseurl/ApplypassAPI/$lid', data: data);
       if ((response.statusCode == 200 || response.statusCode == 201) &&
@@ -129,6 +133,8 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -545,7 +551,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                           ],
                         ),
                         child: ElevatedButton(
-                          onPressed: applyPass,
+                          onPressed: _isSubmitting ? null : applyPass,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             foregroundColor: Colors.white,
@@ -554,13 +560,15 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                               borderRadius: BorderRadius.circular(13),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.send_rounded, size: 17),
                               SizedBox(width: 9),
                               Text(
-                                'Submit Application',
+                                _isSubmitting
+                                    ? 'Submitting...'
+                                    : 'Submit Application',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,

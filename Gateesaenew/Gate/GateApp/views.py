@@ -1246,9 +1246,9 @@ class StudentNewPass(StudentRequiredMixin, View):
 
         now_local = timezone.localtime()
 
-        if not mentor_approval_window_open():
-            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-            return redirect('StudentNewPass')
+        # if not mentor_approval_window_open():
+        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+        #     return redirect('StudentNewPass')
 
         # ── Limit of 2 passes per hour ──
         one_hour_ago = now_local - datetime.timedelta(hours=1)
@@ -1257,9 +1257,9 @@ class StudentNewPass(StudentRequiredMixin, View):
             created_at__gte=one_hour_ago
         ).count()
 #########web student pass limit 2 per hour
-        if recent_passes_count >= 2:
-            messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
-            return redirect('StudentNewPass')
+        # if recent_passes_count >= 2:
+        #     messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
+        #     return redirect('StudentNewPass')
 
         exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
         exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())

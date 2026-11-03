@@ -1246,9 +1246,9 @@ class StudentNewPass(StudentRequiredMixin, View):
 
         now_local = timezone.localtime()
 
-        if not mentor_approval_window_open():
-            messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
-            return redirect('StudentNewPass')
+        # if not mentor_approval_window_open():
+        #     messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
+        #     return redirect('StudentNewPass')
 
         # ── Limit of 2 passes per hour ──
         one_hour_ago = now_local - datetime.timedelta(hours=1)

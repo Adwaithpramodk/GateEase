@@ -730,11 +730,15 @@ class MentorPendingPasses(MentorRequiredMixin, View):
 
             exit_pass = exitpasstable.objects.get(
                 id=pass_id,
-                mentor_status='pending',
                 student_id__classs__id__in=assigned_classes
             )
 
-            if action == 'approve':
+            if exit_pass.mentor_status != 'pending':
+                messages.warning(
+                    request,
+                    f"Pass has already been {exit_pass.mentor_status or 'processed'}."
+                )
+            elif action == 'approve':
                 exit_pass.mentor_status = 'approved'
                 exit_pass.mentor_id = mentor_obj
                 from django.utils import timezone
@@ -1064,7 +1068,19 @@ class DeleteSecurity(AdminRequiredMixin, View):
 #admin approve pass
 class Approvepassadmin(AdminRequiredMixin, View):
     def post(self, request, id):
-        exit_pass = exitpasstable.objects.get(id=id)
+        try:
+            exit_pass = exitpasstable.objects.get(id=id)
+        except exitpasstable.DoesNotExist:
+            messages.error(request, "Pass not found.")
+            return redirect('pass')
+
+        if exit_pass.mentor_status != "pending":
+            messages.warning(
+                request,
+                f"Pass has already been {exit_pass.mentor_status or 'processed'}."
+            )
+            return redirect('pass')
+
         exit_pass.mentor_status = "approved"
         exit_pass.approved_at = timezone.now()
         exit_pass.save()
@@ -1074,7 +1090,19 @@ class Approvepassadmin(AdminRequiredMixin, View):
 #admin reject pass
 class Rejectpassadmin(AdminRequiredMixin, View):
     def post(self,request,id):
-        obj = exitpasstable.objects.get(id=id)
+        try:
+            obj = exitpasstable.objects.get(id=id)
+        except exitpasstable.DoesNotExist:
+            messages.error(request, "Pass not found.")
+            return redirect('pass')
+
+        if obj.mentor_status != "pending":
+            messages.warning(
+                request,
+                f"Pass has already been {obj.mentor_status or 'processed'}."
+            )
+            return redirect('pass')
+
         obj.mentor_status = "rejected"
         obj.save()
         messages.warning(request, "Pass Rejected")
@@ -2023,7 +2051,9 @@ class ApproveExitPassAPI(JWTAuthMixin, APIView):
         # ---------------- MENTOR APPROVAL ----------------
         if role == "mentor":
             if exit_pass.mentor_status != "pending":
-                return Response({"error": "Already processed"}, status=400)
+                return Response({
+                    "error": f"Pass has already been {exit_pass.mentor_status or 'processed'}"
+                }, status=400)
 
             exit_pass.mentor_status = "approved"
             exit_pass.approved_at = timezone.now()
@@ -2072,8 +2102,10 @@ class RejectExitPassAPI(JWTAuthMixin, APIView):
             except mentortable.DoesNotExist:
                 return Response({"error": "Mentor not found"}, status=400)
 
-            if exit_pass.mentor_status in ["approved", "rejected"]:
-                return Response({"error": "Already processed"}, status=400)
+            if exit_pass.mentor_status != "pending":
+                return Response({
+                    "error": f"Pass has already been {exit_pass.mentor_status or 'processed'}"
+                }, status=400)
             exit_pass.mentor_status = "rejected"
             exit_pass.mentor_id = mentor_obj
 
@@ -2411,10 +2443,18 @@ class getallpasses(JWTAuthMixin, APIView):
     def get(self, request, lid):
         if str(lid) != str(request.auth.get('login_id')):
             return Response({'error': 'Unauthorized'}, status=403)
+        mentor_obj = mentortable.objects.get(LOGINID_id=lid)
+        assigned_classes = class_assigntable.objects.filter(
+            mentor_id=mentor_obj
+        ).values_list('class_id', flat=True)
         threshold = timezone.now() - datetime.timedelta(hours=24)
         security_obj = exitpasstable.objects.filter(
-            mentor_id__LOGINID_id=lid,
-            created_at__gte=threshold
+            models.Q(mentor_id=mentor_obj) |
+            models.Q(
+                mentor_status='pending',
+                student_id__classs__id__in=assigned_classes,
+            ),
+            created_at__gte=threshold,
         ).order_by('-created_at')
 
         serializer = ExitpassSerializer1(security_obj,many=True)

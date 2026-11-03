@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,6 +59,13 @@ class _PendingPassPageState extends State<PendingPassPage> {
       }
     } catch (e) {
       debugPrint("Approve Error: $e");
+      if (!mounted) return;
+      final message = e is DioException && e.response?.data is Map
+          ? (e.response?.data['error']?.toString() ?? 'Unable to approve pass')
+          : 'Unable to approve pass';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -83,6 +91,13 @@ class _PendingPassPageState extends State<PendingPassPage> {
       }
     } catch (e) {
       debugPrint("Reject Error: $e");
+      if (!mounted) return;
+      final message = e is DioException && e.response?.data is Map
+          ? (e.response?.data['error']?.toString() ?? 'Unable to reject pass')
+          : 'Unable to reject pass';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -156,17 +171,22 @@ class _PendingPassPageState extends State<PendingPassPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pass Requests'),
-      ),
+      appBar: AppBar(title: const Text('Pass Requests')),
       body: pendingPasses.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.checklist_rtl_rounded, size: 64, color: Colors.grey.shade300),
+                  Icon(
+                    Icons.checklist_rtl_rounded,
+                    size: 64,
+                    color: Colors.grey.shade300,
+                  ),
                   const SizedBox(height: 16),
-                  Text('No pending requests', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+                  Text(
+                    'No pending requests',
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+                  ),
                 ],
               ),
             )
@@ -181,7 +201,13 @@ class _PendingPassPageState extends State<PendingPassPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
@@ -190,62 +216,105 @@ class _PendingPassPageState extends State<PendingPassPage> {
                       children: [
                         // Header with color accent
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.05)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.05),
+                          ),
                           child: Row(
                             children: [
-                              const Icon(Icons.person_pin_rounded, color: AppTheme.primary, size: 20),
+                              const Icon(
+                                Icons.person_pin_rounded,
+                                color: AppTheme.primary,
+                                size: 20,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   pass['name'] ?? 'Student Name',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 13),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primary,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                               Text(
                                 pass['classs'] ?? '',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textSecondary,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        
+
                         Padding(
                           padding: const EdgeInsets.all(20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _infoBlock('Reason', pass['reason'] ?? '', Icons.notes_rounded),
+                              _infoBlock(
+                                'Reason',
+                                pass['reason'] ?? '',
+                                Icons.notes_rounded,
+                              ),
                               const SizedBox(height: 16),
-                              _infoBlock('Expected Exit', pass['time'] ?? '', Icons.access_time_filled_rounded),
-                              
+                              _infoBlock(
+                                'Expected Exit',
+                                pass['time'] ?? '',
+                                Icons.access_time_filled_rounded,
+                              ),
+
                               const SizedBox(height: 24),
-                              
+
                               Row(
                                 children: [
                                   Expanded(
                                     child: OutlinedButton.icon(
-                                      onPressed: () => _showRejectDialog(pass['id']),
-                                      icon: const Icon(Icons.close_rounded, size: 18),
+                                      onPressed: () =>
+                                          _showRejectDialog(pass['id']),
+                                      icon: const Icon(
+                                        Icons.close_rounded,
+                                        size: 18,
+                                      ),
                                       label: const Text('Reject'),
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: AppTheme.error,
-                                        side: const BorderSide(color: AppTheme.error),
+                                        side: const BorderSide(
+                                          color: AppTheme.error,
+                                        ),
                                         minimumSize: const Size(0, 48),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: ElevatedButton.icon(
-                                      onPressed: () => approvePassApi(pass['id']),
-                                      icon: const Icon(Icons.check_rounded, size: 18),
+                                      onPressed: () =>
+                                          approvePassApi(pass['id']),
+                                      icon: const Icon(
+                                        Icons.check_rounded,
+                                        size: 18,
+                                      ),
                                       label: const Text('Approve'),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppTheme.accent,
                                         minimumSize: const Size(0, 48),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -269,7 +338,10 @@ class _PendingPassPageState extends State<PendingPassPage> {
       children: [
         Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Icon(icon, size: 16, color: AppTheme.textSecondary),
         ),
         const SizedBox(width: 12),
@@ -277,9 +349,24 @@ class _PendingPassPageState extends State<PendingPassPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.textSecondary, letterSpacing: 0.5)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary, fontWeight: FontWeight.w500)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),

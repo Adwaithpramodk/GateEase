@@ -73,7 +73,16 @@ class ExitpassSerializer1(serializers.ModelSerializer):
     
     class Meta:
         model = exitpasstable
-        fields = ['mentor_status', 'security_status','reason','time','name']
+        fields = [
+            'id',
+            'mentor_status',
+            'security_status',
+            'reason',
+            'time',
+            'name',
+            'created_at',
+            'is_group_pass',
+        ]
 
 
 
@@ -97,4 +106,3 @@ class DepartmentassignSerializer(ModelSerializer):
     class Meta:
         model=dept_assigntable
         fields='__all__'
-

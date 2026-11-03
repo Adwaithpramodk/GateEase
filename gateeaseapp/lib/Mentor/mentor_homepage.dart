@@ -21,6 +21,7 @@ class MentorHomePage extends StatefulWidget {
 }
 
 class _MentorHomePageState extends State<MentorHomePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String? expandedStatus;
   List<Map<String, String>> passes = [];
   Map<String, dynamic>? details;
@@ -106,10 +107,10 @@ class _MentorHomePageState extends State<MentorHomePage> {
   }
 
   String getStatus(Map<String, dynamic> pass) {
-    final securityStatus =
-    (pass['security_status'] ?? '').toString().toLowerCase();
-    final mentorStatus =
-    (pass['mentor_status'] ?? '').toString().toLowerCase();
+    final securityStatus = (pass['security_status'] ?? '')
+        .toString()
+        .toLowerCase();
+    final mentorStatus = (pass['mentor_status'] ?? '').toString().toLowerCase();
 
     if (securityStatus == 'scanned') return 'Scanned';
     if (mentorStatus == 'rejected') return 'Rejected';
@@ -124,7 +125,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => LoginPage()),
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -139,20 +140,25 @@ class _MentorHomePageState extends State<MentorHomePage> {
       final response = await dio.get('$baseurl/MentorPassAnalytics/$lid');
       if (!mounted) return;
       if (response.statusCode == 200) {
-        passes = List<Map<String, String>>.from(
-          response.data.map(
-                (e) => {
-              'status': getStatus(e),
-              'mentor_status': e['mentor_status'].toString(),
-              'security_status': e['security_status'].toString(),
-              'name': e['name'].toString(),
-              'time': e['time'].toString(),
-              'reason': (e['reason'] ?? '').toString(),
-              'created_at': (e['created_at'] ?? '').toString(),
-              'is_group_pass': (e['is_group_pass'] ?? false).toString(),
-            },
-          ),
-        );
+        final data = response.data;
+        if (data is! List) {
+          throw const FormatException(
+            'Mentor analytics response is not a list',
+          );
+        }
+        passes = data.whereType<Map>().map<Map<String, String>>((rawPass) {
+          final pass = Map<String, dynamic>.from(rawPass);
+          return {
+            'status': getStatus(pass),
+            'mentor_status': (pass['mentor_status'] ?? '').toString(),
+            'security_status': (pass['security_status'] ?? '').toString(),
+            'name': (pass['name'] ?? 'Unknown student').toString(),
+            'time': (pass['time'] ?? '').toString(),
+            'reason': (pass['reason'] ?? '').toString(),
+            'created_at': (pass['created_at'] ?? '').toString(),
+            'is_group_pass': (pass['is_group_pass'] ?? false).toString(),
+          };
+        }).toList();
       }
     } catch (e) {
       debugPrint('Analytics Error: $e');
@@ -167,63 +173,64 @@ class _MentorHomePageState extends State<MentorHomePage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: AppTheme.background,
         drawer: _buildDrawer(),
         body: isAnalyticsLoading
             ? const Center(
-          child: CircularProgressIndicator(color: AppTheme.primary),
-        )
+                child: CircularProgressIndicator(color: AppTheme.primary),
+              )
             : RefreshIndicator(
-          color: AppTheme.primary,
-          onRefresh: _loadAll,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader()),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 34),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _buildWelcomeStrip(),
-                    const SizedBox(height: 22),
-                    _sectionHeading(
-                      'Quick actions',
-                      'Open the tools you use most',
+                color: AppTheme.primary,
+                onRefresh: _loadAll,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildHeader()),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(18, 20, 18, 34),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          _buildWelcomeStrip(),
+                          const SizedBox(height: 22),
+                          _sectionHeading(
+                            'Quick actions',
+                            'Open the tools you use most',
+                          ),
+                          const SizedBox(height: 12),
+                          _quickActions(),
+                          const SizedBox(height: 25),
+                          _buildPendingRequests(),
+                          const SizedBox(height: 25),
+                          _sectionHeading(
+                            'Pass activity',
+                            'A summary of processed requests',
+                          ),
+                          const SizedBox(height: 11),
+                          _analyticsSection(
+                            'Approved',
+                            AppTheme.success,
+                            AppTheme.successLight,
+                            Icons.verified_rounded,
+                          ),
+                          _analyticsSection(
+                            'Scanned',
+                            AppTheme.accent,
+                            AppTheme.accentLight,
+                            Icons.qr_code_scanner_rounded,
+                          ),
+                          _analyticsSection(
+                            'Rejected',
+                            AppTheme.error,
+                            AppTheme.errorLight,
+                            Icons.cancel_rounded,
+                          ),
+                        ]),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _quickActions(),
-                    const SizedBox(height: 25),
-                    _buildPendingRequests(),
-                    const SizedBox(height: 25),
-                    _sectionHeading(
-                      'Pass activity',
-                      'A summary of processed requests',
-                    ),
-                    const SizedBox(height: 11),
-                    _analyticsSection(
-                      'Approved',
-                      AppTheme.success,
-                      AppTheme.successLight,
-                      Icons.verified_rounded,
-                    ),
-                    _analyticsSection(
-                      'Scanned',
-                      AppTheme.accent,
-                      AppTheme.accentLight,
-                      Icons.qr_code_scanner_rounded,
-                    ),
-                    _analyticsSection(
-                      'Rejected',
-                      AppTheme.error,
-                      AppTheme.errorLight,
-                      Icons.cancel_rounded,
-                    ),
-                  ]),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -290,9 +297,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
             child: Text(
               '$pendingCount pending',
               style: TextStyle(
-                color: pendingCount > 0
-                    ? AppTheme.accent
-                    : AppTheme.success,
+                color: pendingCount > 0 ? AppTheme.accent : AppTheme.success,
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
               ),
@@ -318,7 +323,6 @@ class _MentorHomePageState extends State<MentorHomePage> {
 
   Widget _quickActions() {
     final actions = [
-
       {
         'title': 'Pending passes',
         'subtitle': 'Review new requests',
@@ -433,8 +437,18 @@ class _MentorHomePageState extends State<MentorHomePage> {
     if (parsed == null) return 'Recently requested';
     final local = parsed.toLocal();
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${local.day} ${months[local.month - 1]} • '
         '${local.hour % 12 == 0 ? 12 : local.hour % 12}:'
@@ -463,10 +477,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
               ),
               child: const Text(
                 'View all',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
               ),
             ),
           ],
@@ -487,61 +498,61 @@ class _MentorHomePageState extends State<MentorHomePage> {
           ),
           child: recent.isEmpty
               ? Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 28,
-            ),
-            child: Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.successLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: AppTheme.success,
-                      size: 25,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 28,
+                  ),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.successLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check_rounded,
+                            color: AppTheme.success,
+                            size: 25,
+                          ),
+                        ),
+                        const SizedBox(height: 11),
+                        const Text(
+                          'No pending requests',
+                          style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'New requests will appear here.',
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 11),
-                  const Text(
-                    'No pending requests',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'New requests will appear here.',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
+                )
               : Column(
-            children: [
-              for (int i = 0; i < recent.length; i++) ...[
-                _pendingRequestTile(recent[i]),
-                if (i != recent.length - 1)
-                  Divider(
-                    height: 1,
-                    indent: 66,
-                    endIndent: 15,
-                    color: AppTheme.border,
-                  ),
-              ],
-            ],
-          ),
+                  children: [
+                    for (int i = 0; i < recent.length; i++) ...[
+                      _pendingRequestTile(recent[i]),
+                      if (i != recent.length - 1)
+                        Divider(
+                          height: 1,
+                          indent: 66,
+                          endIndent: 15,
+                          color: AppTheme.border,
+                        ),
+                    ],
+                  ],
+                ),
         ),
       ],
     );
@@ -870,16 +881,18 @@ class _MentorHomePageState extends State<MentorHomePage> {
                           ),
                           child: CircleAvatar(
                             radius: 27,
-                            backgroundColor: Colors.white.withValues(alpha: 0.18),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.18,
+                            ),
                             backgroundImage: image != null
                                 ? NetworkImage('$baseurl$image')
                                 : null,
                             child: image == null
                                 ? const Icon(
-                              Icons.person_rounded,
-                              color: Colors.white,
-                              size: 27,
-                            )
+                                    Icons.person_rounded,
+                                    color: Colors.white,
+                                    size: 27,
+                                  )
                                 : null,
                           ),
                         ),
@@ -1059,14 +1072,11 @@ class _MentorHomePageState extends State<MentorHomePage> {
   }
 
   void _openMentorPage(Widget page) {
-    Navigator.pop(context);
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => page),
-    );
+    // Close only the drawer. Do not pop the MentorHomePage route.
+    _scaffoldKey.currentState?.closeDrawer();
+
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
-
-
 
   Widget _sectionHeading(String title, String subtitle) {
     return Column(
@@ -1094,13 +1104,12 @@ class _MentorHomePageState extends State<MentorHomePage> {
     );
   }
 
-
   Widget _analyticsSection(
-      String status,
-      Color color,
-      Color bgColor,
-      IconData icon,
-      ) {
+    String status,
+    Color color,
+    Color bgColor,
+    IconData icon,
+  ) {
     final list = _byStatus(status);
     final isExpanded = expandedStatus == status;
 
@@ -1191,15 +1200,12 @@ class _MentorHomePageState extends State<MentorHomePage> {
                 padding: EdgeInsets.all(18),
                 child: Text(
                   'No records available',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                 ),
               )
             else
               ...list.map(
-                    (pass) => Padding(
+                (pass) => Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 9,

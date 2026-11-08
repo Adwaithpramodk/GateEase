@@ -286,6 +286,12 @@ class StudentVerificationPending(View):
             'contact_email': settings.EMAIL_HOST_USER,
             'status': request.GET.get('status', 'pending'),
         })
+class StudentVerificationRejected(View):
+    def get(self, request):
+        return render(request, 'tables/form/student_verification_reject.html', {
+            'contact_email': settings.EMAIL_HOST_USER,
+            'status': request.GET.get('status', 'pending'),
+        })
 
 class LoginPage(View):
     def get(self,request):
@@ -326,8 +332,11 @@ class LoginPage(View):
                 messages.error(request, "Login Unsuccessful")
                 return render(request, 'tables/form/login.html')
 
-            if obj.usertype in ('pending', 'Rejected'):
+            if obj.usertype in ('pending'):
                 return redirect(f"/StudentVerificationPending?status={obj.usertype}")
+            
+            if obj.usertype in ('Rejected'):
+                return redirect(f"/StudentVerificationRejected?status={obj.usertype}")
 
             # If password is correct, generate short-lived access and persistent refresh tokens.
             refresh = create_login_tokens(obj)

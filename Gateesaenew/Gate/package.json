@@ -27,7 +27,7 @@
     "node-addon-api": "^7.1.1",
     "picocolors": "^1.1.1",
     "picomatch": "^2.3.2",
-    "source-map-js": "^1.2.1",
+    "source-map-js": "^1.2.2",
     "tapable": "^2.3.3",
     "to-regex-range": "^5.0.1"
   },

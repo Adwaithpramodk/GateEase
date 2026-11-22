@@ -1,74 +1,50 @@
-# PythonAnywhere Deployment Guide for GateEase
+# GateEase production upgrade on PythonAnywhere
 
-This document outlines the exact steps to completely wipe a previous deployment and re-host the GateEase Django application on PythonAnywhere from scratch, using a MySQL database.
+The college uses this installation. Upgrade the existing deployment in place and keep its MySQL database, media files, environment settings, and current Django secret key.
 
-## Phase 1: Wipe the Slate Clean
-If you have a pre-existing app on PythonAnywhere that you want to delete to start fresh, follow these steps:
-1. **Delete the Web App:** Go to the **Web** tab, scroll to the very bottom, and click the red **Delete** button.
-2. **Delete the Files:** Go to your **Consoles** tab, open a new **Bash** console, and run these commands to delete your old code and old virtual environment:
+## Before the maintenance window
+
+1. Back up the production MySQL database and media directory. Secure the backups and verify that you can restore them to an isolated staging environment. Save the current release, virtual environment, and hosting configuration so you can switch the application back if needed.
+2. Stage the new release and its dependencies separately. Check that the production settings still point to the intended MySQL database. Django falls back to local SQLite when no database URL is configured.
+3. On the restored MySQL copy, run the two checks below. Confirm the migration history matches the existing schema and review every pending operation.
+
    ```bash
-   rm -rf /home/GATEEASEE/GateEase  # Deletes the old code (adjust folder name if your folder is named differently)
-   rmvirtualenv gate-env            # Deletes the old virtual environment
+   python manage.py showmigrations GateApp
+   python manage.py migrate --plan
    ```
 
-## Phase 2: Upload Code & Set up Environment
-1. **Clone your Code:** In the same Bash console, pull down your fresh code from GitHub:
+   **Stop if `0006_integrity_constraints` is pending or the plan contains unexpected migrations.** Migration 0006 deletes certain duplicate rows before adding constraints. Review the affected data on the restored copy before deciding how to proceed.
+
+4. Rehearse the upgrade on the restored copy. Compare counts for student accounts, staff accounts, passes, complaints, and announcements before and after. Verify that the currently distributed Flutter build and the updated build can perform essential student, mentor, and gate workflows. Keep the current deployment serving students until the rollout is ready.
+
+## What this release changes in the database
+
+| Migration | Effect |
+| --- | --- |
+| `0007_ratelimitcounter` | Creates the rate-limit counter table. |
+| `0008_passwordresetotp_failed_attempts_and_more` | Changes password-reset storage and invalidates previously issued reset codes. Users with a pending reset must request a new code. |
+| `0009_logintable_last_totp_step` | Adds an unused column retained for migration compatibility. |
+| `0010_logintable_session_version` | Adds a field for session revocation. Existing accounts are retained. |
+
+These four migrations leave existing students, staff, passes, complaints, and announcements in place. The configured rate-limit cache table is created separately.
+
+## During the maintenance window
+
+1. Pause writes and take a fresh backup. Repeat the migration-plan check against the existing production database before applying changes. MySQL schema changes can lock tables and a failed migration may leave partial changes. [Django migration documentation](https://docs.djangoproject.com/en/5.2/topics/migrations/#mysql)
+2. From the release directory with its virtual environment and production settings loaded, run the following in order. Stop if any command fails.
+
    ```bash
-   git clone <your-github-repo-url>
-   ```
-2. **Create a New Virtual Environment & Install Requirements:**
-   ```bash
-   mkvirtualenv --python=/usr/bin/python3.10 gate-env
-   cd <your-project-folder-with-requirements.txt>
-   pip install -r requirements.txt
-   ```
-   *(Note: Ensure `mysqlclient` is in your `requirements.txt` instead of `psycopg2-binary` before doing this).*
-
-## Phase 3: Set up the MySQL Database & Secrets
-1. **Create the Database:** Go to the **Databases** tab, click to initialize MySQL with a password, and note your database name (it will look like `GATEEASEE$default`).
-2. **Create the `.env` File:** Go to the **Files** tab, navigate to the folder containing your `manage.py`, create a new file named `.env`, and paste in your secrets:
-   ```ini
-   SECRET_KEY=your_secure_secret_key
-   DEBUG=False
-   ALLOWED_HOSTS=GATEEASEE.pythonanywhere.com
-   CSRF_TRUSTED_ORIGIN=https://GATEEASEE.pythonanywhere.com
-   EMAIL_HOST_PASSWORD=your_gmail_app_password
-   DATABASE_URL=mysql://GATEEASEE:YourDbPassword@GATEEASEE.mysql.pythonanywhere-services.com/GATEEASEE$default
-   ```
-3. **Migrate the Database:** Go back to your Bash console (with `gate-env` active) and run:
-   ```bash
-   python manage.py migrate
-   python manage.py collectstatic
+   python manage.py migrate --noinput
+   python manage.py createcachetable
+   python manage.py collectstatic --noinput
+   python manage.py check --deploy
    ```
 
-## Phase 4: Create the New Web App
-1. Go to the **Web** tab and click **Add a new web app**.
-2. Click **Next**, then select **Manual Configuration** (do NOT choose Django).
-3. Select **Python 3.10** and click Next.
-4. Once created, scroll down to the **Virtualenv** section and type: `gate-env`
-5. Scroll up to the **Source code** section and enter the path to your project (the folder where `manage.py` is):
-   `/home/GATEEASEE/GateEase/Gateesaenew/Gate`
-6. Click the **WSGI configuration file** link, delete everything in it, and paste this exact code (make sure the path matches your Source code path):
-   ```python
-   import os
-   import sys
+3. Switch the existing web app to the new release and reload it. Keep the static assets mapping. Remove any direct `/media/` mapping after verifying protected media works from the updated web and Flutter clients. Keep the media directory itself.
+4. Verify sign-in, pass requests, approvals, gate scanning, and private media before reopening access. If the rollout fails, stop writes, check the migration state, and assess whether the previous release can run against the resulting schema. A database restore can discard writes made after the backup.
 
-   path = '/home/GATEEASEE/GateEase/Gateesaenew/Gate'
-   if path not in sys.path:
-       sys.path.append(path)
+## Sessions and app distribution
 
-   os.environ['DJANGO_SETTINGS_MODULE'] = 'Gate.settings'
-
-   from dotenv import load_dotenv
-   load_dotenv(os.path.join(path, '.env'))
-
-   from django.core.wsgi import get_wsgi_application
-   application = get_wsgi_application()
-   ```
-   ```
-7. **Configure Static and Media Files:** Scroll down to the **Static files** section and add these two entries:
-   * URL: `/static/` -> Directory: `/home/GATEEASEE/GateEase/Gateesaenew/Gate/staticfiles`
-   * URL: `/media/` -> Directory: `/home/GATEEASEE/GateEase/Gateesaenew/Gate/media`
-8. Click **Save** on the WSGI file, go back to the Web tab, turn on **Force HTTPS** under the Security section, and click the big green **Reload** button!
-
-Your application should now be live and connected to MySQL.
+- Tell users they will need to sign in again after the upgrade. Existing session tokens expire under the new rules. The updated Flutter app supports automatic renewal, and an older build may still lose API access after 15 minutes.
+- Sign Android updates with the existing production signing key through `GATEEASE_ANDROID_KEYSTORE`, `GATEEASE_ANDROID_KEY_ALIAS`, `GATEEASE_ANDROID_STORE_PASSWORD`, and `GATEEASE_ANDROID_KEY_PASSWORD`.
+- Verify that the proxy overwrites HTTPS headers. Enable `TRUST_PROXY_CLIENT_IP=True` only if the proxy also overwrites `X-Real-IP`. After rollout, run `python manage.py cleanup_rate_limit_counters` periodically to remove expired rate-limit counters.

@@ -90,7 +90,8 @@ class ExitpassSerializer1(serializers.ModelSerializer):
 class ComplaintSerializer(ModelSerializer):
     class Meta:
         model=complainttable
-        fields='__all__'
+        fields = ['id', 'student_id', 'complaint', 'reply', 'date']
+        read_only_fields = ['id', 'student_id', 'reply', 'date']
 
 class SecuritySerializer(ModelSerializer):
     class Meta:

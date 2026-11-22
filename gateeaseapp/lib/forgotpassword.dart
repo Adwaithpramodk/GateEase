@@ -58,7 +58,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => isLoading = true);
     try {
       final response = await dio.post(
-        '$baseurl/ResetPassword',
+        '$baseurl/api/password/reset/',
         data: {
           'email': emailController.text.trim(),
           'otp': otpController.text.trim(),

@@ -18,15 +18,15 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from django.conf.urls.static import static
 from django.conf import settings
-from django.views.static import serve
-from rest_framework_simplejwt.views import TokenRefreshView
+from GateApp.views import MobileTokenRefresh
+from GateApp.media_views import ProtectedMediaView
 
 urlpatterns = [
     path('gateease-marymatha-9884/', admin.site.urls),
     path('',include('GateApp.urls')),
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^media/(?P<path>.*)$', ProtectedMediaView.as_view()),
     # JWT token refresh endpoint (used by mobile app to silently renew access tokens)
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/refresh/', MobileTokenRefresh.as_view(), name='token_refresh'),
 ]
 
 if settings.DEBUG:

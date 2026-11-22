@@ -8,7 +8,15 @@ under REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'].
 from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle
 
 
-class LoginRateThrottle(AnonRateThrottle):
+from .middleware import client_ip
+
+
+class ClientIPThrottle(AnonRateThrottle):
+    def get_ident(self, request):
+        return client_ip(request)
+
+
+class LoginRateThrottle(ClientIPThrottle):
     """
     Strict throttle for the login endpoint.
     Prevents brute-force password attacks.
@@ -17,7 +25,7 @@ class LoginRateThrottle(AnonRateThrottle):
     scope = 'login'
 
 
-class SignupRateThrottle(AnonRateThrottle):
+class SignupRateThrottle(ClientIPThrottle):
     """
     Throttle for the student registration endpoint.
     Prevents spam account creation.
@@ -26,7 +34,7 @@ class SignupRateThrottle(AnonRateThrottle):
     scope = 'signup'
 
 
-class PasswordResetThrottle(AnonRateThrottle):
+class PasswordResetThrottle(ClientIPThrottle):
     """
     Throttle for forgot-password and reset-password endpoints.
     Prevents OTP spamming / email flooding.
@@ -57,5 +65,5 @@ class AuthenticatedAPIThrottle(SimpleRateThrottle):
         # Fall back to IP-based throttling if token has no login_id
         return self.cache_format % {
             'scope': self.scope,
-            'ident': self.get_ident(request),
+            'ident': client_ip(request),
         }

@@ -55,7 +55,6 @@ class NotificationService {
     try {
       String? token = await _firebaseMessaging.getToken();
       if (token != null) {
-        debugPrint('✅ FCM Token: $token');
       }
       return token;
     } catch (e) {
@@ -96,7 +95,6 @@ class NotificationService {
   /// Handle notification tap (when user taps notification)
   static void _handleNotificationTap(RemoteMessage message) {
     debugPrint('👆 Notification tapped');
-    debugPrint('Data: ${message.data}');
 
     // Navigate to pending passes screen based on notification type
     try {
@@ -149,7 +147,4 @@ class NotificationService {
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('🔔 Background notification received');
-  debugPrint('Title: ${message.notification?.title}');
-  debugPrint('Body: ${message.notification?.body}');
-  debugPrint('Data: ${message.data}');
 }

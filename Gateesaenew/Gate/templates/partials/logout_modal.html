@@ -113,7 +113,6 @@
         if (event) event.preventDefault();
         const modal = document.getElementById('logoutModal');
         if (!modal) {
-            window.location.href = "{% url 'logout' %}";
             return false;
         }
         modal.style.display = 'flex';

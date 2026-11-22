@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gateeaseapp/login.dart';
+import 'package:gateeaseapp/api_config.dart';
 import 'package:gateeaseapp/student/student_homepage.dart';
 import 'package:gateeaseapp/Mentor/mentor_homepage.dart';
 import 'package:gateeaseapp/Security/security_homepage.dart';
@@ -55,6 +56,12 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkLogin() async {
+    var restored = false;
+    try {
+      restored = await restoreSession();
+    } catch (_) {
+      // A device storage failure should still allow a fresh login.
+    }
     final prefs = await SharedPreferences.getInstance();
     final savedLid = prefs.getInt('lid');
     final savedType = prefs.getString('usertype');
@@ -63,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
-    if (savedLid != null && savedType != null) {
+    if (restored && savedLid != null && savedType != null) {
       lid = savedLid;
       usertype = savedType;
 

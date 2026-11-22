@@ -1,3 +1,4 @@
+import 'package:gateeaseapp/private_image.dart';
 import 'package:flutter/material.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:dio/dio.dart';
@@ -295,7 +296,7 @@ class _ApplyPassPageState extends State<ApplyPassPage> {
                               clipBehavior: Clip.antiAlias,
                               child: details?['Photo'] != null &&
                                   details!['Photo'].toString().isNotEmpty
-                                  ? Image.network(
+                                  ? PrivateImage(
                                 details!['Photo'].toString().startsWith('http')
                                     ? details!['Photo'].toString()
                                     : '$baseurl${details!['Photo']}',

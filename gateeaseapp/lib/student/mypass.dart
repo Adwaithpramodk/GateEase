@@ -3,6 +3,7 @@
 ////////////////////////
 library;
 
+import 'package:gateeaseapp/private_image.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -26,7 +27,6 @@ class _MypassesState extends State<Mypasses> {
   Map<int, String?> qrErrorMessages = {}; // Store error messages per pass
   Timer? _expiryTimer;
 
-  final String imageBaseUrl = baseurl; // backend base url
 
   @override
   void initState() {
@@ -530,8 +530,8 @@ class _MypassesState extends State<Mypasses> {
                                             width: 2,
                                           ),
                                         ),
-                                        child: Image.network(
-                                          "$imageBaseUrl$qrUrl",
+                                        child: PrivateImage(
+                                          qrUrl.toString(),
                                           height: 180,
                                           width: 180,
                                           errorBuilder:

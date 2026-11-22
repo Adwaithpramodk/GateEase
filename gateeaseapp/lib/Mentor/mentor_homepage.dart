@@ -1,3 +1,4 @@
+import 'package:gateeaseapp/private_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gateeaseapp/Mentor/pending_pass.dart';
@@ -119,8 +120,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
   }
 
   Future<void> logout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await logoutSession(deviceToken: await NotificationService.getFCMToken());
     if (!context.mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -887,16 +887,18 @@ class _MentorHomePageState extends State<MentorHomePage> {
                             backgroundColor: Colors.white.withValues(
                               alpha: 0.18,
                             ),
-                            backgroundImage: image != null
-                                ? NetworkImage('$baseurl$image')
-                                : null,
                             child: image == null
-                                ? const Icon(
-                                    Icons.person_rounded,
-                                    color: Colors.white,
-                                    size: 27,
-                                  )
-                                : null,
+                                ? const Icon(Icons.person_rounded, color: Colors.white70)
+                                : ClipOval(
+                                    child: PrivateImage(
+                                      image,
+                                      width: 54,
+                                      height: 54,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) =>
+                                          const Icon(Icons.person_rounded, color: Colors.white70),
+                                    ),
+                                  ),
                           ),
                         ),
                         const Spacer(),

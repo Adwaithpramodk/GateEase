@@ -1,30 +1,53 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gateeaseapp/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:gateeaseapp/main.dart';
+String tokenExpiringAt(DateTime date) {
+  final payload = base64Url.encode(
+    utf8.encode(jsonEncode({'exp': date.millisecondsSinceEpoch ~/ 1000})),
+  );
+  return 'header.$payload.signature';
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'lid': 12, 'usertype': 'Student'});
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  test('retains a session whose access token needs renewal', () async {
+    final now = DateTime.now();
+    await saveSession(
+      tokenExpiringAt(now.subtract(const Duration(minutes: 1))),
+      tokenExpiringAt(now.add(const Duration(days: 7))),
+    );
+    expect(await restoreSession(), isTrue);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test(
+    'clears saved identity when the seven-day refresh token expires',
+    () async {
+      final expired = tokenExpiringAt(
+        DateTime.now().subtract(const Duration(seconds: 30)),
+      );
+      await saveSession(expired, expired);
+      expect(await restoreSession(), isFalse);
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getInt('lid'), isNull);
+      expect(preferences.getString('usertype'), isNull);
+    },
+  );
+
+  test('rejects another origin for authenticated media', () {
+    expect(isGateEaseOrigin(Uri.parse('$baseurl/media/private.png')), isTrue);
+    expect(
+      isGateEaseOrigin(Uri.parse('https://other.example/media/private.png')),
+      isFalse,
+    );
   });
 }

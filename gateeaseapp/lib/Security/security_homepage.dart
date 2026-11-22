@@ -1,3 +1,4 @@
+import 'package:gateeaseapp/private_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -31,8 +32,7 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await logoutSession();
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (_) => LoginPage()), (route) => false);
@@ -242,13 +242,18 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
                         radius: 32,
                         backgroundColor:
                             Colors.white.withValues(alpha: 0.15),
-                        backgroundImage: details?['Photo'] != null
-                            ? NetworkImage('$baseurl${details!['Photo']}')
-                            : null,
-                        child: details?['Photo'] == null
-                            ? const Icon(Icons.security_rounded,
-                                color: Colors.white70, size: 30)
-                            : null,
+                        child: details?['Photo']?.toString() == null
+                            ? const Icon(Icons.security_rounded, color: Colors.white70)
+                            : ClipOval(
+                                child: PrivateImage(
+                                  (details?['Photo']?.toString())!,
+                                  width: 64,
+                                  height: 64,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) =>
+                                      const Icon(Icons.security_rounded, color: Colors.white70),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 14),

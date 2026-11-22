@@ -111,7 +111,7 @@ urlpatterns = [
     path('SecurityApprovedPassAPI/<int:lid>', SecurityApprovedPassAPI.as_view()),
     path('Securityinfo_api/<int:lid>',Securityinfo_api.as_view()),
     path('ForgetPassword',ForgetPassword.as_view()),
-    path('ResetPassword', ResetPasswordAPI.as_view()),
+    path('api/password/reset/', ResetPasswordAPI.as_view()),
     path('AcceptPass',AcceptPass.as_view()),
     path('RejectPass',RejectPass.as_view()),
     path('ping', PingAPI.as_view()),

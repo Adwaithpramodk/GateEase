@@ -65,10 +65,7 @@ class _LoginPageState extends State<LoginPage> {
         final accessToken = response.data['access']?.toString() ?? '';
         final refreshToken = response.data['refresh']?.toString() ?? '';
 
-        await prefs.setString('access_token', accessToken);
-        await prefs.setString('refresh_token', refreshToken);
-
-        setupDioInterceptor();
+        await saveSession(accessToken, refreshToken);
 
         if (!context.mounted) return;
 

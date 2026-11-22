@@ -36,7 +36,7 @@ def initialize_firebase():
                     print(f"Firebase service account file not found at: {cred_path}")
                     print("Push notifications will not work until you add the file or set FIREBASE_SERVICE_ACCOUNT_JSON env var")
     except Exception as e:
-        print(f"Firebase initialization error: {e}")
+        print("Firebase initialization failed")
 
 
 def send_notification_to_mentor(device_tokens, student_name, class_name, reason, pass_id):
@@ -59,16 +59,11 @@ def send_notification_to_mentor(device_tokens, student_name, class_name, reason,
     
     # Create notification message
     title = "New Pass Request 📝"
-    body = f"{student_name} from {class_name} requested a pass"
+    body = "Open GateEase to review a new exit pass request."
     
     # Data payload to send with notification
-    data = {
-        'pass_id': str(pass_id),
-        'student_name': student_name,
-        'class_name': class_name,
-        'reason': reason,
-        'type': 'pass_request'
-    }
+    data = {'type': 'pass_request'}
+
     
     successful_sends = 0
     failed_tokens = []
@@ -102,18 +97,14 @@ def send_notification_to_mentor(device_tokens, student_name, class_name, reason,
             )
             
             # Send message
-            response = messaging.send(message)
+            messaging.send(message)
             successful_sends += 1
-            print(f"✅ Notification sent successfully to token: {token[:20]}... | Response: {response}")
             
         except messaging.UnregisteredError:
-            print(f"❌ Token is unregistered: {token[:20]}...")
             failed_tokens.append(token)
         except messaging.SenderIdMismatchError:
-            print(f"❌ Sender ID mismatch for token: {token[:20]}...")
             failed_tokens.append(token)
         except Exception as e:
-            print(f"❌ Error sending notification to {token[:20]}...: {e}")
             failed_tokens.append(token)
     
     # You can handle failed tokens here (e.g., mark them as inactive in DB)
@@ -174,6 +165,6 @@ def send_pass_status_notification(device_tokens, student_name, status, reason=No
             successful_sends += 1
             
         except Exception as e:
-            print(f"❌ Error sending status notification: {e}")
+            print("Status notification delivery failed")
     
     return successful_sends

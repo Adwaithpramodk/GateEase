@@ -1,6 +1,11 @@
 import datetime
 import logging
 import secrets
+from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.utils.crypto import constant_time_compare, salted_hmac
 import csv
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
@@ -9,16 +14,17 @@ from django.contrib import messages
 from django.http import HttpResponse
 from .serializer import *
 from .models import *
+from .middleware import client_ip
 from .forms import *
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import IntegrityError, transaction
 from django.db import models as models
-from .auth_tokens import delete_auth_cookies, create_login_tokens, rotate_refresh_token, set_auth_cookies
-from django.views.decorators.http import require_GET    
+from .auth_tokens import ACTIVE_ROLES, active_token_user, delete_auth_cookies, create_login_tokens, rotate_refresh_token, set_auth_cookies
 from django.db.models import Q
 logger = logging.getLogger(__name__)
+security_log = logging.getLogger('GateApp.security')
 
 
 def mentor_approval_window_open():
@@ -28,8 +34,8 @@ def mentor_approval_window_open():
 
 def pass_expired(exit_pass, now=None):
     """Return whether a pass is past its 15-minute scan grace period."""
-    if not exit_pass.created_at or not exit_pass.time:
-        return False
+    if not exit_pass.created_at or exit_pass.time is None:
+        return True
     now = now or timezone.localtime()
     pass_date = timezone.localtime(exit_pass.created_at).date()
     exit_datetime = datetime.datetime.combine(pass_date, exit_pass.time)
@@ -38,6 +44,60 @@ def pass_expired(exit_pass, now=None):
         timezone.get_current_timezone(),
     )
     return now >= exit_datetime + datetime.timedelta(minutes=15)
+
+
+def individual_scan_open(exit_pass):
+    if not exit_pass.created_at or exit_pass.time is None:
+        return False
+    now = timezone.localtime()
+    exit_date = timezone.localtime(exit_pass.created_at).date()
+    exit_time = timezone.make_aware(datetime.datetime.combine(exit_date, exit_pass.time))
+    return exit_time - datetime.timedelta(minutes=15) <= now < exit_time + datetime.timedelta(minutes=15)
+
+
+def submit_individual_pass(student, reason, requested_time, now):
+    with transaction.atomic():
+        studenttable.objects.select_for_update().get(pk=student.pk)
+        existing = exitpasstable.objects.filter(
+            student_id=student, created_at__gte=now - datetime.timedelta(hours=1),
+        )
+        if existing.filter(
+            reason=reason, time=requested_time, created_at__gte=now - datetime.timedelta(seconds=15),
+        ).exists():
+            raise ValueError('This pass application was already submitted.')
+        if existing.count() >= 2:
+            raise ValueError('You can only apply for 2 passes per hour.')
+        return exitpasstable.objects.create(
+            student_id=student, reason=reason, time=requested_time,
+            mentor_status='pending', security_status='pending',
+        )
+
+
+def process_group_passes(login_id, pass_ids):
+    guard = securitytable.objects.filter(LOGINID_id=login_id).first()
+    if guard is None:
+        raise PermissionError('An active guard profile is required.')
+    if not isinstance(pass_ids, list) or not 1 <= len(pass_ids) <= 500:
+        raise ValueError('Select between 1 and 500 group passes.')
+    if any(type(value) not in (int, str) or not str(value).isascii() or not str(value).isdigit()
+           or len(str(value)) > 18 for value in pass_ids):
+        raise ValueError('Invalid group pass selection.')
+    ids = {int(value) for value in pass_ids}
+    with transaction.atomic():
+        passes = list(exitpasstable.objects.select_for_update().filter(
+            id__in=ids, is_group_pass=True, mentor_status='approved', security_status='pending',
+        ).order_by('id'))
+        if len(passes) != len(ids) or any(pass_expired(item) for item in passes):
+            raise ValueError('The selection contains ineligible or expired group passes.')
+        updated = exitpasstable.objects.filter(
+            id__in=ids, is_group_pass=True, mentor_status='approved', security_status='pending',
+        ).update(security_status='scanned', scanned_at=timezone.now(), scanned_by=guard)
+        if updated != len(ids):
+            raise ValueError('The pass selection changed. Please reload and retry.')
+        transaction.on_commit(lambda: security_log.info(
+            'group_scan actor=%s passes=%s', login_id, sorted(ids),
+        ))
+    return updated
 
 
 def notify_assigned_mentors_about_pass(exit_pass, student_obj, reason):
@@ -177,61 +237,102 @@ class Logout(View):
         delete_auth_cookies(response)
         return response
 
-    def get(self, request):
-        return self._logout(request)
-
     def post(self, request):
         return self._logout(request)
 
-#login page for admin
+def password_errors(password, username):
+    if not isinstance(password, str) or not password:
+        return 'Password is required.'
+    try:
+        validate_password(password, user=Logintable(username=username))
+    except ValidationError as exc:
+        return ' '.join(exc.messages)
+    return None
+
+
+RESET_RESPONSE = 'If the account exists, a code will be sent.'
+
+
+def reset_account(email):
+    if not isinstance(email, str) or len(email) > 100:
+        return None
+    try:
+        validate_email(email)
+    except ValidationError:
+        return None
+    try:
+        return Logintable.objects.get(username__iexact=email)
+    except (Logintable.DoesNotExist, Logintable.MultipleObjectsReturned):
+        return None
+
+
+def otp_digest(login_id, code):
+    return salted_hmac('gateease.password-reset', f'{login_id}:{code}', algorithm='sha256').hexdigest()
+
+
+def issue_password_reset(email):
+    user = reset_account(email)
+    if user is None or not cache.add(f'gateease-reset-send:{user.pk}', True, timeout=60):
+        return
+    code = str(secrets.randbelow(900000) + 100000)
+    with transaction.atomic():
+        Logintable.objects.select_for_update().get(pk=user.pk)
+        PasswordResetOTP.objects.filter(email=user.username, is_used=False).update(is_used=True)
+        reset = PasswordResetOTP.objects.create(email=user.username, otp=otp_digest(user.pk, code))
+    try:
+        send_mail(
+            'GateEase Password Reset',
+            f'Your password reset code is {code}. It expires in 10 minutes.',
+            settings.DEFAULT_FROM_EMAIL,
+            [user.username],
+        )
+    except Exception:
+        PasswordResetOTP.objects.filter(pk=reset.pk).update(is_used=True)
+        logger.exception('Password reset delivery failed')
+
+
+def complete_password_reset(email, code, password):
+    user = reset_account(email)
+    if user is None or not isinstance(code, str) or len(code) != 6:
+        raise ValidationError('Invalid or expired code.')
+    validate_password(password, user=user)
+    with transaction.atomic():
+        user = Logintable.objects.select_for_update().get(pk=user.pk)
+        reset = PasswordResetOTP.objects.filter(email=user.username, is_used=False).order_by('-id').first()
+        if reset is None or timezone.now() >= reset.created_at + datetime.timedelta(minutes=10):
+            return False
+        if not constant_time_compare(reset.otp, otp_digest(user.pk, code)):
+            reset.failed_attempts += 1
+            reset.is_used = reset.failed_attempts >= 5
+            reset.save(update_fields=['failed_attempts', 'is_used'])
+            return False
+        if PasswordResetOTP.objects.filter(pk=reset.pk, is_used=False).update(is_used=True) != 1:
+            return False
+        user.password = make_password(password)
+        user.save(update_fields=['password'])
+    security_log.info('password_reset target=%s', user.pk)
+    return True
+
+
 class ForgotPasswordWeb(View):
     def get(self, request):
         return render(request, 'tables/form/forgot_password.html')
 
     def post(self, request):
-        email = request.POST.get('email')
-        if not email:
-            messages.error(request, "Email is required.")
+        email = request.POST.get('email', '').strip()
+        if not email or len(email) > 100:
+            messages.error(request, 'Enter a valid email address.')
             return redirect('ForgotPassword')
+        issue_password_reset(email)
+        request.session['reset_email'] = email
+        messages.success(request, RESET_RESPONSE)
+        return redirect('ResetPassword')
 
-        user_tables = [studenttable, mentortable, securitytable]
-        user_found = False
-
-        for table in user_tables:
-            if table.objects.filter(email=email).exists():
-                user_found = True
-                break
-
-        if not user_found and not Logintable.objects.filter(username=email).exists():
-            messages.error(request, "Email not registered.")
-            return redirect('ForgotPassword')
-
-        import random
-        otp = str(secrets.randbelow(900000) + 100000)
-        PasswordResetOTP.objects.create(email=email, otp=otp)
-
-        try:
-            send_mail(
-                'GateEase Password Reset',
-                f'Your OTP for password reset is: {otp}\nValid for 10 minutes.\nAny queries contact: {settings.EMAIL_HOST_USER}',
-                settings.EMAIL_HOST_USER,
-                [email],
-                fail_silently=False,
-            )
-            request.session['reset_email'] = email
-            messages.success(request, "OTP sent successfully. Please check your email. Check your spam folder if you don't see it in your inbox.")
-            return redirect('ResetPassword')
-        except Exception as e:
-            logger.error("Mail Error in ForgotPasswordWeb: %s", e)
-            PasswordResetOTP.objects.filter(email=email, is_used=False).delete()
-            messages.error(request, "Failed to send OTP email. Please try again later.")
-            return redirect('ForgotPassword')
 
 class ResetPasswordWeb(View):
     def get(self, request):
         email = request.session.get('reset_email')
         if not email:
-            messages.error(request, "Please start the password reset process first.")
             return redirect('ForgotPassword')
         return render(request, 'tables/form/reset_password.html', {'email': email})
 
@@ -239,46 +340,23 @@ class ResetPasswordWeb(View):
         email = request.session.get('reset_email')
         if not email:
             return redirect('ForgotPassword')
-
-        otp = request.POST.get('otp')
-        new_password = request.POST.get('new_password')
-        confirm_password = request.POST.get('confirm_password')
-
-        if not all([otp, new_password, confirm_password]):
-            messages.error(request, "All fields are required.")
+        password = request.POST.get('new_password', '')
+        if password != request.POST.get('confirm_password'):
+            messages.error(request, 'Passwords do not match.')
             return redirect('ResetPassword')
-
-        if new_password != confirm_password:
-            messages.error(request, "Passwords do not match.")
+        try:
+            if not complete_password_reset(email, request.POST.get('otp'), password):
+                raise ValidationError('Invalid or expired code.')
+        except ValidationError as exc:
+            messages.error(request, ' '.join(exc.messages))
             return redirect('ResetPassword')
+        request.session.flush()
+        request._rotated_auth_tokens = None
+        response = redirect('LoginPage')
+        delete_auth_cookies(response)
+        messages.success(request, 'Password reset successfully. Please log in.')
+        return response
 
-        if len(new_password) < 8:
-            messages.error(request, "Password must be at least 8 characters.")
-            return redirect('ResetPassword')
-
-        otp_obj = PasswordResetOTP.objects.filter(email=email, is_used=False).order_by('-created_at').first()
-
-        if not otp_obj or otp_obj.otp != otp:
-            messages.error(request, "Invalid or expired OTP.")
-            return redirect('ResetPassword')
-
-        if timezone.now() > otp_obj.created_at + timezone.timedelta(minutes=10):
-            messages.error(request, "OTP has expired. Please request a new one.")
-            return redirect('ForgotPassword')
-
-        login_obj = Logintable.objects.filter(username=email).first()
-        if login_obj:
-            login_obj.password = make_password(new_password)
-            login_obj.save()
-
-        otp_obj.is_used = True
-        otp_obj.save()
-
-        if 'reset_email' in request.session:
-            del request.session['reset_email']
-
-        messages.success(request, "Password reset successfully. Please login.")
-        return redirect('LoginPage')
 
 class StudentVerificationPending(View):
     def get(self, request):
@@ -310,6 +388,16 @@ class LoginPage(View):
         password = request.POST.get('password')
 
         # Server-side Validation
+        login_key = salted_hmac('gateease.login-limit', f'{(username or "").casefold()}:{client_ip(request)}')
+        key = f'gateease-web-login:{login_key.hexdigest()}'
+        cache.add(key, 0, timeout=60)
+        try:
+            attempts = cache.incr(key)
+        except ValueError:
+            attempts = 1
+        if attempts > 5:
+            return HttpResponse('Too many login attempts.', status=429)
+
         if not username or not password:
             messages.error(request, "Login Failed: Email and Password are required!")
             return render(request, 'tables/form/login.html')
@@ -324,21 +412,17 @@ class LoginPage(View):
             #checking password
             if obj and check_password(password, obj.password):
                 pass
-            elif obj and obj.password == password:
-                #hashing the password
-                obj.password = make_password(password)
-                obj.save()
             else:
                 messages.error(request, "Login Unsuccessful")
                 return render(request, 'tables/form/login.html')
 
-            if obj.usertype in ('pending'):
+            if obj.usertype == 'pending':
                 return redirect(f"/StudentVerificationPending?status={obj.usertype}")
             
-            if obj.usertype in ('Rejected'):
+            if obj.usertype == 'Rejected':
                 return redirect(f"/StudentVerificationRejected?status={obj.usertype}")
 
-            # If password is correct, generate short-lived access and persistent refresh tokens.
+            # Issue short-lived access and persistent refresh tokens.
             refresh = create_login_tokens(obj)
 
             response = None
@@ -390,7 +474,7 @@ def filter_student_verification_status(queryset, status):
     return queryset.filter(status_filters[status]) if status in status_filters else queryset
 
 
-class VerifyStudent(LoginRequiredMixin, View):
+class VerifyStudent(AdminRequiredMixin, View):
     def get(self, request):
         q = request.GET.get('q', '').strip()
         status = request.GET.get('status', '').strip()
@@ -438,8 +522,8 @@ class AdminAddStudent(AdminRequiredMixin, View):
         if not admn_no.isdigit() or len(admn_no) != 4:
             messages.error(request, 'Admission number must be exactly 4 digits (e.g. 5467).')
             return redirect('admin_add_student')
-        if len(password) < 8:
-            messages.error(request, 'Password must be at least 8 characters.')
+        if error := password_errors(password, email):
+            messages.error(request, error)
             return redirect('admin_add_student')
         if Logintable.objects.filter(username=email).exists() or studenttable.objects.filter(email=email).exists():
             messages.error(request, 'Email already registered.')
@@ -465,20 +549,32 @@ class AdminAddStudent(AdminRequiredMixin, View):
         except classstable.DoesNotExist:
             messages.error(request, 'Selected class not found.')
         except Exception as e:
-            messages.error(request, f'Error adding student: {str(e)}')
+            messages.error(request, 'Unable to add the student.')
         return redirect('admin_add_student')
+
+def managed_students(request):
+    role = request.jwt_usertype or request.session.get('usertype')
+    if role == 'admin':
+        return studenttable.objects.all()
+    login_id = request.jwt_user_id or request.session.get('user_id')
+    classes = class_assigntable.objects.filter(mentor_id__LOGINID_id=login_id)
+    return studenttable.objects.filter(classs_id__in=classes.values('class_id'))
+
 
 class EditStudent(AdminOrMentorRequiredMixin, View):
     def get(self, request, id):
-        student = get_object_or_404(studenttable, id=id)
+        student = get_object_or_404(managed_students(request), id=id)
         form = EditStudentForm(instance=student)
         user_type = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
         back_url = 'verify_student' if user_type == 'admin' else 'verify_student_mentor'
         return render(request, 'tables/form/edit_student.html', {'form': form, 'student': student, 'back_url': back_url})
 
     def post(self, request, id):
-        student = get_object_or_404(studenttable, id=id)
-        form = EditStudentForm(request.POST, instance=student)
+        student = get_object_or_404(managed_students(request), id=id)
+        data = request.POST.copy()
+        if (request.jwt_usertype or request.session.get('usertype')) == 'mentor':
+            data.update({'email': student.email, 'classs': student.classs_id})
+        form = EditStudentForm(data, instance=student)
         user_type = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
         back_url = 'verify_student' if user_type == 'admin' else 'verify_student_mentor'
         if form.is_valid():
@@ -489,9 +585,15 @@ class EditStudent(AdminOrMentorRequiredMixin, View):
 
 class AcceptStudent(AdminOrMentorRequiredMixin, View):
     def post(self,request, lid):
-        login_obj=Logintable.objects.get(id=lid)
-        login_obj.usertype='Student'
-        login_obj.save()
+        login_obj = get_object_or_404(
+            Logintable.objects.filter(id__in=managed_students(request).values('LOGINID_id')),
+            id=lid, usertype__in=('pending', 'Rejected', 'Student'),
+        )
+        if login_obj.usertype != 'Student':
+            Logintable.objects.filter(pk=login_obj.pk).update(
+                usertype='Student', session_version=models.F('session_version') + 1,
+            )
+        security_log.info('student_verified actor=%s target=%s', request.jwt_user_id, login_obj.pk)
         messages.success(request, "Student Accepted successfully")
         destination = 'verify_student_mentor' if (
             getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
@@ -500,16 +602,22 @@ class AcceptStudent(AdminOrMentorRequiredMixin, View):
 
 class RejectStudent(AdminOrMentorRequiredMixin, View):
     def post(self,request, lid):
-        login_obj=Logintable.objects.get(id=lid)
-        login_obj.usertype='Rejected'
-        login_obj.save()
+        login_obj = get_object_or_404(
+            Logintable.objects.filter(id__in=managed_students(request).values('LOGINID_id')),
+            id=lid, usertype__in=('pending', 'Rejected', 'Student'),
+        )
+        if login_obj.usertype != 'Rejected':
+            Logintable.objects.filter(pk=login_obj.pk).update(
+                usertype='Rejected', session_version=models.F('session_version') + 1,
+            )
+        security_log.info('student_rejected actor=%s target=%s', request.jwt_user_id, login_obj.pk)
         messages.warning(request, "Student Rejected")
         destination = 'verify_student_mentor' if (
             getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
         ) == 'mentor' else 'verify_student'
         return redirect(destination)
 
-class DeleteStudent(AdminOrMentorRequiredMixin, View):
+class DeleteStudent(AdminRequiredMixin, View):
     def post(self,request,id):
         destination = 'verify_student_mentor' if (
             getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
@@ -530,15 +638,18 @@ class DeleteStudent(AdminOrMentorRequiredMixin, View):
 class UploadImage(AdminOrMentorRequiredMixin, View):
     def post(self, request, s_id):
         Photo = request.FILES.get('image')
-        student_obj = studenttable.objects.get(id=s_id)
+        student_obj = get_object_or_404(managed_students(request), id=s_id)
 
         if Photo:
             # Simply assign the file to the Photo field
             # Django will automatically save it to profile_photos/students/ as defined in the model
             student_obj.Photo = Photo
-            student_obj.save()
+            try:
+                student_obj.save()
+            except ValidationError as exc:
+                messages.error(request, ' '.join(exc.messages))
 
-        return redirect(request.META.get('HTTP_REFERER', 'verify_student'))
+        return redirect('verify_student' if (request.jwt_usertype or request.session.get('usertype')) == 'admin' else 'verify_student_mentor')
 
 class ManageDepartment(AdminRequiredMixin, View):
     def get(self,request):
@@ -568,13 +679,6 @@ class AssignDepartment(AdminRequiredMixin, View):
 #exit pass with admin role checking and report generation
 class Pass(AdminRequiredMixin, View):
     def get(self, request):
-        # Mark stale requests without mutating data as a side effect of a read.
-        threshold = timezone.now() - datetime.timedelta(hours=24)
-        exitpasstable.objects.filter(
-            mentor_status='pending',
-            created_at__lt=threshold,
-        ).update(mentor_status='expired')
-
         month = request.GET.get('month')
         q = request.GET.get('q', '').strip()
 
@@ -784,43 +888,27 @@ class MentorPendingPasses(MentorRequiredMixin, View):
         return render(request, 'tables/form/mentor_pending_passes.html', {'passes': pending_passes, 'mentor': mentor_obj if 'mentor_obj' in locals() else None})
 
     def post(self, request):
-        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
-        pass_id = request.POST.get('pass_id')
+        login_id = request.jwt_user_id or request.session.get('user_id')
+        mentor = mentortable.objects.filter(LOGINID_id=login_id).first()
         action = request.POST.get('action')
-
-        try:
-            mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
-            assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
-
-            exit_pass = exitpasstable.objects.get(
-                id=pass_id,
-                student_id__classs__id__in=assigned_classes
-            )
-
-            if exit_pass.mentor_status != 'pending':
-                messages.warning(
-                    request,
-                    f"Pass has already been {exit_pass.mentor_status or 'processed'}."
+        scoped_passes = exitpasstable.objects.filter(
+            student_id__classs_id__in=class_assigntable.objects.filter(mentor_id=mentor).values('class_id'),
+        ) if mentor else exitpasstable.objects.none()
+        if action not in ('approve', 'reject'):
+            messages.error(request, 'Invalid pass decision.')
+        else:
+            decision = 'approved' if action == 'approve' else 'rejected'
+            try:
+                review_pending_pass(
+                    scoped_passes, request.POST.get('pass_id'), decision, login_id, mentor,
+                    request.POST.get('reject_reason', ''),
                 )
-            elif action == 'approve':
-                exit_pass.mentor_status = 'approved'
-                exit_pass.mentor_id = mentor_obj
-                from django.utils import timezone
-                exit_pass.approved_at = timezone.now()
-                exit_pass.save()
-                messages.success(request, f"Pass for {exit_pass.student_id.name} approved.")
-            elif action == 'reject':
-                reject_reason = request.POST.get('reject_reason')
-                exit_pass.mentor_status = 'rejected'
-                exit_pass.mentor_id = mentor_obj
-                exit_pass.reject_reason = reject_reason
-                exit_pass.save()
-                messages.success(request, f"Pass for {exit_pass.student_id.name} rejected.")
-
-        except (mentortable.DoesNotExist, exitpasstable.DoesNotExist):
-            messages.error(request, "Pass not found or unauthorized.")
-
+            except (ValueError, PermissionError) as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.success(request, f'Pass {decision}.')
         return redirect('MentorPendingPasses')
+
 
 class MentorApprovedPasses(MentorRequiredMixin, View):
     def get(self, request):
@@ -828,23 +916,13 @@ class MentorApprovedPasses(MentorRequiredMixin, View):
         try:
             mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
             assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
-            now_local = timezone.localtime()
-            assigned_approved_passes = exitpasstable.objects.filter(
-                mentor_status='approved',
-                security_status='pending',
-                student_id__classs__id__in=assigned_classes
-            )
-            expired_filter = models.Q(created_at__date__lt=now_local.date()) | models.Q(
-                created_at__date=now_local.date(),
-                time__lte=now_local.time()
-            )
-            assigned_approved_passes.filter(expired_filter).delete()
-
-            # Show passes that are approved by mentor but not yet scanned or cancelled
-            approved_passes = assigned_approved_passes.filter(
-                mentor_status='approved',
-                security_status='pending',
-                student_id__classs__id__in=assigned_classes
+            cutoff = timezone.localtime() - datetime.timedelta(minutes=15)
+            approved_passes = exitpasstable.objects.filter(
+                mentor_status='approved', security_status='pending',
+                student_id__classs__id__in=assigned_classes,
+            ).filter(
+                Q(created_at__date__gt=cutoff.date())
+                | Q(created_at__date=cutoff.date(), time__gt=cutoff.time())
             ).order_by('-approved_at')
         except mentortable.DoesNotExist:
             approved_passes = []
@@ -868,11 +946,14 @@ class MentorApprovedPasses(MentorRequiredMixin, View):
 
             if action == 'revoke':
                 revoke_reason = request.POST.get('revoke_reason', 'Revoked by mentor')
-                exit_pass.mentor_status = 'revoked'
-                exit_pass.reject_reason = revoke_reason
-                exit_pass.approved_at = timezone.now()
-                exit_pass.save()
-                messages.success(request, f"Pass for {exit_pass.student_id.name} has been revoked.")
+                updated = exitpasstable.objects.filter(
+                    pk=exit_pass.pk, mentor_status='approved', security_status='pending',
+                ).update(mentor_status='revoked', reject_reason=revoke_reason[:500])
+                if updated:
+                    security_log.info('pass_revoked actor=%s pass=%s', user_id, pass_id)
+                    messages.success(request, f"Pass for {exit_pass.student_id.name} has been revoked.")
+                else:
+                    messages.warning(request, 'Pass has already been processed.')
 
         except (mentortable.DoesNotExist, exitpasstable.DoesNotExist):
             messages.error(request, "Pass not found or unauthorized.")
@@ -961,8 +1042,8 @@ class AddMentor(AdminRequiredMixin, View):
                      messages.error(request, "Error: Email already registered")
                      return redirect('add_mntr')
 
-                if not password or len(password) < 8:
-                     messages.error(request, "Error: Password must be at least 8 characters long")
+                if error := password_errors(password, email):
+                     messages.error(request, error)
                      return redirect('add_mntr')
 
                 with transaction.atomic():
@@ -1005,8 +1086,11 @@ class EditMentor(AdminRequiredMixin, View):
         m=mentortable.objects.get(id=id)
         mt=AddMentorForm(request.POST, request.FILES, instance=m)
         if mt.is_valid():
-            mt.save()
             password = request.POST.get('password')
+            if password and (error := password_errors(password, m.email)):
+                messages.error(request, error)
+                return redirect('mng_mntr')
+            mt.save()
             if password:
                 if m.LOGINID:
                     m.LOGINID.password = make_password(password)
@@ -1061,8 +1145,8 @@ class AddSecurity(AdminRequiredMixin, View):
                      messages.error(request, "Error: Email already registered")
                      return redirect('add_security')
 
-                if not password or len(password) < 8:
-                     messages.error(request, "Error: Password must be at least 8 characters long")
+                if error := password_errors(password, email):
+                     messages.error(request, error)
                      return redirect('add_security')
 
                 with transaction.atomic():
@@ -1109,8 +1193,11 @@ class EditSecurity(AdminRequiredMixin, View):
         sr=securitytable.objects.get(id=id)
         st=AddSecurityForm(request.POST, request.FILES, instance=sr)
         if st.is_valid():
-            st.save()
             password = request.POST.get('password')
+            if password and (error := password_errors(password, sr.email)):
+                messages.error(request, error)
+                return redirect('mng_security')
+            st.save()
             if password:
                 if sr.LOGINID:
                     sr.LOGINID.password = make_password(password)
@@ -1129,48 +1216,27 @@ class DeleteSecurity(AdminRequiredMixin, View):
         messages.success(request, "Security Deleted successfully")
         return redirect('mng_security')
 
-#admin approve pass
-class Approvepassadmin(AdminRequiredMixin, View):
+class AdminPassDecision(AdminRequiredMixin, View):
+    decision = None
+
     def post(self, request, id):
+        login_id = request.jwt_user_id or request.session.get('user_id')
         try:
-            exit_pass = exitpasstable.objects.get(id=id)
-        except exitpasstable.DoesNotExist:
-            messages.error(request, "Pass not found.")
-            return redirect('pass')
-
-        if exit_pass.mentor_status != "pending":
-            messages.warning(
-                request,
-                f"Pass has already been {exit_pass.mentor_status or 'processed'}."
-            )
-            return redirect('pass')
-
-        exit_pass.mentor_status = "approved"
-        exit_pass.approved_at = timezone.now()
-        exit_pass.save()
-        messages.success(request, "Pass Approved")
+            review_pending_pass(exitpasstable.objects.all(), id, self.decision, login_id)
+        except (ValueError, PermissionError) as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(request, f'Pass {self.decision}.')
         return redirect('pass')
 
-#admin reject pass
-class Rejectpassadmin(AdminRequiredMixin, View):
-    def post(self,request,id):
-        try:
-            obj = exitpasstable.objects.get(id=id)
-        except exitpasstable.DoesNotExist:
-            messages.error(request, "Pass not found.")
-            return redirect('pass')
 
-        if obj.mentor_status != "pending":
-            messages.warning(
-                request,
-                f"Pass has already been {obj.mentor_status or 'processed'}."
-            )
-            return redirect('pass')
+class Approvepassadmin(AdminPassDecision):
+    decision = 'approved'
 
-        obj.mentor_status = "rejected"
-        obj.save()
-        messages.warning(request, "Pass Rejected")
-        return redirect('pass')
+
+class Rejectpassadmin(AdminPassDecision):
+    decision = 'rejected'
+
 
 class StudentRegister(View):
     def get(self, request):
@@ -1193,8 +1259,8 @@ class StudentRegister(View):
             messages.error(request, "Admission number must be exactly 4 digits (e.g. 5467).")
             return redirect('StudentRegister')
 
-        if len(password) < 8:
-            messages.error(request, "Password must be at least 8 characters!")
+        if error := password_errors(password, email):
+            messages.error(request, error)
             return redirect('StudentRegister')
 
         if Logintable.objects.filter(username=email).exists() or studenttable.objects.filter(email=email).exists():
@@ -1226,7 +1292,7 @@ class StudentRegister(View):
             messages.success(request, "Registration successful! Please wait for approval.")
             return redirect('login/')
         except Exception as e:
-            messages.error(request, f"Registration failed: {str(e)}")
+            messages.error(request, 'Unable to complete registration.')
             return redirect('StudentRegister')
 
 class StudentNewPass(StudentRequiredMixin, View):
@@ -1273,17 +1339,6 @@ class StudentNewPass(StudentRequiredMixin, View):
             messages.error(request, "Pass applications are only accepted between 10:00 AM and 3:40 PM")
             return redirect('StudentNewPass')
 
-        # ── Limit of 2 passes per hour ──
-        one_hour_ago = now_local - datetime.timedelta(hours=1)
-        recent_passes_count = exitpasstable.objects.filter(
-            student_id=student_obj,
-            created_at__gte=one_hour_ago
-        ).count()
-#########web student pass limit 2 per hour
-        if recent_passes_count >= 2:
-            messages.error(request, "You can only apply for 2 passes per hour. Please try again later.")
-            return redirect('StudentNewPass')
-
         exit_datetime = datetime.datetime.combine(now_local.date(), time_obj)
         exit_datetime = timezone.make_aware(exit_datetime, timezone.get_current_timezone())
 
@@ -1291,25 +1346,18 @@ class StudentNewPass(StudentRequiredMixin, View):
             messages.error(request, "Exit time must be in the future")
             return redirect('StudentNewPass')
 
-        formatted_time = time_obj.strftime('%I:%M %p')
-
         try:
-            exit_pass = exitpasstable.objects.create(
-                student_id=student_obj,
-                reason=reason,
-                time=time_obj,
-                mentor_status='pending',
-                security_status='pending'
-            )
+            exit_pass = submit_individual_pass(student_obj, reason, time_obj, now_local)
             try:
                 notify_assigned_mentors_about_pass(exit_pass, student_obj, reason)
             except Exception:
                 logger.exception("Failed to notify mentors about web pass %s", exit_pass.id)
             messages.success(request, "Pass applied successfully!")
             return redirect('StudentHome')
-        except Exception as e:
-            messages.error(request, f"Error applying pass: {str(e)}")
+        except ValueError as exc:
+            messages.error(request, str(exc))
             return redirect('StudentNewPass')
+
 
 class StudentComplaint(StudentRequiredMixin, View):
     def get(self, request):
@@ -1344,7 +1392,7 @@ class StudentComplaint(StudentRequiredMixin, View):
             messages.success(request, "Complaint submitted successfully!")
             return redirect('StudentComplaint')
         except Exception as e:
-            messages.error(request, f"Error submitting complaint: {str(e)}")
+            messages.error(request, 'Unable to submit the complaint.')
             return redirect('StudentComplaint')
 
 class StudentAnnouncements(StudentRequiredMixin, View):
@@ -1386,7 +1434,7 @@ class StudentMyPasses(StudentRequiredMixin, View):
                     p.is_expired = False
 
                 # Only encrypt if the pass is not expired and hasn't been scanned/rejected
-                if not p.is_expired and p.security_status == 'pending' and p.mentor_status in ['pending', 'approved']:
+                if individual_scan_open(p) and not p.is_group_pass and p.security_status == 'pending' and p.mentor_status == 'approved':
                     p.encrypted_token = encrypt_pass_id(p.id)
                 else:
                     p.encrypted_token = None
@@ -1404,9 +1452,13 @@ class StudentMyPasses(StudentRequiredMixin, View):
             exit_pass = exitpasstable.objects.get(id=pass_id, student_id=student_obj)
 
             if exit_pass.security_status == 'pending' and exit_pass.mentor_status == 'pending':
-                exit_pass.mentor_status = 'cancelled'
-                exit_pass.save()
-                messages.success(request, "Pass cancelled successfully.")
+                if exitpasstable.objects.filter(
+                    pk=exit_pass.pk, mentor_status='pending', security_status='pending',
+                ).update(mentor_status='cancelled'):
+                    security_log.info('pass_cancelled actor=%s pass=%s', user_id, pass_id)
+                    messages.success(request, "Pass cancelled successfully.")
+                else:
+                    messages.warning(request, 'Pass has already been processed.')
             else:
                 messages.error(request, "This pass cannot be cancelled.")
 
@@ -1446,14 +1498,9 @@ class WebGenerateQRCode(StudentRequiredMixin, View):
             return HttpResponse("Invalid Token", status=400)
         try:
             exit_pass = exitpasstable.objects.get(id=pass_id, student_id__LOGINID_id=(getattr(request, 'jwt_user_id', None) or request.session.get('user_id')))
-            now = timezone.localtime()
-            exit_date = timezone.localtime(exit_pass.created_at).date()
-            exit_datetime = timezone.make_aware(
-                datetime.datetime.combine(exit_date, exit_pass.time),
-                timezone.get_current_timezone(),
-            )
-            if now >= exit_datetime + datetime.timedelta(minutes=15):
-                return HttpResponse("QR code expired", status=410)
+            if (exit_pass.is_group_pass or exit_pass.mentor_status != 'approved'
+                    or exit_pass.security_status != 'pending' or not individual_scan_open(exit_pass)):
+                return HttpResponse('QR code unavailable', status=403)
             qr = qrcode.make(token)
             buffer = BytesIO()
             qr.save(buffer, format="PNG")
@@ -1478,13 +1525,15 @@ class WebGetPassDetails(SecurityRequiredMixin, View):
         if not token:
             return JsonResponse({'success': False, 'message': 'No token provided'})
 
-        # Simple rate limiting: max 30 scans per minute per guard session
-        from django.core.cache import cache
-        guard_key = f'scan_rate_{request.session.session_key}'
-        scan_count = cache.get(guard_key, 0)
-        if scan_count > 30:
-            return JsonResponse({'success': False, 'message': 'Too many scan attempts. Please wait a moment.'})
-        cache.set(guard_key, scan_count + 1, timeout=60)
+        guard_id = request.jwt_user_id or request.session.get('user_id')
+        guard_key = f'scan_rate_{guard_id}'
+        cache.add(guard_key, 0, timeout=60)
+        try:
+            attempts = cache.incr(guard_key)
+        except ValueError:
+            attempts = 1
+        if attempts > 30:
+            return JsonResponse({'success': False, 'message': 'Too many scan attempts.'}, status=429)
 
         pass_id = decrypt_pass_id(token)
         if not pass_id:
@@ -1492,16 +1541,9 @@ class WebGetPassDetails(SecurityRequiredMixin, View):
         try:
             exit_pass = exitpasstable.objects.get(id=pass_id)
 
-            try:
-                from django.utils import timezone
-                import datetime
-                now_local = timezone.localtime(timezone.now())
-                pass_date = timezone.localtime(exit_pass.created_at).date()
-                exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, exit_pass.time), timezone.get_current_timezone())
-                if now_local >= exit_dt + datetime.timedelta(minutes=15) and exit_pass.security_status == 'pending':
-                    return JsonResponse({'success': False, 'message': 'This pass has expired.'})
-            except Exception:
-                pass
+            if (exit_pass.is_group_pass or exit_pass.mentor_status != 'approved'
+                    or (exit_pass.security_status == 'pending' and not individual_scan_open(exit_pass))):
+                return JsonResponse({'success': False, 'message': 'Pass is outside its scan window or unavailable.'})
 
             mentor_name = exit_pass.mentor_id.name if exit_pass.mentor_id else 'Unknown'
 
@@ -1527,64 +1569,22 @@ class WebGetPassDetails(SecurityRequiredMixin, View):
 
 class SecurityScanPass(SecurityRequiredMixin, View):
     def post(self, request):
-        # Accept the encrypted token, NOT a raw pass_id integer
         token = request.POST.get('token')
         action = request.POST.get('action', 'approve')
-
-        if not token:
-            return JsonResponse({'success': False, 'message': 'No token provided'})
-
-        # Validate and decrypt — this enforces TTL and tamper-check in one step
+        if not token or action not in ('approve', 'reject'):
+            return JsonResponse({'success': False, 'message': 'Invalid scan request.'})
         pass_id = decrypt_pass_id(token)
         if not pass_id:
-            return JsonResponse({'success': False, 'message': 'Invalid, forged, or expired QR Code. Please re-scan.'})
-
+            return JsonResponse({'success': False, 'message': 'Invalid or expired QR code.'})
+        login_id = request.jwt_user_id or request.session.get('user_id')
         try:
-            exit_pass = exitpasstable.objects.get(id=pass_id)
+            process_individual_scan(login_id, pass_id, action)
+        except PermissionError:
+            return JsonResponse({'success': False, 'message': 'Forbidden'}, status=403)
+        except ValueError as exc:
+            return JsonResponse({'success': False, 'message': str(exc)})
+        return JsonResponse({'success': True, 'message': 'Gate decision recorded.'})
 
-            # Identify the acting guard for the audit trail
-            user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
-            try:
-                from GateApp.models import securitytable
-                guard = securitytable.objects.get(LOGINID_id=user_id)
-            except securitytable.DoesNotExist:
-                guard = None
-
-            try:
-                from django.utils import timezone
-                import datetime
-                now_local = timezone.localtime(timezone.now())
-                pass_date = timezone.localtime(exit_pass.created_at).date()
-                exit_dt = timezone.make_aware(datetime.datetime.combine(pass_date, exit_pass.time), timezone.get_current_timezone())
-                if now_local >= exit_dt + datetime.timedelta(minutes=15) and exit_pass.security_status == 'pending':
-                    return JsonResponse({'success': False, 'message': 'This pass has expired.'})
-            except Exception:
-                pass
-
-            if exit_pass.mentor_status == 'cancelled':
-                return JsonResponse({'success': False, 'message': 'Pass was cancelled by the student.'})
-            elif exit_pass.mentor_status == 'revoked':
-                return JsonResponse({'success': False, 'message': f'Pass Revoked by Mentor: {exit_pass.reject_reason}'})
-            elif exit_pass.mentor_status != 'approved':
-                return JsonResponse({'success': False, 'message': 'Pass is not approved by mentor!'})
-            elif exit_pass.security_status == 'scanned':
-                return JsonResponse({'success': False, 'is_warning': True, 'message': 'Warning: Pass has already been scanned!'})
-            else:
-                if action == 'approve':
-                    exit_pass.security_status = 'scanned'
-                    exit_pass.scanned_at = timezone.now()
-                    exit_pass.scanned_by = guard  # Audit trail: record which guard approved
-                    exit_pass.save()
-                    return JsonResponse({'success': True, 'message': f'Pass scanned successfully for {exit_pass.student_id.name}! Student can now leave the campus.'})
-                elif action == 'reject':
-                    exit_pass.security_status = 'rejected'
-                    exit_pass.scanned_by = guard  # Audit trail: record which guard rejected
-                    exit_pass.save()
-                    return JsonResponse({'success': True, 'message': f'Pass rejected for {exit_pass.student_id.name}.'})
-
-                return JsonResponse({'success': False, 'message': 'Invalid action'})
-        except exitpasstable.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Invalid QR Code: Pass not found.'})
 
 class SecurityHome(SecurityRequiredMixin, View):
     def get(self, request):
@@ -1614,11 +1614,13 @@ from io import BytesIO
 import json
 import qrcode
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from GateApp.throttles import (
     LoginRateThrottle,
     SignupRateThrottle,
@@ -1660,24 +1662,12 @@ class QuietJWTAuthentication(JWTAuthentication):
 
     def get_user(self, validated_token):
         try:
-            login_id = validated_token.get('login_id')
-            if login_id:
-                class JWTUser:
-                    def __init__(self, id):
-                        self.id = id
-                        self.is_authenticated = True
-                        self.is_active = True
-                    def __str__(self): return f"User_{self.id}"
-                return JWTUser(login_id)
-            return super().get_user(validated_token)
-        except Exception as e:
-            logger.debug("QuietJWTAuthentication fallback: %s", e)
-            class AnonymousUser:
-                is_authenticated = True
-                is_active = True
-                def __str__(self): return "JWTUser"
-            return AnonymousUser()
-
+            user = active_token_user(validated_token)
+        except TokenError as exc:
+            raise InvalidToken('Account session has expired') from exc
+        user.is_authenticated = True
+        user.is_active = True
+        return user
 
 
 class JWTAuthMixin:
@@ -1730,8 +1720,8 @@ class UserReg_api(APIView):
                 return Response({"message": "Admission number must be exactly 4 digits"}, status=status.HTTP_400_BAD_REQUEST)
 
             password = request.data.get('password')
-            if not password or len(password) < 8:
-                return Response({"message": "Password must be at least 8 characters long"}, status=status.HTTP_400_BAD_REQUEST)
+            if error := password_errors(password, email):
+                return Response({"message": error}, status=status.HTTP_400_BAD_REQUEST)
             hashed_pw = make_password(password)
 
             login_profile = login_serial.save(
@@ -1742,7 +1732,7 @@ class UserReg_api(APIView):
 
             user_serial.save(LOGINID=login_profile)
 
-            return Response(user_serial.data, status.HTTP_201_CREATED)
+            return Response(user_serial.data, status=status.HTTP_201_CREATED)
         return Response({
             'login_error': login_serial.errors if not login_valid else None,
             'user.error': user_serial.errors if not data_valid else None,
@@ -1764,7 +1754,7 @@ class LoginpageAPI(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        t_user = Logintable.objects.only('id', 'username', 'password', 'usertype').filter(username=username).first()
+        t_user = Logintable.objects.filter(username=username).first()
 
         if not t_user or not check_password(password, t_user.password):
             return Response(
@@ -1772,7 +1762,7 @@ class LoginpageAPI(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        if t_user.usertype in ('pending', 'Rejected'):
+        if t_user.usertype not in ACTIVE_ROLES:
             return Response(
                 {"message": "Account not verified. Contact admin.", "usertype": t_user.usertype},
                 status=status.HTTP_403_FORBIDDEN
@@ -1792,7 +1782,6 @@ class LoginpageAPI(APIView):
             "access": str(access),
             "refresh": str(refresh),
         }, status=status.HTTP_200_OK)
-        set_auth_cookies(response, access, refresh)
 
         logger.info("Login successful for login_id=%s usertype=%s", t_user.id, t_user.usertype)
         return response
@@ -1815,9 +1804,39 @@ class WebTokenRefresh(APIView):
             delete_auth_cookies(response)
             return response
 
-        response = Response({'access': str(refresh.access_token)}, status=status.HTTP_200_OK)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
         set_auth_cookies(response, refresh.access_token, refresh)
         return response
+
+
+class MobileTokenRefresh(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        raw_token = request.data.get('refresh')
+        if not isinstance(raw_token, str) or not raw_token:
+            return Response({'detail': 'Refresh token required.'}, status=400)
+        try:
+            refresh = rotate_refresh_token(raw_token)
+        except (TokenError, KeyError):
+            return Response({'detail': 'Session has expired.'}, status=401)
+        return Response({'access': str(refresh.access_token), 'refresh': str(refresh)})
+
+    def delete(self, request):
+        raw_token = request.data.get('refresh')
+        if isinstance(raw_token, str) and raw_token:
+            try:
+                refresh = RefreshToken(raw_token)
+                refresh.blacklist()
+                device_token = request.data.get('device_token')
+                if isinstance(device_token, str) and len(device_token) <= 255:
+                    MentorDeviceToken.objects.filter(
+                        mentor__LOGINID_id=refresh.get('login_id'), device_token=device_token,
+                    ).delete()
+            except TokenError:
+                pass
+        return Response(status=204)
 
 
 #apply pass api for student
@@ -1825,9 +1844,6 @@ class ApplypassAPI(JWTAuthMixin, APIView):
     def get(self, request, lid):
         if str(lid) != str(request.auth.get('login_id')):
             return Response({'error': 'Unauthorized'}, status=403)
-        # Cleanup expired passes
-        threshold = timezone.now() - datetime.timedelta(hours=24)
-        exitpasstable.objects.filter(mentor_status='pending', created_at__lt=threshold).delete()
 
         student_obj = studenttable.objects.get(LOGINID_id=lid)
         obj = exitpasstable.objects.filter(student_id_id=student_obj).order_by('-id')
@@ -1863,102 +1879,17 @@ class ApplypassAPI(JWTAuthMixin, APIView):
             if exit_datetime <= now_local:
                 return Response({"error": "Exit time must be in the future"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # ── Limit of 2 passes per hour ──
-            student_obj = studenttable.objects.get(LOGINID_id=lid)
-            one_hour_ago = now_local - datetime.timedelta(hours=1)
-            recent_passes_count = exitpasstable.objects.filter(
-                student_id=student_obj,
-                created_at__gte=one_hour_ago
-            ).count()
-######start
-            if recent_passes_count >= 2:
-                return Response({"error": "You can only apply for 2 passes per hour. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
-
             if not mentor_approval_window_open():
-                return Response(
-                    {"error": "Pass applications are only accepted between 10:00 AM and 3:40 PM"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            duplicate_window = now_local - datetime.timedelta(seconds=15)
-            if exitpasstable.objects.filter(
-                student_id=student_obj,
-                reason=reason,
-                time=time_obj,
-                created_at__gte=duplicate_window,
-            ).exists():
-                return Response(
-                    {"error": "This pass application was already submitted."},
-                    status=status.HTTP_409_CONFLICT,
-                )
-#######end 
-            # student_obj = studenttable.objects.get(LOGINID_id=lid)
-
-            # # ── Enforce daily pass limit: max 3 per student per day ──
-            # today_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
-            # passes_today = exitpasstable.objects.filter(
-            #     student_id=student_obj,
-            #     created_at__gte=today_start
-            # ).count()
-            # if passes_today >= 3:
-            #     return Response(
-            #         {"error": "You have reached the maximum of 3 pass applications for today"},
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
-
-            # Create exit pass
-            exit_pass = exitpasstable.objects.create(
-                student_id=student_obj,
-                reason=reason,
-                time=time_obj,
-                mentor_status = 'pending',
-                security_status = 'pending',
-            )
+                return Response({'error': 'Pass applications are only accepted between 10:00 AM and 3:40 PM'}, status=400)
+            student_obj = get_object_or_404(studenttable, LOGINID_id=lid)
             try:
-                # Find mentor assigned to this student's class
-                student_class = student_obj.classs
-                if student_class:
-                    # Get class assignment
-                    class_assignments = class_assigntable.objects.filter(class_id=student_class)
-
-                    if class_assignments.exists():
-                        for assignment in class_assignments:
-                            mentor = assignment.mentor_id
-
-                            # Get all active device tokens for this mentor
-                            device_tokens_objs = MentorDeviceToken.objects.filter(
-                                mentor=mentor,
-                                is_active=True
-                            )
-
-                            if device_tokens_objs.exists():
-                                device_tokens = [token.device_token for token in device_tokens_objs]
-
-                                # Send notification
-                                from GateApp.services.notification_service import send_notification_to_mentor
-                                sent_count = send_notification_to_mentor(
-                                    device_tokens=device_tokens,
-                                    student_name=student_obj.name,
-                                    class_name=student_class.class_name,
-                                    reason=reason,
-                                    pass_id=exit_pass.id
-                                )
-
-                                if sent_count > 0:
-                                    print(f"[SUCCESS] Notification sent to {sent_count} device(s) for mentor {mentor.name}")
-                                else:
-                                    print(f"[WARNING] Failed to send notification to mentor {mentor.name}")
-                            else:
-                                print(f"[WARNING] No active device tokens found for mentor {mentor.name}")
-                    else:
-                        print(f"[WARNING] No mentor assigned  to class {student_class.class_name}")
-                else:
-                    print(f"[WARNING] Student {student_obj.name} is not assigned to any class")
-
-            except Exception as e:
-                print(f"[ERROR] Error sending push notification: {e}")
-                # Don't fail the pass creation if notification fails
-            # ================================================================
+                exit_pass = submit_individual_pass(student_obj, reason, time_obj, now_local)
+            except ValueError as exc:
+                return Response({'error': str(exc)}, status=409)
+            try:
+                notify_assigned_mentors_about_pass(exit_pass, student_obj, reason)
+            except Exception:
+                logger.exception('Failed to notify mentors about pass %s', exit_pass.pk)
 
             return Response(
                 {"message": "Pass applied successfully"},
@@ -1968,7 +1899,7 @@ class ApplypassAPI(JWTAuthMixin, APIView):
         except Exception as e:
             logger.exception("ERROR in ApplypassAPI: %s", type(e).__name__)
             return Response(
-                {"error": str(e)},
+                {"error": "Unable to complete the request."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -1977,13 +1908,13 @@ class StudentInfo_api(JWTAuthMixin, APIView):
     def get(self, request, lid):
         try:
             auth_lid = request.auth.get('login_id')
-            print(f"DEBUG: StudentInfo_api request for lid={lid}, token login_id={auth_lid}")
+
 
             if auth_lid is None:
                 return Response({'error': 'Token missing login_id. Please re-login.'}, status=403)
 
             if str(lid) != str(auth_lid):
-                print(f"DEBUG: ID Mismatch! URL lid={lid} vs Token lid={auth_lid}")
+
                 return Response({'error': 'Unauthorized: ID mismatch'}, status=403)
 
             student_obj = studenttable.objects.get(LOGINID_id=lid)
@@ -1995,16 +1926,20 @@ class StudentInfo_api(JWTAuthMixin, APIView):
             return Response({'error': 'Student profile not found'}, status=404)
         except Exception as e:
             logger.exception("StudentInfo_api Error")
-            return Response({'error': str(e)}, status=500)
+            return Response({'error': 'Unable to complete the request.'}, status=500)
 
 
 #view complaint and view reply api for student
 class ViewcomplaintAPI(JWTAuthMixin, APIView):
     def get(self,request,lid):
+        if request.auth.get("usertype") != "Student" or request.auth.get("login_id") != lid:
+            return Response({"error": "Forbidden"}, status=403)
         complaint = complainttable.objects.filter(student_id__LOGINID__id=lid).order_by('-id')
         complaint_serial = ComplaintSerializer(complaint,many=True)
         return Response(complaint_serial.data,status=status.HTTP_200_OK)
     def post(self,request,lid):
+        if request.auth.get("usertype") != "Student" or request.auth.get("login_id") != lid:
+            return Response({"error": "Forbidden"}, status=403)
         user = studenttable.objects.get(LOGINID__id = lid)
         complaint_serial = ComplaintSerializer(data=request.data)
 
@@ -2020,9 +1955,6 @@ class ExitPassTimelineAPI(JWTAuthMixin, APIView):
         if str(lid) != str(request.auth.get('login_id')):
             return Response({'error': 'Unauthorized'}, status=403)
         try:
-            # Cleanup expired passes
-            threshold = timezone.now() - datetime.timedelta(hours=24)
-            exitpasstable.objects.filter(mentor_status='pending', created_at__lt=threshold).delete()
 
             # Get latest pass for the student
             exit_pass = exitpasstable.objects.filter(
@@ -2040,7 +1972,7 @@ class ExitPassTimelineAPI(JWTAuthMixin, APIView):
 
         except Exception as e:
             return Response(
-                {'error': str(e)},
+                {'error': 'Unable to complete the request.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -2103,120 +2035,77 @@ class MentorDashboardStatsAPI(JWTAuthMixin, APIView):
 #pending pass list for mentor
 class Pendingpass_api(JWTAuthMixin, APIView):
     def get(self,request,lid):
-        # Cleanup expired passes
-        threshold = timezone.now() - datetime.timedelta(hours=24)
-        exitpasstable.objects.filter(mentor_status='pending', created_at__lt=threshold).delete()
+        if request.auth.get('usertype') != 'mentor' or request.auth.get('login_id') != lid:
+            return Response({'error': 'Forbidden'}, status=403)
 
         mentor_obj = mentortable.objects.get(LOGINID_id=lid)
         assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
-        pending = exitpasstable.objects.filter(mentor_status='pending', student_id__classs__id__in=assigned_classes)
+        pending = exitpasstable.objects.filter(mentor_status='pending', created_at__gte=threshold, student_id__classs__id__in=assigned_classes)
         pending_serial = ExitpassSerializer(pending,many=True)
         return Response(pending_serial.data,status=status.HTTP_200_OK)
 
 
 #approve pass api for mentor
-class ApproveExitPassAPI(JWTAuthMixin, APIView):
+def review_pending_pass(passes, pass_id, decision, login_id, mentor=None, reason=''):
+    if type(pass_id) not in (str, int) or not str(pass_id).isascii() or not str(pass_id).isdigit() or len(str(pass_id)) > 18:
+        raise ValueError('Invalid pass ID.')
+    if not isinstance(reason, str) or len(reason) > 500:
+        raise ValueError('Invalid rejection reason.')
+    changes = {'mentor_id': mentor, 'mentor_status': decision}
+    if decision == 'approved':
+        changes['approved_at'] = timezone.now()
+    else:
+        changes['reject_reason'] = reason
+    eligible = passes.filter(id=pass_id, mentor_status='pending', security_status='pending')
+    with transaction.atomic():
+        exit_pass = eligible.select_for_update().first()
+        if exit_pass is None:
+            raise PermissionError('No pending pass within your scope.')
+        if pass_expired(exit_pass) or eligible.update(**changes) != 1:
+            raise ValueError('Pass has expired or been processed.')
+        transaction.on_commit(lambda: security_log.info(
+            'pass_decision actor=%s pass=%s decision=%s', login_id, pass_id, decision,
+        ))
+
+
+class MentorPassDecisionAPI(JWTAuthMixin, APIView):
+    decision = None
+
     def post(self, request):
-        # SECURITY PATCH: Verify token claims match request
-        token_user = request.auth.get('login_id')
-        token_role = request.auth.get('usertype')
-        if str(request.data.get('loginid')) != str(token_user) or request.data.get('role') != token_role:
-            return Response({'error': 'Unauthorized'}, status=403)
-        pass_id = request.data.get("pass_id")
-        role = request.data.get("role")
-        mentor_id = request.data.get('loginid')
-        mentor_obj = mentortable.objects.get(LOGINID_id=mentor_id)
-        if not pass_id or not role:
-            return Response({"error": "pass_id and role required"}, status=400)
-
+        login_id = request.auth.get('login_id')
+        if request.auth.get('usertype') != 'mentor':
+            return Response({'error': 'Forbidden'}, status=403)
+        mentor = mentortable.objects.filter(LOGINID_id=login_id).first()
+        if mentor is None:
+            return Response({'error': 'Forbidden'}, status=403)
+        classes = class_assigntable.objects.filter(mentor_id=mentor).values('class_id')
+        passes = exitpasstable.objects.filter(student_id__classs_id__in=classes)
         try:
-            exit_pass = exitpasstable.objects.select_related(
-                "student_id", "student_id__classs"
-            ).get(id=pass_id)
-        except exitpasstable.DoesNotExist:
-            return Response({"error": "Pass not found"}, status=404)
-
-        # ---------------- MENTOR APPROVAL ----------------
-        if role == "mentor":
-            if exit_pass.mentor_status != "pending":
-                return Response({
-                    "error": f"Pass has already been {exit_pass.mentor_status or 'processed'}"
-                }, status=400)
-
-            exit_pass.mentor_status = "approved"
-            exit_pass.approved_at = timezone.now()
-            exit_pass.mentor_id=mentor_obj
-            # QR code will be generated on-demand when requested
-
-        # ---------------- SECURITY APPROVAL ----------------
-        elif role == "security":
-            if exit_pass.security_status != "pending":
-                return Response({"error": "Already processed"}, status=400)
-
-            exit_pass.security_status = "approved"
-            exit_pass.scanned_at = timezone.now()
-
-        else:
-            return Response({"error": "Invalid role"}, status=400)
-
-        exit_pass.save()
-        return Response({"message": "Pass approved successfully"}, status=200)
-
-#reject pass api for mentor
-class RejectExitPassAPI(JWTAuthMixin, APIView):
-    def post(self, request):
-        # SECURITY PATCH: Verify token claims match request
-        token_user = request.auth.get('login_id')
-        token_role = request.auth.get('usertype')
-        if str(request.data.get('loginid')) != str(token_user) or request.data.get('role') != token_role:
-            return Response({'error': 'Unauthorized'}, status=403)
-        pass_id = request.data.get("pass_id")
-        role = request.data.get("role")
-        reason = request.data.get("reason")
-        mentor_id = request.data.get('loginid')
-
-        try:
-            exit_pass = exitpasstable.objects.get(id=pass_id)
-        except exitpasstable.DoesNotExist:
-            return Response(
-                {"error": "Pass not found"},
-                status=status.HTTP_404_NOT_FOUND
+            review_pending_pass(
+                passes, request.data.get('pass_id'), self.decision, login_id, mentor,
+                request.data.get('reason', ''),
             )
+        except PermissionError as exc:
+            return Response({'error': str(exc)}, status=403)
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=409)
+        return Response({'message': f'Pass {self.decision} successfully.'})
 
-        if role == "mentor":
-            # Fetch mentor object only if role is mentor
-            try:
-                mentor_obj = mentortable.objects.get(LOGINID_id=mentor_id)
-            except mentortable.DoesNotExist:
-                return Response({"error": "Mentor not found"}, status=400)
 
-            if exit_pass.mentor_status != "pending":
-                return Response({
-                    "error": f"Pass has already been {exit_pass.mentor_status or 'processed'}"
-                }, status=400)
-            exit_pass.mentor_status = "rejected"
-            exit_pass.mentor_id = mentor_obj
+class ApproveExitPassAPI(MentorPassDecisionAPI):
+    decision = 'approved'
 
-        elif role == "security":
-            if exit_pass.security_status in ["approved", "rejected"]:
-                return Response({"error": "Already processed"}, status=400)
-            exit_pass.security_status = "rejected"
 
-        else:
-            return Response({"error": "Invalid role"}, status=400)
+class RejectExitPassAPI(MentorPassDecisionAPI):
+    decision = 'rejected'
 
-        exit_pass.reject_reason = reason
-        exit_pass.save()
 
-        return Response(
-            {"message": "Pass rejected", "reason": reason},
-            status=status.HTTP_200_OK
-        )
-#checking pass is already scanned or not for security
 class CheckPassStatus(JWTAuthMixin, APIView):
     def post(self, request):
+        if request.auth.get('usertype') != 'security':
+            return Response({'error': 'Forbidden'}, status=403)
         token = request.data.get("token")
-        pass_id = decrypt_pass_id(token) if token else request.data.get("pass_id")
+        pass_id = decrypt_pass_id(token) if token else None
         if not pass_id:
             return Response({"error": "Invalid QR code"}, status=400)
 
@@ -2224,7 +2113,7 @@ class CheckPassStatus(JWTAuthMixin, APIView):
             exit_pass = exitpasstable.objects.select_related(
                 'student_id', 'student_id__classs', 'mentor_id'
             ).get(id=pass_id)
-            if pass_expired(exit_pass) and exit_pass.security_status == 'pending':
+            if not individual_scan_open(exit_pass) and exit_pass.security_status == 'pending':
                 return Response(
                     {"error": "This pass has expired and cannot be scanned."},
                     status=status.HTTP_410_GONE,
@@ -2284,8 +2173,8 @@ class StudentListAPI(JWTAuthMixin, APIView):
 #group pass api for mentor
 class GroupPassAPI(JWTAuthMixin, APIView):
     def post(self, request, lid):
-        if str(lid) != str(request.auth.get('login_id')):
-            return Response({'error': 'Unauthorized'}, status=403)
+        if request.auth.get('usertype') != 'mentor' or request.auth.get('login_id') != lid:
+            return Response({'error': 'Forbidden'}, status=403)
         try:
             student_ids = request.data.get('student_ids', [])
             reason = request.data.get('reason', 'Group Pass')
@@ -2314,7 +2203,7 @@ class GroupPassAPI(JWTAuthMixin, APIView):
             students = list(
                 studenttable.objects.filter(
                     id__in=student_ids,
-                    classs_id__in=assigned_class_ids,
+                    classs_id__in=assigned_class_ids, LOGINID__usertype='Student',
                 )
             )
             if len(students) != len(student_ids):
@@ -2344,7 +2233,7 @@ class GroupPassAPI(JWTAuthMixin, APIView):
             )
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({'error': 'Invalid request.'}, status=400)
 
 
 #mentor exit report api
@@ -2366,11 +2255,11 @@ class MentorExitReportAPI(JWTAuthMixin, APIView):
 
             # --- 1. Get assigned classes for this mentor ---
             assigned_classes_ids = class_assigntable.objects.filter(mentor_id=mentor).values_list('class_id', flat=True)
-            print(f"DEBUG: MentorExitReportAPI for lid={lid}, mentor={mentor.name}, assigned_classes={list(assigned_classes_ids)}")
+
 
             # If no classes assigned, return empty results immediately
             if not assigned_classes_ids:
-                 print(f"DEBUG: No classes assigned to mentor {mentor.name}")
+
                  return Response({
                     'passes': [],
                     'classes': []
@@ -2456,7 +2345,7 @@ class MentorExitReportAPI(JWTAuthMixin, APIView):
 
         except Exception as e:
             logger.exception("Error in MentorExitReportAPI")
-            return Response({'error': str(e)}, status=500)
+            return Response({'error': 'Unable to complete the request.'}, status=500)
 
 #generate qr code for exit pass 15mins delayed
 class GenerateQRCodeAPI(JWTAuthMixin, APIView):
@@ -2532,6 +2421,8 @@ class GenerateQRCodeAPI(JWTAuthMixin, APIView):
 #list passes for security,mentor approved
 class SecurityApprovedPassAPI(JWTAuthMixin, APIView):
     def get(self, request, lid):
+        if request.auth.get('usertype') != 'security':
+            return Response({'error': 'Forbidden'}, status=403)
         if str(lid) != str(request.auth.get('login_id')):
             return Response({'error': 'Unauthorized'}, status=403)
         passes = exitpasstable.objects.filter(
@@ -2588,199 +2479,93 @@ class ForgetPassword(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
     throttle_classes = [PasswordResetThrottle]
+
     def post(self, request):
-        print(request.data)
         email = request.data.get('Email')
-        print(email)
-        if not email:
-            return Response({"error": "Email required"}, status=400)
+        if not isinstance(email, str) or not email.strip():
+            return Response({'error': 'Email required.'}, status=400)
+        issue_password_reset(email.strip())
+        return Response({'message': RESET_RESPONSE})
 
-        # 1. Verify user exists in any role table
-        user_tables = [studenttable, mentortable, securitytable]
-        user_found = False
 
-        for table in user_tables:
-            if table.objects.filter(email=email).exists():
-                user_found = True
-                break
-
-        if not user_found and not Logintable.objects.filter(username=email).exists():
-             return Response({"error": "Email not registered"}, status=404)
-
-        # 2. Generate 6-digit OTP
-        otp = str(secrets.randbelow(900000) + 100000)
-
-        PasswordResetOTP.objects.create(email=email, otp=otp)
-
-        # 4. Send Email
-        try:
-            send_mail(
-                'GateEase Password Reset',
-                f'Your OTP for password reset is: {otp}\nValid for 10 minutes.\nAny queries contact: {settings.EMAIL_HOST_USER}',
-                settings.EMAIL_HOST_USER,
-                [email],
-                fail_silently=False,
-            )
-            return Response({"message": "OTP sent successfully"}, status=200)
-        except Exception as e:
-            logger.error("Mail Error in ForgetPassword API: %s", e)
-            return Response({"error": "Failed to send email"}, status=500)
-
-#reset password api
 class ResetPasswordAPI(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
     throttle_classes = [PasswordResetThrottle]
+
     def post(self, request):
-        email = request.data.get('email')
-        otp = request.data.get('otp')
-        new_password = request.data.get('new_password')
+        password = request.data.get('new_password')
+        if not isinstance(password, str):
+            return Response({'error': 'New password required.'}, status=400)
+        try:
+            if not complete_password_reset(request.data.get('email'), request.data.get('otp'), password):
+                raise ValidationError('Invalid or expired code.')
+        except ValidationError as exc:
+            return Response({'error': ' '.join(exc.messages)}, status=400)
+        return Response({'message': 'Password reset successfully.'})
 
-        if not all([email, otp, new_password]):
-             return Response({"error": "All fields required"}, status=400)
 
-        if len(new_password) < 8:
-             return Response({"error": "New password must be at least 8 characters long"}, status=400)
+def process_individual_scan(login_id, pass_id, action):
+    guard = securitytable.objects.filter(LOGINID_id=login_id).first()
+    if guard is None:
+        raise PermissionError('An active guard profile is required.')
+    with transaction.atomic():
+        eligible = exitpasstable.objects.filter(
+            id=pass_id, is_group_pass=False, mentor_status='approved', security_status='pending',
+        )
+        exit_pass = eligible.select_for_update().first()
+        if exit_pass is None or not individual_scan_open(exit_pass):
+            raise ValueError('Pass is unavailable, outside its scan window, or already processed.')
+        if eligible.update(
+            security_status='scanned' if action == 'approve' else 'rejected',
+            scanned_at=timezone.now(), scanned_by=guard,
+        ) != 1:
+            raise ValueError('Pass has already been processed.')
+        transaction.on_commit(lambda: security_log.info(
+            'individual_scan actor=%s pass=%s decision=%s', login_id, pass_id, action,
+        ))
 
-        #first Verify OTP
-        # Get latest OTP for this email
-        otp_obj = PasswordResetOTP.objects.filter(email=email, is_used=False).order_by('-created_at').first()
 
-        if not otp_obj or otp_obj.otp != otp:
-            return Response({"error": "Invalid or expired OTP"}, status=400)
+class IndividualScanAPI(JWTAuthMixin, APIView):
+    action = None
 
-        #Check Expiry of otp
-        time_diff = timezone.now() - otp_obj.created_at
-        if time_diff.total_seconds() > 600:
-             return Response({"error": "OTP Expired"}, status=400)
-
-        #Reset Password
-        # Find login object (username is usually email)
-        login_obj = Logintable.objects.filter(username=email).first()
-
-        # If username != email, try to find via Student/Mentor tables
-        if not login_obj:
-             for table in [studenttable, mentortable, securitytable]:
-                 u = table.objects.filter(email=email).first()
-                 if u and u.LOGINID:
-                     login_obj = u.LOGINID
-                     break
-        #hash the password
-        if login_obj:
-            login_obj.password = make_password(new_password)
-            login_obj.save()
-
-            # Mark OTP as used
-            otp_obj.is_used = True
-            otp_obj.save()
-
-            return Response({"message": "Password reset successfully"}, status=200)
-        else:
-            return Response({"error": "User account not found"}, status=404)
-
-#security accept/reject pass
-class AcceptPass(JWTAuthMixin, APIView):
     def post(self, request):
         if request.auth.get('usertype') != 'security':
-            return Response({'error': 'Unauthorized'}, status=403)
-
+            return Response({'error': 'Forbidden'}, status=403)
         token = request.data.get('token')
-        pass_id = decrypt_pass_id(token) if token else request.data.get('pass_id')
-        provided_signature = request.data.get('signature')
-
+        pass_id = decrypt_pass_id(token) if isinstance(token, str) else None
         if not pass_id:
-            return Response({'error': 'pass_id required'}, status=400)
-
-        # Fernet tokens are authenticated and enforce the same TTL as web QR codes.
-        if token and decrypt_pass_id(token) != int(pass_id):
-            return Response({'error': 'Invalid or expired QR Code'}, status=403)
-        if not token and provided_signature:
-            import hmac
-            import hashlib
-            from django.conf import settings
-            expected_signature = hmac.new(
-                settings.SECRET_KEY.encode(),
-                str(pass_id).encode(),
-                hashlib.sha256
-            ).hexdigest()
-            if not hmac.compare_digest(provided_signature, expected_signature):
-                return Response({'error': 'Invalid QR Code Signature'}, status=403)
-        elif not token:
-            # If no signature is provided, we can either block it or allow it for backwards compatibility
-            # Since the requirement is to protect it, we should enforce it.
-            return Response({'error': 'Signature required for QR scanning'}, status=403)
-
+            return Response({'error': 'Invalid or expired QR code.'}, status=400)
         try:
-            with transaction.atomic():
-                obj = exitpasstable.objects.select_for_update().get(id=pass_id)
-                if obj.mentor_status != 'approved':
-                    return Response({'error': 'Pass is not approved by mentor'}, status=400)
-                if pass_expired(obj):
-                    return Response({'error': 'This pass has expired'}, status=410)
-                if obj.security_status != 'pending':
-                    return Response({'error': 'Pass has already been processed'}, status=409)
-                obj.security_status = 'scanned'
-                obj.scanned_at = timezone.now()
-                obj.save(update_fields=['security_status', 'scanned_at'])
-        except exitpasstable.DoesNotExist:
-            return Response({'error': 'Pass not found'}, status=404)
-        return Response(status=status.HTTP_200_OK)
+            process_individual_scan(request.auth['login_id'], pass_id, self.action)
+        except PermissionError:
+            return Response({'error': 'Forbidden'}, status=403)
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=409)
+        return Response(status=200)
 
-class RejectPass(JWTAuthMixin, APIView):
-    def post(self, request):
-        if request.auth.get('usertype') != 'security':
-            return Response({'error': 'Unauthorized'}, status=403)
 
-        token = request.data.get('token')
-        pass_id = decrypt_pass_id(token) if token else request.data.get('pass_id')
-        provided_signature = request.data.get('signature')
+class AcceptPass(IndividualScanAPI):
+    action = 'approve'
 
-        if not pass_id:
-            return Response({'error': 'pass_id required'}, status=400)
 
-        if token and decrypt_pass_id(token) != int(pass_id):
-            return Response({'error': 'Invalid or expired QR Code'}, status=403)
-        if not token and provided_signature:
-            import hmac
-            import hashlib
-            from django.conf import settings
-            expected_signature = hmac.new(
-                settings.SECRET_KEY.encode(),
-                str(pass_id).encode(),
-                hashlib.sha256
-            ).hexdigest()
-            if not hmac.compare_digest(provided_signature, expected_signature):
-                return Response({'error': 'Invalid QR Code Signature'}, status=403)
-        elif not token:
-            return Response({'error': 'Signature required for QR scanning'}, status=403)
+class RejectPass(IndividualScanAPI):
+    action = 'reject'
 
-        try:
-            with transaction.atomic():
-                obj = exitpasstable.objects.select_for_update().get(id=pass_id)
-                if obj.mentor_status != 'approved':
-                    return Response({'error': 'Pass is not approved by mentor'}, status=400)
-                if pass_expired(obj):
-                    return Response({'error': 'This pass has expired'}, status=410)
-                if obj.security_status != 'pending':
-                    return Response({'error': 'Pass has already been processed'}, status=409)
-                obj.security_status = 'rejected'
-                obj.save(update_fields=['security_status'])
-        except exitpasstable.DoesNotExist:
-            return Response({'error': 'Pass not found'}, status=404)
-        return Response(status=status.HTTP_200_OK)
 
-#security group pass list
 class SecurityGroupPassListAPI(JWTAuthMixin, APIView):
     def get(self, request):
+        if request.auth.get('usertype') != 'security':
+            return Response({'error': 'Forbidden'}, status=403)
         today = timezone.localtime().date()
-        print(f"DEBUG: Checking for passes on {today}")
+
         passes = exitpasstable.objects.filter(
             created_at__date=today,
-            reason='Group Pass',
+            is_group_pass=True,
             security_status='pending',
             mentor_status='approved'
         ).select_related('student_id', 'mentor_id', 'student_id__classs')
-        print(f"DEBUG: Found {passes.count()} pending group passes")
+
 
         from collections import defaultdict
         groups = defaultdict(list)
@@ -2837,20 +2622,16 @@ class SecurityGroupPassListAPI(JWTAuthMixin, APIView):
 #security proceed group pass
 class ProceedGroupPassAPI(JWTAuthMixin, APIView):
     def post(self, request):
+        if request.auth.get('usertype') != 'security':
+            return Response({'error': 'Forbidden'}, status=403)
         try:
-            pass_ids = request.data.get('pass_ids', [])
-            current_time = timezone.localtime()
-            for pid in pass_ids:
-                try:
-                    obj = exitpasstable.objects.get(id=pid)
-                    obj.security_status = 'scanned'
-                    obj.scanned_at = current_time
-                    obj.save()
-                except exitpasstable.DoesNotExist:
-                    continue
-            return Response({'message': 'Processed successfully'})
-        except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            count = process_group_passes(request.auth['login_id'], request.data.get('pass_ids'))
+        except PermissionError:
+            return Response({'error': 'Forbidden'}, status=403)
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=400)
+        return Response({'message': 'Processed successfully', 'count': count})
+
 
 #register device token to send notification
 class RegisterDeviceTokenAPI(JWTAuthMixin, APIView):
@@ -2859,7 +2640,9 @@ class RegisterDeviceTokenAPI(JWTAuthMixin, APIView):
     """
     def post(self, request):
         try:
-            login_id = request.data.get('login_id')
+            if request.auth.get('usertype') != 'mentor':
+                return Response({'error': 'Forbidden'}, status=403)
+            login_id = request.auth.get('login_id')
             device_token = request.data.get('device_token')
             platform = request.data.get('platform', 'android')
 
@@ -2894,7 +2677,7 @@ class RegisterDeviceTokenAPI(JWTAuthMixin, APIView):
 
         except Exception as e:
             return Response(
-                {'error': str(e)},
+                {'error': 'Unable to complete the request.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -2905,7 +2688,9 @@ class UpdateDeviceTokenAPI(JWTAuthMixin, APIView):
     """
     def put(self, request):
         try:
-            login_id = request.data.get('login_id')
+            if request.auth.get('usertype') != 'mentor':
+                return Response({'error': 'Forbidden'}, status=403)
+            login_id = request.auth.get('login_id')
             old_token = request.data.get('old_token')
             new_token = request.data.get('new_token')
 
@@ -2946,7 +2731,7 @@ class UpdateDeviceTokenAPI(JWTAuthMixin, APIView):
 
         except Exception as e:
             return Response(
-                {'error': str(e)},
+                {'error': 'Unable to complete the request.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -2957,7 +2742,9 @@ class DeleteDeviceTokenAPI(JWTAuthMixin, APIView):
     """
     def delete(self, request):
         try:
-            login_id = request.data.get('login_id')
+            if request.auth.get('usertype') != 'mentor':
+                return Response({'error': 'Forbidden'}, status=403)
+            login_id = request.auth.get('login_id')
             device_token = request.data.get('device_token')
 
             if not login_id or not device_token:
@@ -2995,7 +2782,7 @@ class DeleteDeviceTokenAPI(JWTAuthMixin, APIView):
 
         except Exception as e:
             return Response(
-                {'error': str(e)},
+                {'error': 'Unable to complete the request.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -3118,6 +2905,13 @@ class MentorAnalyticsView(MentorRequiredMixin, View):
             'passes': recent_passes
         })
 
+def spreadsheet_text(value):
+    text = str(value or '')
+    if text.lstrip().startswith(('=', '+', '-', '@')) or text.startswith(('\t', '\r', '\n')):
+        return "'" + text
+    return text
+
+
 class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
     def get(self, request):
         mentor_dept_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
@@ -3144,10 +2938,10 @@ class MentorAnalyticsExportCSVView(MentorRequiredMixin, View):
 
         for p in passes:
             writer.writerow([
-                p.student_id.name if p.student_id else 'N/A',
-                p.student_id.admn_no if p.student_id else 'N/A',
-                p.student_id.classs.class_name if (p.student_id and p.student_id.classs) else 'N/A',
-                p.reason,
+                spreadsheet_text(p.student_id.name) if p.student_id else 'N/A',
+                spreadsheet_text(p.student_id.admn_no) if p.student_id else 'N/A',
+                spreadsheet_text(p.student_id.classs.class_name) if (p.student_id and p.student_id.classs) else 'N/A',
+                spreadsheet_text(p.reason),
                 p.created_at.strftime('%Y-%m-%d') if p.created_at else 'N/A',
                 p.time.strftime('%I:%M %p') if p.time else 'N/A',
                 p.mentor_status,
@@ -3269,26 +3063,23 @@ class SecurityGroupPass(SecurityRequiredMixin, View):
         return render(request, 'tables/form/security_group_passes.html', {'groups': result, 'security': security_guard})
 
     def post(self, request):
-        pass_ids_str = request.POST.get('pass_ids', '')
-        if pass_ids_str:
-            pass_ids = [pid for pid in pass_ids_str.split(',') if pid]
-            current_time = timezone.localtime()
-            count = 0
-            for pid in pass_ids:
-                try:
-                    obj = exitpasstable.objects.get(id=pid)
-                    if obj.security_status != 'scanned':
-                        obj.security_status = 'scanned'
-                        obj.scanned_at = current_time
-                        obj.save()
-                        count += 1
-                except exitpasstable.DoesNotExist:
-                    pass
-            messages.success(request, f"{count} passes scanned successfully.")
+        login_id = request.jwt_user_id or request.session.get('user_id')
+        pass_ids = request.POST.get('pass_ids', '').split(',')
+        try:
+            count = process_group_passes(login_id, pass_ids)
+        except (PermissionError, ValueError) as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(request, f'{count} passes scanned successfully.')
         return redirect('SecurityGroupPass')
 
-@require_GET
+
+@api_view(['GET'])
+@authentication_classes([QuietJWTAuthentication])
+@permission_classes([IsTokenAuthenticated])
 def ViewannouncementAPI(request):
+    if request.auth.get('usertype') != 'Student':
+        return Response({'error': 'Forbidden'}, status=403)
     announcements = announcementtable.objects.filter(
         is_active=True
     ).filter(

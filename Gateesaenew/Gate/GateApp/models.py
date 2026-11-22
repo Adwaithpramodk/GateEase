@@ -1,25 +1,49 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
 from io import BytesIO
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from django.core.files import File
 
 def compress_image(image, quality=70, max_size=(800, 800)):
     if not image:
         return image
-    im = Image.open(image)
-    if im.mode != 'RGB':
-        im = im.convert('RGB')
-    im.thumbnail(max_size)
-    im_io = BytesIO()
-    im.save(im_io, 'JPEG', quality=quality)
-    new_image = File(im_io, name=image.name.split('.')[0] + '.jpg')
-    return new_image
+    if image.size > 5 * 1024 * 1024:
+        raise ValidationError('Profile photos must be 5 MB or smaller.')
+    try:
+        with Image.open(image, formats=('JPEG', 'PNG', 'WEBP')) as source:
+            if source.width * source.height > 12_000_000:
+                raise ValidationError('Profile photos must be under 12 megapixels.')
+            im = source.convert('RGB')
+            im.thumbnail(max_size)
+            buffer = BytesIO()
+            im.save(buffer, 'JPEG', quality=quality)
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
+        raise ValidationError('Upload a valid JPEG, PNG, or WebP photo.') from exc
+    return File(buffer, name=image.name.rsplit('.', 1)[0] + '.jpg')
+
+
+
+class RateLimitCounter(models.Model):
+    key = models.CharField(max_length=255, unique=True)
+    count = models.PositiveIntegerField(default=0)
+    expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=('expires_at',), name='GateApp_rat_expires_7f6e5c_idx'),
+        ]
+
+    def __str__(self):
+        return self.key
 
 class Logintable(models.Model):
     username=models.CharField(max_length=100, null=True, blank=True, db_index=True, unique=True)
     password=models.CharField(max_length=100,null=True,blank=True)
     usertype=models.CharField(max_length=100,null=True,blank=True)
+    # Kept to preserve the existing database schema and migration history.
+    last_totp_step = models.PositiveBigIntegerField(default=0)
+    session_version = models.PositiveBigIntegerField(default=0)
 
     def __str__(self):
         return self.username
@@ -293,6 +317,7 @@ class MentorDeviceToken(models.Model):
 
 class PasswordResetOTP(models.Model):
     email = models.EmailField()
-    otp = models.CharField(max_length=6)
+    otp = models.CharField(max_length=64)
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     is_used = models.BooleanField(default=False)

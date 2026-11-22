@@ -1,10 +1,30 @@
 from django.contrib import admin
+from django.db.models import F
 
 from .models import *
 
 
 # Register your models here.
-admin.site.register(Logintable)
+@admin.register(Logintable)
+class LoginAdmin(admin.ModelAdmin):
+    exclude = ('password', 'last_totp_step', 'session_version')
+    list_display = ('username', 'usertype')
+    actions = ('revoke_sessions',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        if change and {'username', 'usertype'} & set(form.changed_data):
+            obj.session_version = F('session_version') + 1
+        super().save_model(request, obj, form, change)
+
+    @admin.action(description='Revoke selected GateEase sessions')
+    def revoke_sessions(self, request, queryset):
+        count = queryset.update(session_version=F('session_version') + 1)
+        self.message_user(request, f'Sessions revoked for {count} accounts.')
+
+
 admin.site.register(departmenttable)
 admin.site.register(classstable)
 admin.site.register(studenttable)
@@ -33,6 +53,11 @@ class MentorDeviceTokenAdmin(admin.ModelAdmin):
 
 @admin.register(PasswordResetOTP)
 class PasswordResetOTPAdmin(admin.ModelAdmin):
-    list_display = ('email', 'otp', 'is_used', 'created_at')
+    list_display = ('email', 'is_used', 'created_at')
     list_filter = ('is_used', 'created_at')
     search_fields = ('email',)
+
+    exclude = ('otp',)
+
+    def has_add_permission(self, request):
+        return False

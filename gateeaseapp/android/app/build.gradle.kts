@@ -31,11 +31,25 @@ android {
         versionName = flutter.versionName
     }
 
+    val releaseSecrets = listOf(
+        "GATEEASE_ANDROID_KEYSTORE", "GATEEASE_ANDROID_STORE_PASSWORD",
+        "GATEEASE_ANDROID_KEY_ALIAS", "GATEEASE_ANDROID_KEY_PASSWORD",
+    ).associateWith { providers.environmentVariable(it).orNull }
+
+    signingConfigs {
+        if (releaseSecrets.values.all { !it.isNullOrBlank() }) {
+            create("release") {
+                storeFile = file(releaseSecrets.getValue("GATEEASE_ANDROID_KEYSTORE")!!)
+                storePassword = releaseSecrets.getValue("GATEEASE_ANDROID_STORE_PASSWORD")
+                keyAlias = releaseSecrets.getValue("GATEEASE_ANDROID_KEY_ALIAS")
+                keyPassword = releaseSecrets.getValue("GATEEASE_ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 }

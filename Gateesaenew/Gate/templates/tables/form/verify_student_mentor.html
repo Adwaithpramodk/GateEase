@@ -1566,21 +1566,6 @@
                                 {% endif %}
 
                                 <!-- Delete: available for all statuses -->
-                                <form method="POST"
-                                      action="{% url 'delete_student' i.id %}"
-                                      class="action-form"
-                                      onsubmit="return confirm('Delete this student permanently? This action cannot be undone.');">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                            class="icon-btn delete"
-                                            title="Delete student"
-                                            aria-label="Delete {{ i.name }}">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
-                                            <path d="M10 10v6m4-6v6"/>
-                                        </svg>
-                                    </button>
-                                </form>
 
                             </div>
                         </article>

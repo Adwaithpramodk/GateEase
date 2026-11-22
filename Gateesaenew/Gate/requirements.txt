@@ -1,10 +1,10 @@
-Django==4.2.0
-djangorestframework==3.15.2
+Django>=5.2.19,<5.3
+djangorestframework>=3.16.1,<4
 djangorestframework-simplejwt==5.3.1
 xhtml2pdf>=0.2.16
 firebase-admin==6.5.0
-Pillow==10.3.0
-gunicorn==20.1.0
+Pillow>=12.2.0,<13
+gunicorn>=23.0.0,<27
 whitenoise==6.4.0
 mysqlclient==2.2.4
 dj-database-url==2.0.0

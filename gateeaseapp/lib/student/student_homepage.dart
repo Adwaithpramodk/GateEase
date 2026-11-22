@@ -1,3 +1,4 @@
+import 'package:gateeaseapp/private_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
@@ -7,7 +8,6 @@ import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/student/mypass.dart';
 import 'package:gateeaseapp/student/new_pass.dart';
 import 'package:gateeaseapp/theme/app_theme.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gateeaseapp/student/announcement_page.dart';
 class StudentHomePage extends StatefulWidget {
   const StudentHomePage({super.key});
@@ -189,8 +189,7 @@ class _StudentHomePageState extends State<StudentHomePage>
   }
 
   Future<void> logout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Clear all session data including tokens
+    await logoutSession();
     if (context.mounted) {
       Navigator.pop(context);
       Navigator.pushAndRemoveUntil(
@@ -596,7 +595,7 @@ class _StudentHomePageState extends State<StudentHomePage>
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: photo != null && photo.isNotEmpty
-                        ? Image.network(
+                        ? PrivateImage(
                       photo.startsWith('http') ? photo : '$baseurl$photo',
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => _studentInitial(studentName),
@@ -735,7 +734,7 @@ class _StudentHomePageState extends State<StudentHomePage>
             ),
             clipBehavior: Clip.antiAlias,
             child: photo != null && photo.isNotEmpty
-                ? Image.network(
+                ? PrivateImage(
               photo.startsWith('http') ? photo : '$baseurl$photo',
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => _studentInitial(studentName),

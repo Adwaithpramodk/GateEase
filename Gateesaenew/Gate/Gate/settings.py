@@ -47,7 +47,14 @@ if not DEBUG:
 
 
 # ALLOWED_HOSTS should be a list of strings. We read a comma-separated string from .env
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = [
+    host.strip().removeprefix('https://').removeprefix('http://').rstrip('/')
+    for host in os.getenv(
+        'ALLOWED_HOSTS',
+        '127.0.0.1,localhost,gateease.marymathacollege.ac.in',
+    ).split(',')
+    if host.strip()
+]
 
 # Application definition
 
@@ -66,6 +73,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'GateApp.middleware.RateLimitMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,7 +82,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'GateApp.middleware.JWTWebAuthMiddleware',
-    'GateApp.middleware.RateLimitMiddleware',
 ]
 
 # ── HTTPS & PRODUCTION SECURITY SETTINGS ──────────────────────────────────────
@@ -83,8 +90,10 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
+        'SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False'
+    ) == 'True'
+    SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'False') == 'True'
 
 ROOT_URLCONF = 'Gate.urls'
 
@@ -121,11 +130,11 @@ import dj_database_url
 db_from_env = dj_database_url.config(conn_max_age=0)
 DATABASES['default'].update(db_from_env)
 
-# Cache configuration for Rate Limiting
+# Shared cache for DRF throttles and other short-lived counters.
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': os.getenv('RATE_LIMIT_CACHE_TABLE', 'gateease_rate_limit_cache'),
     }
 }
 
@@ -170,9 +179,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 CSRF_TRUSTED_ORIGINS = [
-    os.getenv('CSRF_TRUSTED_ORIGIN', 'https://gateeasee.pythonanywhere.com'),
+    origin.strip().rstrip('/')
+    for origin in os.getenv(
+        'CSRF_TRUSTED_ORIGINS',
+        os.getenv('CSRF_TRUSTED_ORIGIN', 'https://gateease.marymathacollege.ac.in'),
+    ).split(',')
+    if origin.strip()
 ]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+TRUST_PROXY_CLIENT_IP = os.getenv('TRUST_PROXY_CLIENT_IP', 'False') == 'True'
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 
@@ -192,7 +207,7 @@ REST_FRAMEWORK = {
     # Public endpoints can be accessed without authentication by overriding
     # permission_classes on the view itself.
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ),
     # ── Rate Limiting (Throttling) ──────────────────────────────────────────
     'DEFAULT_THROTTLE_CLASSES': [
@@ -200,7 +215,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon':              '60/min',     # General unauthenticated requests
-        'login':             '15/min',     # Brute-force protection on login
+        'login':             '5/min',     # Brute-force protection on login
         'signup':            '15/min',     # Prevent spam registrations
         'password_reset':    '15/min',     # OTP spam prevention
         'authenticated_api': '100/min',    # Per-user limit on protected APIs
@@ -237,4 +252,20 @@ SESSION_COOKIE_NAME = 'gateease_session'
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Keep local HTTP development usable without weakening production cookies.
-JWT_COOKIE_SECURE = os.getenv('JWT_COOKIE_SECURE', 'false' if DEBUG else 'true').lower() == 'true'
+JWT_COOKIE_SECURE = not DEBUG
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'security': {'format': '%(asctime)s %(levelname)s %(name)s %(message)s'}},
+    'handlers': {'security_console': {'class': 'logging.StreamHandler', 'formatter': 'security'}},
+    'loggers': {
+        'GateApp.security': {
+            'handlers': ['security_console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

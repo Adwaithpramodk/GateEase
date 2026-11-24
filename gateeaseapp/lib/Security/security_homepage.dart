@@ -19,6 +19,7 @@ class SecurityHomePage extends StatefulWidget {
 
 class _SecurityHomePageState extends State<SecurityHomePage> {
   List<dynamic> allPasses = [];
+  List<dynamic>? recentScans;
   List<dynamic> filteredPasses = [];
   bool isLoading = true;
   Map<String, dynamic>? details;
@@ -28,6 +29,7 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
   void initState() {
     super.initState();
     fetchApprovedPasses();
+    _fetchRecentScans();
     getDetails();
   }
 
@@ -96,6 +98,43 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
     }
   }
 
+  Future<void> _fetchRecentScans() async {
+    try {
+      final response = await dio.get('/api/security/recent-scans/');
+      if (mounted && response.data is List) {
+        setState(() => recentScans = response.data as List);
+      }
+    } on DioException catch (_) {
+      if (mounted) setState(() => recentScans = null);
+    }
+  }
+
+  Widget _buildRecentScans() {
+    final scans = recentScans;
+    if (scans == null) {
+      return TextButton(
+        onPressed: _fetchRecentScans,
+        child: const Text('Load recent scans'),
+      );
+    }
+    if (scans.isEmpty) return const Text('No completed scans today.');
+    return Column(
+      children: scans.map((scan) {
+        final scannedAt = DateTime.tryParse(scan['scanned_at']?.toString() ?? '')?.toLocal();
+        final guard = scan['guard']?.toString();
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.verified_outlined),
+          title: Text(scan['name']?.toString() ?? 'Unknown student'),
+          subtitle: Text([
+            if (scannedAt != null) DateFormat.jm().format(scannedAt),
+            if (guard != null && guard.isNotEmpty) guard,
+          ].join(' · ')),
+        );
+      }).toList(),
+    );
+  }
+
   void _filterByDate() {
     filteredPasses = allPasses.where((pass) {
       final passDate = DateTime.parse(pass['date']);
@@ -134,8 +173,7 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
         body: RefreshIndicator(
           color: AppTheme.primary,
           onRefresh: () async {
-            await fetchApprovedPasses();
-            await getDetails();
+            await Future.wait([fetchApprovedPasses(), _fetchRecentScans(), getDetails()]);
           },
           child: CustomScrollView(
             slivers: [
@@ -151,6 +189,10 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
                     _buildHistoryHeader(),
                     const SizedBox(height: 14),
                     _buildPassList(),
+                    const SizedBox(height: 28),
+                    _buildSectionLabel('Recent scans'),
+                    const SizedBox(height: 10),
+                    _buildRecentScans(),
                     const SizedBox(height: 40),
                   ]),
                 ),
@@ -373,6 +415,7 @@ class _SecurityHomePageState extends State<SecurityHomePage> {
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ScanQrPage()));
               fetchApprovedPasses();
+              _fetchRecentScans();
             },
           ),
         ),

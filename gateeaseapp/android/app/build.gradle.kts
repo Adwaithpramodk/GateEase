@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.gateeaseapp"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = maxOf(36, flutter.compileSdkVersion)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -26,7 +26,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = maxOf(36, flutter.targetSdkVersion)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -36,8 +36,16 @@ android {
         "GATEEASE_ANDROID_KEY_ALIAS", "GATEEASE_ANDROID_KEY_PASSWORD",
     ).associateWith { providers.environmentVariable(it).orNull }
 
+    val missingSigningValues = releaseSecrets.filterValues { it.isNullOrBlank() }.keys
+    val releaseRequested = gradle.startParameter.taskNames.any { task ->
+        task.substringAfterLast(':').matches(Regex("(bundle|assemble).*Release"))
+    }
+    if (releaseRequested && missingSigningValues.isNotEmpty()) {
+        throw GradleException("Release signing is incomplete. Set: ${missingSigningValues.joinToString()}")
+    }
+
     signingConfigs {
-        if (releaseSecrets.values.all { !it.isNullOrBlank() }) {
+        if (missingSigningValues.isEmpty()) {
             create("release") {
                 storeFile = file(releaseSecrets.getValue("GATEEASE_ANDROID_KEYSTORE")!!)
                 storePassword = releaseSecrets.getValue("GATEEASE_ANDROID_STORE_PASSWORD")
@@ -50,6 +58,14 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release")
+        }
+    }
+}
+
+tasks.matching { it.name in setOf("packageRelease", "packageReleaseBundle") }.configureEach {
+    doFirst {
+        if (android.signingConfigs.findByName("release") == null) {
+            throw GradleException("A configured upload key is required for a release package.")
         }
     }
 }

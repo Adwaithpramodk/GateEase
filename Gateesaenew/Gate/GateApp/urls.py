@@ -90,6 +90,9 @@ urlpatterns = [
 
 ########################API#############################
 
+    path('api/role-page/<slug:page>/', MobileRolePage.as_view()),
+    path('api/mentor/analytics.csv', MobileMentorCSV.as_view()),
+    path('api/security/recent-scans/', SecurityRecentScansAPI.as_view()),
     path('UserReg',UserReg_api.as_view(),name='userreg'), 
     path('LoginpageAPI',LoginpageAPI.as_view(),name='loginpageapi'),
     path('auth/refresh/', WebTokenRefresh.as_view(), name='web_token_refresh'),

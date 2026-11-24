@@ -10,10 +10,11 @@ from django.db import IntegrityError, transaction
 from django.utils.deprecation import MiddlewareMixin
 from django.http import HttpResponse
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import TokenError
 from django.utils import timezone
 from django.utils.cache import add_never_cache_headers
 
-from .auth_tokens import active_token_user, rotate_refresh_token, set_auth_cookies
+from .auth_tokens import active_token_user, browser_access_token, set_auth_cookies
 from .models import RateLimitCounter
 
 logger = logging.getLogger(__name__)
@@ -32,49 +33,80 @@ class JWTWebAuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
         request.jwt_user_id = None
         request.jwt_usertype = None
-        request._rotated_auth_tokens = None
+        request._renewed_access = None
         
         token = request.COOKIES.get('access_token')
         if token:
             try:
                 access_token = AccessToken(token)
+                if access_token.get('channel') != 'web':
+                    raise TokenError('Wrong session type')
                 active_token_user(access_token)
                 request.jwt_user_id = access_token.get('login_id')
                 request.jwt_usertype = access_token.get('usertype')
-            except Exception as e:
-                logger.debug(f"JWTWebAuthMiddleware invalid token: {e}")
+            except TokenError:
+                pass
 
         # Refresh only when the access token is absent/expired, never on every request.
         if not request.jwt_user_id and request.COOKIES.get('refresh_token') and request.path not in {
-            '/auth/refresh/',
-            '/api/token/refresh/',
-            '/LoginpageAPI',
-            '/Logout',
+            '/auth/refresh/', '/api/token/refresh/', '/LoginpageAPI', '/Logout',
         }:
             try:
-                refresh = rotate_refresh_token(request.COOKIES['refresh_token'])
-                request.jwt_user_id = refresh.get('login_id')
-                request.jwt_usertype = refresh.get('usertype')
-                request._rotated_auth_tokens = (refresh.access_token, refresh)
-            except Exception:
-                # An expired refresh token must not leave an old session authenticated.
-                request.session.flush()
-        elif not request.jwt_user_id and request.session.get('user_id') and not request.COOKIES.get('refresh_token'):
-            # Do not let a database session outlive the persistent authentication cookie.
-            request.session.flush()
+                access = browser_access_token(request.COOKIES['refresh_token'])
+                request.jwt_user_id = access['login_id']
+                request.jwt_usertype = access['usertype']
+                request._renewed_access = access
+            except TokenError:
+                pass
+        if not request.jwt_user_id:
+            request.session.pop('user_id', None)
+            request.session.pop('usertype', None)
 
     def process_response(self, request, response):
         if not request.path.startswith('/static/') and request.path not in {'/sw.js', '/manifest.json'}:
             add_never_cache_headers(response)
-        if request._rotated_auth_tokens:
-            set_auth_cookies(response, *request._rotated_auth_tokens)
+        if request._renewed_access and 'access_token' not in response.cookies:
+            set_auth_cookies(response, request._renewed_access)
         return response
+
+def consume_rate_limit(key, limit, seconds):
+    now = timezone.now()
+    expires_at = now + timedelta(seconds=seconds)
+    with transaction.atomic():
+        try:
+            counter = RateLimitCounter.objects.select_for_update().get(key=key)
+            created = False
+        except RateLimitCounter.DoesNotExist:
+            try:
+                with transaction.atomic():
+                    counter = RateLimitCounter.objects.create(
+                        key=key,
+                        count=1,
+                        expires_at=expires_at,
+                    )
+                created = True
+            except IntegrityError:
+                counter = RateLimitCounter.objects.select_for_update().get(key=key)
+                created = False
+
+        if created:
+            pass
+        elif counter.expires_at <= now:
+            counter.count = 1
+            counter.expires_at = expires_at
+            counter.save(update_fields=('count', 'expires_at'))
+        elif counter.count >= limit:
+            return False
+        else:
+            counter.count += 1
+            counter.save(update_fields=('count',))
+    return True
+
 
 class RateLimitMiddleware(MiddlewareMixin):
     """
     Database-backed fixed-window limiter shared by all application workers.
     """
-    RATE_LIMIT = 60
     WINDOW_SECONDS = 60
     SUSPICIOUS_PATH = re.compile(
         r'(^|/)(?:\.env(?:\.[^/]*)?|\.git(?:/|$)|'
@@ -98,53 +130,17 @@ class RateLimitMiddleware(MiddlewareMixin):
         if normalized_path.startswith('/static/') or normalized_path.startswith('/media/'):
             return None
 
-        ip = self.get_client_ip(request)
-
-        now = timezone.now()
-        expires_at = now + timedelta(seconds=self.WINDOW_SECONDS)
-        cache_key = f"ip:{ip}"
-
-        with transaction.atomic():
-            try:
-                counter = RateLimitCounter.objects.select_for_update().get(key=cache_key)
-                created = False
-            except RateLimitCounter.DoesNotExist:
-                try:
-                    with transaction.atomic():
-                        counter = RateLimitCounter.objects.create(
-                            key=cache_key,
-                            count=1,
-                            expires_at=expires_at,
-                        )
-                    created = True
-                except IntegrityError:
-                    counter = RateLimitCounter.objects.select_for_update().get(key=cache_key)
-                    created = False
-
-            if created:
-                pass
-            elif counter.expires_at <= now:
-                counter.count = 1
-                counter.expires_at = expires_at
-                counter.save(update_fields=('count', 'expires_at'))
-            elif counter.count >= self.RATE_LIMIT:
-                logger.warning(
-                    "Rate limit exceeded: ip=%s path=%s limit=%s window=%ss",
-                    ip,
-                    request.path,
-                    self.RATE_LIMIT,
-                    self.WINDOW_SECONDS,
-                )
-                response = HttpResponse(
-                    "Too Many Requests. Please wait a minute and try again.",
-                    status=429,
-                )
-                response["Retry-After"] = str(self.WINDOW_SECONDS)
-                return response
-            else:
-                counter.count += 1
-                counter.save(update_fields=('count',))
-
+        login_id = getattr(request, 'jwt_user_id', None)
+        if login_id:
+            key = f'web:account:{login_id}'
+            limit = settings.WEB_SIGNED_IN_REQUEST_LIMIT
+        else:
+            key = f'ip:{self.get_client_ip(request)}'
+            limit = settings.WEB_ANONYMOUS_IP_LIMIT
+        if not consume_rate_limit(key, limit, self.WINDOW_SECONDS):
+            response = HttpResponse('Too many requests.', status=429)
+            response['Retry-After'] = str(self.WINDOW_SECONDS)
+            return response
         return None
 
     @staticmethod

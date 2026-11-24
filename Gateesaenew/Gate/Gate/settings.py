@@ -73,7 +73,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'GateApp.middleware.RateLimitMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -82,6 +81,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'GateApp.middleware.JWTWebAuthMiddleware',
+    'GateApp.middleware.RateLimitMiddleware',
 ]
 
 # ── HTTPS & PRODUCTION SECURITY SETTINGS ──────────────────────────────────────
@@ -127,6 +127,9 @@ DATABASES = {
 }
 
 import dj_database_url
+if not DEBUG and not os.getenv("DATABASE_URL"):
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("DATABASE_URL must be set in production.")
 db_from_env = dj_database_url.config(conn_max_age=0)
 DATABASES['default'].update(db_from_env)
 
@@ -176,7 +179,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS=[os.path.join(BASE_DIR,'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip().rstrip('/')
@@ -188,6 +194,9 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 TRUST_PROXY_CLIENT_IP = os.getenv('TRUST_PROXY_CLIENT_IP', 'False') == 'True'
+WEB_ANONYMOUS_IP_LIMIT = int(os.getenv('WEB_ANONYMOUS_IP_LIMIT', '300'))
+WEB_SIGNED_IN_REQUEST_LIMIT = int(os.getenv('WEB_SIGNED_IN_REQUEST_LIMIT', '120'))
+LOGIN_IP_LIMIT = int(os.getenv('LOGIN_IP_LIMIT', '60'))
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 
@@ -215,7 +224,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon':              '60/min',     # General unauthenticated requests
-        'login':             '5/min',     # Brute-force protection on login
         'signup':            '15/min',     # Prevent spam registrations
         'password_reset':    '15/min',     # OTP spam prevention
         'authenticated_api': '100/min',    # Per-user limit on protected APIs
@@ -235,6 +243,7 @@ SIMPLE_JWT = {
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
+EMAIL_TIMEOUT = 20
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'gateeaseapp@gmail.com')

@@ -52,6 +52,9 @@ class MentorSerializer(ModelSerializer):
         fields=['name','email','phone','departmentname','image']
 
 class ExitpassSerializer(serializers.ModelSerializer):
+    mentor_status = serializers.CharField(source='effective_mentor_status', read_only=True)
+    approval_deadline = serializers.DateTimeField(read_only=True)
+
     name = serializers.CharField(source='student_id.name', read_only=True)
     final_status = serializers.ReadOnlyField()
     time = serializers.TimeField(format='%I:%M %p')
@@ -68,6 +71,9 @@ class ExitpassSerializer(serializers.ModelSerializer):
         model = exitpasstable
         fields = '__all__'
 class ExitpassSerializer1(serializers.ModelSerializer):
+    mentor_status = serializers.CharField(source='effective_mentor_status', read_only=True)
+    approval_deadline = serializers.DateTimeField(read_only=True)
+
     name = serializers.CharField(source='student_id.name', read_only=True)
     time = serializers.TimeField(format='%I:%M %p')
     
@@ -76,6 +82,7 @@ class ExitpassSerializer1(serializers.ModelSerializer):
         fields = [
             'id',
             'mentor_status',
+            'approval_deadline',
             'security_status',
             'reason',
             'time',

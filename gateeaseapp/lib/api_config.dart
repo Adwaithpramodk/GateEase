@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -19,6 +20,9 @@ final Dio dio = Dio(_options());
 final Dio _sessionClient = Dio(_options());
 const _storage = FlutterSecureStorage();
 const _sessionKey = 'gateease.session';
+const _revocationPrefix = 'gateease.logout.';
+Future<void>? _revocationsInProgress;
+DateTime? _lastRevocationAttempt;
 
 Future<String?>? _refreshInProgress;
 Future<void> Function()? onSessionExpired;
@@ -56,6 +60,7 @@ bool _expired(String token) {
 }
 
 Future<bool> restoreSession() async {
+  unawaited(retryPendingLogouts());
   final prefs = await SharedPreferences.getInstance();
   final oldAccess = prefs.getString('access_token');
   final oldRefresh = prefs.getString('refresh_token');
@@ -79,16 +84,57 @@ Future<void> logoutSession({String? deviceToken}) async {
     // A failed renewal still allows the local session to be cleared.
   }
   final session = await _readSession();
+  if (session != null && !_expired(session.refresh)) {
+    final tokenId = JwtDecoder.decode(session.refresh)['jti'];
+    await _storage.write(
+      key: '$_revocationPrefix$tokenId',
+      value: jsonEncode({
+        'refresh': session.refresh,
+        'device_token': ?deviceToken,
+      }),
+    );
+  }
   await _clearSession();
-  if (session != null) {
-    try {
-      await _sessionClient.delete(
-        '/api/token/refresh/',
-        data: {'refresh': session.refresh, 'device_token': ?deviceToken},
-      );
-    } on DioException {
-      // Local logout still works when the backend is unavailable.
+  await retryPendingLogouts(force: true);
+}
+
+Future<void> retryPendingLogouts({bool force = false}) async {
+  final pending = _revocationsInProgress;
+  if (pending != null) {
+    if (!force) return;
+    await pending;
+    return retryPendingLogouts(force: true);
+  }
+  final now = DateTime.now();
+  final lastAttempt = _lastRevocationAttempt;
+  if (!force &&
+      lastAttempt != null &&
+      now.difference(lastAttempt) < const Duration(minutes: 1)) {
+    return;
+  }
+  _lastRevocationAttempt = now;
+  final retry = _retryPendingLogouts();
+  _revocationsInProgress = retry;
+  try {
+    await retry;
+  } finally {
+    _revocationsInProgress = null;
+  }
+}
+
+Future<void> _retryPendingLogouts() async {
+  try {
+    final stored = await _storage.readAll();
+    for (final item in stored.entries) {
+      if (!item.key.startsWith(_revocationPrefix)) continue;
+      final data = jsonDecode(item.value) as Map<String, dynamic>;
+      if (!_expired(data['refresh'] as String)) {
+        await _sessionClient.delete('/api/token/refresh/', data: data);
+      }
+      await _storage.delete(key: item.key);
     }
+  } catch (_) {
+    // Retain pending revocation when storage or the network is unavailable.
   }
 }
 
@@ -134,6 +180,14 @@ Future<String?> _validAccess() async {
   }
 }
 
+Future<Map<String, String>> rolePageAuthorization() async {
+  final token = await _validAccess();
+  return token == null
+      ? const {}
+      : {'Authorization': 'Bearer $token', 'X-Authorization': 'Bearer $token'};
+}
+
+
 bool isGateEaseOrigin(Uri uri) {
   final server = Uri.parse(baseurl);
   return uri.scheme == server.scheme &&
@@ -146,6 +200,7 @@ void setupDioInterceptor() {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
+        unawaited(retryPendingLogouts());
         if (!isGateEaseOrigin(options.uri) ||
             {
               '/LoginpageAPI',

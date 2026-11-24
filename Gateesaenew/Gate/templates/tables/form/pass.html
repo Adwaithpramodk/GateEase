@@ -123,7 +123,7 @@
         <div class="crumbs"><a href="{% url 'homepage' %}">Dashboard</a><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span>Exit passes</span></div>
         <header class="topbar">
             <div><p class="eyebrow">Campus movement</p><h1>Exit pass requests</h1><p class="intro">Review student exit requests and approve or reject pending mentor submissions.</p></div>
-            <a href="{% url 'export_pass_pdf' %}?month={{ selected_month|default:'' }}" class="export-btn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export report</a>
+            <a href="{% url 'export_pass_pdf' %}?month={{ selected_month|default:'' }}&amp;q={{ q|urlencode }}" class="export-btn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export report</a>
         </header>
         <form method="get" class="toolbar">
             <div class="search"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input type="text" name="q" value="{{ q }}" placeholder="Search student, reason, or department"></div>

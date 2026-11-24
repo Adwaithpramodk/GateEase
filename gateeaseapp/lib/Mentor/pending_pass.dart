@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:gateeaseapp/pass_approval.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:gateeaseapp/login.dart';
@@ -15,12 +17,19 @@ class PendingPassPage extends StatefulWidget {
 class _PendingPassPageState extends State<PendingPassPage> {
   List<dynamic> pendingPasses = [];
   bool isLoading = true;
+  Timer? _approvalTimer;
   final Set<int> _processingPasses = {};
 
   @override
   void initState() {
     super.initState();
     getDetails();
+  }
+
+  @override
+  void dispose() {
+    _approvalTimer?.cancel();
+    super.dispose();
   }
 
   // Original API call and response format preserved.
@@ -36,7 +45,10 @@ class _PendingPassPageState extends State<PendingPassPage> {
 
       if (response.statusCode == 200 && mounted) {
         setState(() {
-          pendingPasses = response.data;
+          pendingPasses = (response.data as List)
+              .where((pass) => !mentorApprovalExpired(pass))
+              .toList();
+          _scheduleApprovalRefresh();
           isLoading = false;
         });
       }
@@ -46,6 +58,18 @@ class _PendingPassPageState extends State<PendingPassPage> {
     } finally {
       if (mounted && isLoading) setState(() => isLoading = false);
     }
+  }
+
+  void _scheduleApprovalRefresh() {
+    _approvalTimer?.cancel();
+    final delay = nextPassApprovalRefresh(pendingPasses);
+    if (delay == null) return;
+    _approvalTimer = Timer(delay, () {
+      if (!mounted) return;
+      setState(() => pendingPasses.removeWhere(mentorApprovalExpired));
+      _scheduleApprovalRefresh();
+      getDetails();
+    });
   }
 
   // Original endpoint, payload and success handling preserved.

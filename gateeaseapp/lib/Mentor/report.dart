@@ -506,18 +506,22 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Widget _buildStatusBadge(String? status) {
-    bool isExited = status == 'scanned' || status == 'approved';
+    final isExited = status == 'scanned' || status == 'approved';
+    final isRejected = status == 'rejected';
+    final label = isExited ? 'EXITED' : isRejected ? 'REJECTED' : 'PENDING';
+    final color = isExited ? AppTheme.success : isRejected ? AppTheme.error : AppTheme.warning;
+    final background = isExited ? AppTheme.successLight : isRejected ? AppTheme.errorLight : AppTheme.warningLight;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isExited ? AppTheme.successLight : AppTheme.warningLight,
+        color: background,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: isExited ? AppTheme.success.withValues(alpha: 0.3) : AppTheme.warning.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        isExited ? 'EXITED' : 'PENDING',
+        label,
         style: TextStyle(
-          color: isExited ? AppTheme.success : AppTheme.warning,
+          color: color,
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.5,

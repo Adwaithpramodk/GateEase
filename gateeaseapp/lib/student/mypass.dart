@@ -4,6 +4,7 @@
 library;
 
 import 'package:gateeaseapp/private_image.dart';
+import 'package:gateeaseapp/pass_approval.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -26,6 +27,9 @@ class _MypassesState extends State<Mypasses> {
   Map<int, String?> qrCodeCache = {}; // Cache QR codes by pass ID
   Map<int, String?> qrErrorMessages = {}; // Store error messages per pass
   Timer? _expiryTimer;
+  Timer? _approvalRefreshTimer;
+  Timer? _gateStatusTimer;
+  bool _fetchingPasses = false;
 
 
   @override
@@ -40,34 +44,90 @@ class _MypassesState extends State<Mypasses> {
   @override
   void dispose() {
     _expiryTimer?.cancel();
+    _approvalRefreshTimer?.cancel();
+    _gateStatusTimer?.cancel();
     super.dispose();
   }
 
   // ================= FETCH PASSES =================
   Future<void> getDetails() async {
+    if (_fetchingPasses) return;
+    _fetchingPasses = true;
     try {
       if (lid == null) {
         final prefs = await SharedPreferences.getInstance();
         lid = prefs.getInt('lid');
       }
       if (lid == null) {
-        setState(() => isLoading = false);
+        if (mounted) setState(() => isLoading = false);
         return;
       }
       final response = await dio.get('$baseurl/ApplypassAPI/$lid');
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && mounted) {
         setState(() {
           details = response.data;
+          _approvalRefreshTimer?.cancel();
+          final delay = nextPassApprovalRefresh(details);
+          if (delay != null) _approvalRefreshTimer = Timer(delay, getDetails);
+          _watchGateStatus();
           isLoading = false;
         });
       }
     } catch (e) {
-      debugPrint('Get Details Error: $e');
-      setState(() => isLoading = false);
+      debugPrint('Get Details Error: ${e.runtimeType}');
+      if (mounted) setState(() => isLoading = false);
+    } finally {
+      _fetchingPasses = false;
     }
   }
 
   // ================= GENERATE QR CODE =================
+  void _watchGateStatus() {
+    final displayingQr = details.any((pass) =>
+        pass['mentor_status'] == 'approved' &&
+        pass['security_status'] == 'pending' &&
+        !_isPassExpired(pass) &&
+        ((pass['qrcode']?.toString().isNotEmpty ?? false) ||
+            qrCodeCache[pass['id']] != null));
+    if (!displayingQr) {
+      _gateStatusTimer?.cancel();
+      _gateStatusTimer = null;
+    } else {
+      _gateStatusTimer ??= Timer.periodic(const Duration(seconds: 5), (_) {
+        if (mounted) getDetails();
+      });
+    }
+  }
+
+  Future<void> _cancelPass(int passId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cancel pass request?'),
+        content: const Text('This pending request will be cancelled.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep request'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Cancel pass'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await dio.delete('/ApplypassAPI/$lid', data: {'pass_id': passId});
+      _showMessage('Pass cancelled.');
+    } on DioException catch (error) {
+      final data = error.response?.data;
+      _showMessage(data is Map ? data['error']?.toString() ?? 'Could not cancel the pass.' : 'Could not cancel the pass.');
+    }
+    if (mounted) await getDetails();
+  }
+
   Future<void> generateQRCode(int passId) async {
     final matchingPasses = details.where((pass) => pass['id'] == passId);
     if (matchingPasses.isNotEmpty && _isPassExpired(matchingPasses.first)) {
@@ -86,6 +146,7 @@ class _MypassesState extends State<Mypasses> {
           qrCodeCache[passId] = response.data['qrcode_url'];
           qrErrorMessages[passId] = null;
         });
+        _watchGateStatus();
         // Refresh the pass list to get updated data
         getDetails();
         _showMessage('QR code generated successfully!');
@@ -138,6 +199,8 @@ class _MypassesState extends State<Mypasses> {
   // A pass expires 15 minutes after its requested exit time.
   // The request date is taken from created_at and the requested time from time.
   DateTime? _getPassExpiryTime(dynamic pass) {
+    final deadline = passApprovalDeadline(pass);
+    if (deadline != null) return deadline.add(const Duration(minutes: 15));
     try {
       final createdAtRaw = pass['created_at']?.toString();
       final requestedTimeRaw = pass['time']?.toString();
@@ -183,6 +246,14 @@ class _MypassesState extends State<Mypasses> {
 
   // ================= STATUS LOGIC =================
   Map<String, dynamic> getStatus(dynamic pass) {
+    final mentorStatus = pass['mentor_status'];
+    if (mentorStatus == 'cancelled' || mentorStatus == 'revoked') {
+      return {
+        'text': mentorStatus == 'cancelled' ? 'Cancelled' : 'Revoked',
+        'color': AppTheme.error,
+        'icon': Icons.cancel_rounded,
+      };
+    }
     if (pass['mentor_status'] == 'rejected' ||
         pass['security_status'] == 'rejected') {
       return {
@@ -196,7 +267,8 @@ class _MypassesState extends State<Mypasses> {
         'color': AppTheme.accent,
         'icon': Icons.check_circle_rounded,
       };
-    } else if (pass['mentor_status'] == 'approved' && _isPassExpired(pass)) {
+    } else if (mentorApprovalExpired(pass) ||
+        (pass['mentor_status'] == 'approved' && _isPassExpired(pass))) {
       return {
         'text': 'Expired',
         'color': AppTheme.error,
@@ -292,6 +364,11 @@ class _MypassesState extends State<Mypasses> {
                     !isExpired &&
                     pass['security_status'] != 'scanned' &&
                     pass['security_status'] != 'rejected';
+                final qrOpensAt = passApprovalDeadline(pass)?.subtract(
+                  const Duration(minutes: 15),
+                );
+                final qrOpensLater =
+                    qrOpensAt != null && DateTime.now().isBefore(qrOpensAt);
 
                 // Generate through the encrypted-token API instead of trusting a
                 // QR image created by an older app version.
@@ -408,8 +485,13 @@ class _MypassesState extends State<Mypasses> {
                                 ],
                               ),
 
+                              if (mentorApprovalExpired(pass)) ...[
+                                const SizedBox(height: 12),
+                                const Text(mentorApprovalExpiredMessage),
+                              ],
+
                               if (pass['reject_reason'] != null &&
-                                  status['text'] == 'Rejected') ...[
+                                  (status['text'] == 'Rejected' || status['text'] == 'Revoked')) ...[
                                 const SizedBox(height: 20),
                                 Container(
                                   padding: const EdgeInsets.all(16),
@@ -513,9 +595,23 @@ class _MypassesState extends State<Mypasses> {
                               ],
 
                               // QR Section
+                              if (pass['mentor_status'] == 'pending' &&
+                                  pass['security_status'] == 'pending' &&
+                                  !mentorApprovalExpired(pass))
+                                TextButton.icon(
+                                  onPressed: () => _cancelPass(passId),
+                                  icon: const Icon(Icons.cancel_outlined),
+                                  label: const Text('Cancel pass'),
+                                ),
+
                               if (canShowQr) ...[
                                 const SizedBox(height: 28),
-                                if (hasQr)
+                                if (qrOpensLater)
+                                  const Text(
+                                    'QR code available 15 minutes before exit.',
+                                    textAlign: TextAlign.center,
+                                  )
+                                else if (hasQr)
                                   Column(
                                     children: [
                                       Container(

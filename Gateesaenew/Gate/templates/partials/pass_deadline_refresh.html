@@ -1,0 +1,7 @@
+{% if next_pass_refresh_ms %}
+{{ next_pass_refresh_ms|json_script:"next-pass-refresh" }}
+<script>
+    window.setTimeout(() => window.location.reload(),
+        JSON.parse(document.getElementById('next-pass-refresh').textContent));
+</script>
+{% endif %}

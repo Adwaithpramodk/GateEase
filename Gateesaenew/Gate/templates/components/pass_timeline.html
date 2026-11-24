@@ -109,6 +109,14 @@
                         <p class="tl-title tl-text-pending">Cancelled by You</p>
                         <p class="tl-time">--</p>
                     </div>
+                {% elif current_pass.approval_expired %}
+                    <div class="tl-icon-wrapper tl-bg-pending" aria-label="Expired">
+                        <span class="tl-dot"></span>
+                    </div>
+                    <div class="tl-content">
+                        <p class="tl-title tl-text-pending">Expired</p>
+                        <p class="tl-time">Mentor did not approve before the requested exit time.</p>
+                    </div>
                 {% else %}
                     <!-- Pending -->
                     <div class="tl-icon-wrapper tl-bg-pending" aria-label="Mentor Pending">

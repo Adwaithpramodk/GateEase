@@ -66,6 +66,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Select a profile photo when updating an authorized GateEase profile.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>GateEase needs camera access to scan student QR codes for entry and exit verification.</string>
 </dict>

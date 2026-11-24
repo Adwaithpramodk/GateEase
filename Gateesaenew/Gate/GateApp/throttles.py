@@ -16,15 +16,6 @@ class ClientIPThrottle(AnonRateThrottle):
         return client_ip(request)
 
 
-class LoginRateThrottle(ClientIPThrottle):
-    """
-    Strict throttle for the login endpoint.
-    Prevents brute-force password attacks.
-    Limit: 15 requests/minute per IP.
-    """
-    scope = 'login'
-
-
 class SignupRateThrottle(ClientIPThrottle):
     """
     Throttle for the student registration endpoint.

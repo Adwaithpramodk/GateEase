@@ -1,3 +1,6 @@
+import 'package:gateeaseapp/role_page.dart';
+import 'dart:async';
+import 'package:gateeaseapp/pass_approval.dart';
 import 'package:gateeaseapp/private_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,6 +30,8 @@ class _MentorHomePageState extends State<MentorHomePage> {
   List<Map<String, String>> passes = [];
   Map<String, dynamic>? details;
   bool isAnalyticsLoading = true;
+  Timer? _approvalTimer;
+  StreamSubscription<String>? _deviceTokenSubscription;
 
   @override
   void initState() {
@@ -36,9 +41,16 @@ class _MentorHomePageState extends State<MentorHomePage> {
     });
   }
 
+  @override
+  void dispose() {
+    _approvalTimer?.cancel();
+    _deviceTokenSubscription?.cancel();
+    super.dispose();
+  }
+
   Future<void> _initializeNotifications() async {
     try {
-      await NotificationService.initialize();
+      if (!await NotificationService.enableMentorNotifications() || !mounted) return;
       String? token = await NotificationService.getFCMToken();
       if (token != null && lid != null) {
         String platform = Platform.isAndroid ? 'android' : 'ios';
@@ -49,8 +61,9 @@ class _MentorHomePageState extends State<MentorHomePage> {
         );
         if (success) debugPrint('✅ Push notifications enabled');
       }
-      NotificationService.listenToTokenRefresh((newToken) async {
-        if (lid != null) {
+      if (!mounted) return;
+      _deviceTokenSubscription = NotificationService.listenToTokenRefresh((newToken) async {
+        if (mounted && lid != null && usertype == 'mentor') {
           String platform = Platform.isAndroid ? 'android' : 'ios';
           await NotificationApiService.registerDeviceToken(
             loginId: lid!,
@@ -120,6 +133,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
   }
 
   Future<void> logout(BuildContext context) async {
+    await _deviceTokenSubscription?.cancel();
     await logoutSession(deviceToken: await NotificationService.getFCMToken());
     if (!context.mounted) return;
     Navigator.pushAndRemoveUntil(
@@ -146,11 +160,13 @@ class _MentorHomePageState extends State<MentorHomePage> {
             'Mentor analytics response is not a list',
           );
         }
-        passes = data.whereType<Map>().map<Map<String, String>>((rawPass) {
+        passes = data.whereType<Map>().where((pass) => !mentorApprovalExpired(pass))
+            .map<Map<String, String>>((rawPass) {
           final pass = Map<String, dynamic>.from(rawPass);
           return {
             'status': getStatus(pass),
             'mentor_status': (pass['mentor_status'] ?? '').toString(),
+            'approval_deadline': (pass['approval_deadline'] ?? '').toString(),
             'security_status': (pass['security_status'] ?? '').toString(),
             'name': (pass['name'] ?? 'Unknown student').toString(),
             'time': (pass['time'] ?? '').toString(),
@@ -159,10 +175,24 @@ class _MentorHomePageState extends State<MentorHomePage> {
             'is_group_pass': (pass['is_group_pass'] ?? false).toString(),
           };
         }).toList();
+        _scheduleApprovalRefresh();
       }
     } catch (e) {
       debugPrint('Analytics Error: $e');
     }
+  }
+
+  void _scheduleApprovalRefresh() {
+    _approvalTimer?.cancel();
+    final delay = nextPassApprovalRefresh(passes);
+    if (delay == null) return;
+    _approvalTimer = Timer(delay, () async {
+      if (!mounted) return;
+      setState(() => passes.removeWhere(mentorApprovalExpired));
+      _scheduleApprovalRefresh();
+      await fetchAnalytics();
+      if (mounted) setState(() {});
+    });
   }
 
   List<Map<String, String>> _byStatus(String status) =>
@@ -850,8 +880,8 @@ class _MentorHomePageState extends State<MentorHomePage> {
       width: 300,
       backgroundColor: AppTheme.background,
       child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 20),
@@ -901,7 +931,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
                                   ),
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 9,
@@ -997,7 +1027,27 @@ class _MentorHomePageState extends State<MentorHomePage> {
               title: 'Reports',
               onTap: () => _openMentorPage(const ReportPage()),
             ),
-            const Spacer(),
+            _drawerItem(
+              icon: Icons.manage_accounts_outlined,
+              title: 'Verify and manage students',
+              onTap: () => _openMentorPage(const RolePage(title: 'Manage students', page: 'students')),
+            ),
+            _drawerItem(
+              icon: Icons.assignment_turned_in_outlined,
+              title: 'Approved passes',
+              onTap: () => _openMentorPage(const RolePage(title: 'Approved passes', page: 'approved-passes')),
+            ),
+            _drawerItem(
+              icon: Icons.edit_outlined,
+              title: 'Edit profile',
+              onTap: () => _openMentorPage(const RolePage(title: 'Edit profile', page: 'profile')),
+            ),
+            _drawerItem(
+              icon: Icons.table_view_outlined,
+              title: 'Analytics and CSV export',
+              onTap: () => _openMentorPage(const RolePage(title: 'Analytics', page: 'analytics')),
+            ),
+            const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
               child: Container(

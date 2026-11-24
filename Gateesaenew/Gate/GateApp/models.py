@@ -1,3 +1,5 @@
+from datetime import datetime as _datetime
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
@@ -62,7 +64,7 @@ class departmenttable(models.Model):
 class classstable(models.Model):
     class_name=models.CharField(max_length=100,null=True,blank=True)
     admission_year=models.IntegerField(null=True,blank=True)
-    department_id=models.ForeignKey(departmenttable,on_delete=models.CASCADE,null=True,blank=True)
+    department_id=models.ForeignKey(departmenttable,on_delete=models.PROTECT,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -80,7 +82,7 @@ class classstable(models.Model):
         if not self.admission_year:
             return None
         
-        from datetime import datetime
+        from datetime import datetime as _datetime
         current_year = datetime.now().year
         current_month = datetime.now().month
         if current_month >= 6:
@@ -119,7 +121,7 @@ class studenttable(models.Model):
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
     
-    classs=models.ForeignKey(classstable,on_delete=models.CASCADE,null=True,blank=True)
+    classs=models.ForeignKey(classstable,on_delete=models.PROTECT,null=True,blank=True)
     
     Photo = models.ImageField(upload_to='profile_photos/students/', null=True, blank=True)
     
@@ -177,7 +179,7 @@ class mentortable(models.Model):
     email=models.CharField(max_length=100,null=True,blank=True,unique=True)
     phone=models.BigIntegerField(null=True,blank=True)
     LOGINID=models.ForeignKey(Logintable,on_delete=models.CASCADE,null=True,blank=True)
-    department=models.ForeignKey(departmenttable,on_delete=models.CASCADE,null=True,blank=True)
+    department=models.ForeignKey(departmenttable,on_delete=models.PROTECT,null=True,blank=True)
     image = models.ImageField(upload_to='profile_photos/mentors/', null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -196,9 +198,14 @@ class mentortable(models.Model):
         return self.name
 
 
+def approval_window_filter(now=None):
+    local_now = timezone.localtime(now)
+    return models.Q(created_at__date=local_now.date(), time__gt=local_now.time())
+
+
 class exitpasstable(models.Model):
-    student_id=models.ForeignKey(studenttable,on_delete=models.CASCADE,null=True,blank=True)
-    mentor_id=models.ForeignKey(mentortable,on_delete=models.CASCADE,null=True,blank=True)
+    student_id=models.ForeignKey(studenttable,on_delete=models.PROTECT,null=True,blank=True)
+    mentor_id=models.ForeignKey(mentortable,on_delete=models.PROTECT,null=True,blank=True)
     reason=models.TextField(max_length=100,null=True,blank=True)
     time=models.TimeField(null=True,blank=True)
     mentor_status=models.CharField(max_length=100, null=True, blank=True, db_index=True)
@@ -211,11 +218,31 @@ class exitpasstable(models.Model):
     reject_reason = models.TextField(null=True, blank=True)
     is_group_pass = models.BooleanField(default=False, db_index=True)
 
+    @property
+    def approval_deadline(self):
+        if self.created_at is None or self.time is None:
+            return None
+        date = timezone.localtime(self.created_at).date()
+        return timezone.make_aware(_datetime.combine(date, self.time))
+
+    @property
+    def approval_expired(self):
+        if self.mentor_status == 'expired':
+            return True
+        if self.mentor_status != 'pending':
+            return False
+        deadline = self.approval_deadline
+        return deadline is None or timezone.now() >= deadline
+
+    @property
+    def effective_mentor_status(self):
+        return 'expired' if self.approval_expired else self.mentor_status
+
     def __str__(self):
         return f"Pass for {self.student_id.name} - Status: {self.mentor_status}, {self.security_status}"
 
 class complainttable(models.Model):
-    student_id=models.ForeignKey(studenttable,on_delete=models.CASCADE,null=True,blank=True)
+    student_id=models.ForeignKey(studenttable,on_delete=models.PROTECT,null=True,blank=True)
     complaint=models.TextField(max_length=200,null=True,blank=True)
     reply=models.TextField(max_length=200,null=True,blank=True)
     date=models.DateField(auto_now_add=True)
@@ -321,3 +348,15 @@ class PasswordResetOTP(models.Model):
     failed_attempts = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     is_used = models.BooleanField(default=False)
+
+
+class PasswordResetDelivery(models.Model):
+    email = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    leased_until = models.DateTimeField(null=True, blank=True)
+
+
+class PassNotificationDelivery(models.Model):
+    exit_pass = models.OneToOneField(exitpasstable, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    leased_until = models.DateTimeField(null=True, blank=True)

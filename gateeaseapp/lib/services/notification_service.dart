@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:gateeaseapp/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
@@ -7,46 +11,36 @@ class NotificationService {
   static final FirebaseMessaging _firebaseMessaging =
       FirebaseMessaging.instance;
 
-  /// Initialize notification service and request permissions
-  static Future<void> initialize() async {
+  static Future<void>? _listenerSetup;
+
+  static Future<bool> enableMentorNotifications() async {
+    final settings = await _firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+        settings.authorizationStatus != AuthorizationStatus.provisional) {
+      return false;
+    }
+
+    await (_listenerSetup ??= _initializeListeners());
+    return true;
+  }
+
+  static Future<void> _initializeListeners() async {
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+    final initialMessage = await _firebaseMessaging.getInitialMessage();
+    if (initialMessage != null) await _handleNotificationTap(initialMessage);
+  }
+
+  static Future<bool> _hasMentorSession() async {
     try {
-      // Request notification permissions (iOS)
-      NotificationSettings settings = await _firebaseMessaging
-          .requestPermission(
-            alert: true,
-            badge: true,
-            sound: true,
-            provisional: false,
-          );
-
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        debugPrint('✅ User granted notification permission');
-      } else if (settings.authorizationStatus ==
-          AuthorizationStatus.provisional) {
-        debugPrint('⚠️ User granted provisional notification permission');
-      } else {
-        debugPrint(
-          '❌ User declined or has not accepted notification permission',
-        );
-      }
-
-      // Get the FCM token (for device registration)
-      await getFCMToken();
-
-      // Listen to foreground messages
-      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-      // Handle notification taps when app is in background/terminated
-      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
-
-      // Check if app was opened from a terminated state
-      RemoteMessage? initialMessage = await FirebaseMessaging.instance
-          .getInitialMessage();
-      if (initialMessage != null) {
-        _handleNotificationTap(initialMessage);
-      }
-    } catch (e) {
-      debugPrint('❌ Error initializing notifications: $e');
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('usertype') == 'mentor' && await restoreSession();
+    } catch (_) {
+      return false;
     }
   }
 
@@ -64,11 +58,12 @@ class NotificationService {
   }
 
   /// Handle foreground notifications (when app is open)
-  static void _handleForegroundMessage(RemoteMessage message) {
+  static Future<void> _handleForegroundMessage(RemoteMessage message) async {
+    if (!await _hasMentorSession()) return;
     debugPrint('📬 Foreground notification received');
     
     final context = navigatorKey.currentContext;
-    if (context != null && message.notification != null) {
+    if (context != null && context.mounted && message.notification != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Column(
@@ -92,21 +87,9 @@ class NotificationService {
     }
   }
 
-  /// Handle notification tap (when user taps notification)
-  static void _handleNotificationTap(RemoteMessage message) {
-    debugPrint('👆 Notification tapped');
-
-    // Navigate to pending passes screen based on notification type
-    try {
-      String? notificationType = message.data['type'];
-
-      if (notificationType == 'pass_request') {
-        // Navigate to pending passes page
-        navigatorKey.currentState?.pushNamed('/pending-passes');
-        debugPrint('✅ Navigating to pending passes page');
-      }
-    } catch (e) {
-      debugPrint('❌ Error handling notification tap: $e');
+  static Future<void> _handleNotificationTap(RemoteMessage message) async {
+    if (message.data['type'] == 'pass_request' && await _hasMentorSession()) {
+      navigatorKey.currentState?.pushNamed('/pending-passes');
     }
   }
 
@@ -115,12 +98,9 @@ class NotificationService {
       GlobalKey<NavigatorState>();
 
   /// Listen to token refresh
-  static void listenToTokenRefresh(Function(String) onTokenRefresh) {
-    _firebaseMessaging.onTokenRefresh.listen((newToken) {
-      debugPrint('🔄 FCM Token refreshed');
-      onTokenRefresh(newToken);
-    });
-  }
+  static StreamSubscription<String> listenToTokenRefresh(
+    Future<void> Function(String) onTokenRefresh,
+  ) => _firebaseMessaging.onTokenRefresh.listen(onTokenRefresh);
 
   /// Subscribe to a topic (optional - for broadcast notifications)
   static Future<void> subscribeToTopic(String topic) async {

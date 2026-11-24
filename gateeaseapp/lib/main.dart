@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gateeaseapp/splash.dart';
+import 'package:gateeaseapp/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:gateeaseapp/services/notification_service.dart';
@@ -12,14 +13,19 @@ void main() async {
 
   // Set up JWT interceptor so all API calls carry the auth token
   setupDioInterceptor();
+  onSessionExpired = () async {
+    lid = null;
+    usertype = null;
+    NotificationService.navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (_) => false,
+    );
+  };
 
   // Initialize Firebase
   try {
     await Firebase.initializeApp();
     debugPrint('✅ Firebase initialized successfully');
-    
-    // Initialize Notification Service
-    await NotificationService.initialize();
     
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (e) {

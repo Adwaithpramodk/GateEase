@@ -31,7 +31,7 @@ class NotificationApiService {
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Error registering device token: $e');
+      debugPrint('❌ Error registering device token: ${e.runtimeType}');
       return false;
     }
   }
@@ -64,7 +64,7 @@ class NotificationApiService {
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Error updating device token: $e');
+      debugPrint('❌ Error updating device token: ${e.runtimeType}');
       return false;
     }
   }
@@ -91,7 +91,7 @@ class NotificationApiService {
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Error deleting device token: $e');
+      debugPrint('❌ Error deleting device token: ${e.runtimeType}');
       return false;
     }
   }

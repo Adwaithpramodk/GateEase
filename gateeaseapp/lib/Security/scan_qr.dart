@@ -1,3 +1,4 @@
+import 'package:gateeaseapp/private_image.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:gateeaseapp/api_config.dart';
@@ -25,8 +26,20 @@ class _ScanQrPageState extends State<ScanQrPage> {
           // Camera feed
           MobileScanner(
             controller: controller,
+            errorBuilder: (context, error) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text(
+                  error.errorCode == MobileScannerErrorCode.permissionDenied
+                      ? 'Allow camera access in Android Settings to scan passes.'
+                      : 'Camera unavailable. Reopen the scanner or try another device.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ),
             onDetect: (BarcodeCapture capture) async {
-              if (scanned) return;
+              if (scanned || capture.barcodes.isEmpty) return;
               final String? code = capture.barcodes.first.rawValue;
               if (code == null) return;
               scanned = true;
@@ -51,9 +64,10 @@ class _ScanQrPageState extends State<ScanQrPage> {
                     data['approved_at']?.toString() ?? '-';
                 String approvedDate = '-';
                 if (approvedAtRaw != '-') {
-                  final DateTime dt = DateTime.parse(approvedAtRaw).toLocal();
-                  approvedDate =
-                      '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}';
+                  final dt = DateTime.tryParse(approvedAtRaw)?.toLocal();
+                  if (dt != null) {
+                    approvedDate = '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}';
+                  }
                 }
 
                 if (!context.mounted) return;
@@ -65,6 +79,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
                 if (!context.mounted) return;
                 await _showPassDialog(
                   name: name,
+                  photo: data['student_photo']?.toString(),
                   reason: reason,
                   time: time,
                   approvedDate: approvedDate,
@@ -300,6 +315,7 @@ class _ScanQrPageState extends State<ScanQrPage> {
   Future<void> _showPassDialog({
     required String token,
     required String name,
+    String? photo,
     required String reason,
     required String time,
     required String approvedDate,
@@ -364,6 +380,20 @@ class _ScanQrPageState extends State<ScanQrPage> {
               _detailRow('Class', studentClass, Icons.class_rounded),
               _detailRow('Reason', reason, Icons.info_outline_rounded),
               _detailRow('Time', time, Icons.access_time_rounded),
+              if (photo != null && photo.isNotEmpty) ...[
+                Center(
+                  child: ClipOval(
+                    child: PrivateImage(
+                      photo,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Icon(Icons.person_outline, size: 48),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               _detailRow('Date', approvedDate, Icons.calendar_today_rounded),
               _detailRow(
                 'Approved by',

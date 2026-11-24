@@ -1,4 +1,7 @@
+import 'package:gateeaseapp/privacy_policy_screen.dart';
+import 'dart:async';
 import 'package:gateeaseapp/private_image.dart';
+import 'package:gateeaseapp/pass_approval.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
@@ -30,6 +33,7 @@ class _StudentHomePageState extends State<StudentHomePage>
   bool isLoading = true;
   Map<String, dynamic>? details;
   Map<String, dynamic>? latestPassDetails;
+  Timer? _approvalTimer;
 
   late AnimationController _headerAnim;
   late AnimationController _contentAnim;
@@ -59,6 +63,7 @@ class _StudentHomePageState extends State<StudentHomePage>
 
   @override
   void dispose() {
+    _approvalTimer?.cancel();
     _headerAnim.dispose();
     _contentAnim.dispose();
     super.dispose();
@@ -143,7 +148,10 @@ class _StudentHomePageState extends State<StudentHomePage>
 
         String mentorStatusDisplay = 'pending';
         if (mentorStatus == 'approved') mentorStatusDisplay = 'completed';
-        if (mentorStatus == 'rejected') mentorStatusDisplay = 'rejected';
+        if (mentorStatus == 'rejected' || mentorStatus == 'revoked' || mentorStatus == 'cancelled') {
+          mentorStatusDisplay = mentorStatus;
+        }
+        if (mentorApprovalExpired(data)) mentorStatusDisplay = 'expired';
 
         String securityStatusDisplay = 'pending';
         if (securityStatus == 'scanned') securityStatusDisplay = 'completed';
@@ -156,13 +164,20 @@ class _StudentHomePageState extends State<StudentHomePage>
             'status': 'completed',
           },
           {
-            'title': 'Mentor Review',
-            'time': mentorStatus == 'pending'
+            'title': switch (mentorStatusDisplay) {
+              'expired' => 'Expired',
+              'revoked' => 'Revoked by mentor',
+              'cancelled' => 'Cancelled',
+              _ => 'Mentor Review',
+            },
+            'time': mentorStatusDisplay == 'expired'
+                ? mentorApprovalExpiredMessage
+                : mentorStatus == 'pending'
                 ? 'Pending'
                 : formatTime(approvedAt),
             'status': mentorStatusDisplay,
           },
-          {
+          if (mentorStatus == 'approved' || mentorStatusDisplay == 'pending') {
             'title': 'Security Scan',
             'time': securityStatus == 'pending'
                 ? 'Pending'
@@ -179,6 +194,9 @@ class _StudentHomePageState extends State<StudentHomePage>
         setState(() {
           timeline = temp;
           latestPassDetails = passDetails;
+          _approvalTimer?.cancel();
+          final delay = nextPassApprovalRefresh([?passDetails]);
+          if (delay != null) _approvalTimer = Timer(delay, fetchTimeline);
           isLoading = false;
         });
       }
@@ -634,6 +652,11 @@ class _StudentHomePageState extends State<StudentHomePage>
               ),
             ),
             _drawerItem(
+              icon: Icons.person_remove_outlined,
+              title: 'Request account deletion',
+              onTap: () => openAccountDeletion(context),
+            ),
+            _drawerItem(
               icon: Icons.logout_rounded,
               title: 'Logout',
               color: const Color(0xFFD84A4A),
@@ -886,7 +909,7 @@ class _StudentHomePageState extends State<StudentHomePage>
                   statusColor = const Color(0xFF16865B);
                   statusBackground = const Color(0xFFE5F6EE);
                   statusIcon = Icons.check_rounded;
-                } else if (status == 'rejected' || status == 'cancelled') {
+                } else if (status == 'rejected' || status == 'cancelled' || status == 'expired' || status == 'revoked') {
                   statusColor = const Color(0xFFD84B5B);
                   statusBackground = const Color(0xFFFFEAED);
                   statusIcon = Icons.close_rounded;

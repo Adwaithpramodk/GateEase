@@ -1168,16 +1168,11 @@
 
                                             <!-- Mentor and gate status -->
                                             <div class="status-list">
-                                                {% if pass.mentor_status == 'pending' %}
-                                                    {% if pass.is_expired %}
-                                                        <span class="status-chip status-neutral">
-                                                            Mentor approval expired
-                                                        </span>
-                                                    {% else %}
-                                                        <span class="status-chip status-pending">
-                                                            Mentor: Pending
-                                                        </span>
-                                                    {% endif %}
+                                                {% if pass.approval_expired %}
+                                                    <span class="status-chip status-neutral">Expired</span>
+                                                    <span>Mentor did not approve before the requested exit time.</span>
+                                                {% elif pass.mentor_status == 'pending' %}
+                                                    <span class="status-chip status-pending">Mentor: Pending</span>
 
                                                 {% elif pass.mentor_status == 'approved' %}
                                                     <span class="status-chip status-approved">
@@ -1590,5 +1585,6 @@
         });
     </script>
 
+{% include 'partials/pass_deadline_refresh.html' %}
 </body>
 </html>

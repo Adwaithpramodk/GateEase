@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:gateeaseapp/login.dart';
+import 'package:gateeaseapp/privacy_policy_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gateeaseapp/api_config.dart';
@@ -49,5 +52,54 @@ void main() {
       isGateEaseOrigin(Uri.parse('https://other.example/media/private.png')),
       isFalse,
     );
+  });
+
+  testWidgets('login fits a compact screen with enlarged text', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(1.6)),
+          child: child!,
+        ),
+        home: const LoginPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(TextFormField), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('account deletion link is reachable at large text size', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const PrivacyPolicyScreen(),
+      ),
+    );
+    final deletion = find.widgetWithText(
+      OutlinedButton,
+      'Request account deletion',
+    );
+    await tester.ensureVisible(deletion);
+    await tester.pumpAndSettle();
+    expect(deletion.hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

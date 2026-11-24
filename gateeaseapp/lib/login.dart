@@ -1,3 +1,4 @@
+import 'package:gateeaseapp/role_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
@@ -105,7 +106,15 @@ class _LoginPageState extends State<LoginPage> {
       if (e is DioException &&
           e.response != null &&
           e.response!.data is Map) {
-        _snack(e.response!.data['message'] ?? 'Login failed');
+        final status = e.response!.data['usertype'];
+        if (status == 'pending' || status == 'Rejected') {
+          _openPage(RolePage(
+            title: 'Account verification',
+            page: status == 'pending' ? 'verification-pending' : 'verification-rejected',
+          ));
+        } else {
+          _snack(e.response!.data['message']?.toString() ?? 'Login failed');
+        }
       } else {
         _snack('Server error. Try again later.');
       }
@@ -212,7 +221,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildLoginCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 25, 22, 22),
+      padding: const EdgeInsets.fromLTRB(16, 25, 16, 22),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(25),
@@ -333,11 +342,12 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 22),
           SizedBox(
             width: double.infinity,
-            height: 54,
             child: ElevatedButton(
               onPressed: _isLoading ? null : () => login(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
+                minimumSize: const Size(0, 54),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 disabledBackgroundColor:
                 AppTheme.primary.withValues(alpha: 0.35),
                 foregroundColor: Colors.white,
@@ -355,8 +365,10 @@ class _LoginPageState extends State<LoginPage> {
                   strokeWidth: 2.2,
                 ),
               )
-                  : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                  : const Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 9,
                 children: [
                   Text(
                     'Sign In',
@@ -365,7 +377,6 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  SizedBox(width: 9),
                   Icon(Icons.arrow_forward_rounded, size: 19),
                 ],
               ),
@@ -442,7 +453,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Center(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(22, 28, 22, 24),
+                      padding: const EdgeInsets.fromLTRB(16, 28, 16, 24),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           maxWidth: isWide ? 430 : 460,

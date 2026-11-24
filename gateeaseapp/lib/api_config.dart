@@ -180,13 +180,6 @@ Future<String?> _validAccess() async {
   }
 }
 
-Future<Map<String, String>> rolePageAuthorization() async {
-  final token = await _validAccess();
-  return token == null
-      ? const {}
-      : {'Authorization': 'Bearer $token', 'X-Authorization': 'Bearer $token'};
-}
-
 
 bool isGateEaseOrigin(Uri uri) {
   final server = Uri.parse(baseurl);

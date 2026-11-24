@@ -1,4 +1,4 @@
-import 'package:gateeaseapp/role_page.dart';
+import 'package:gateeaseapp/Mentor/mentor_management.dart';
 import 'dart:async';
 import 'package:gateeaseapp/pass_approval.dart';
 import 'package:gateeaseapp/private_image.dart';
@@ -1030,22 +1030,17 @@ class _MentorHomePageState extends State<MentorHomePage> {
             _drawerItem(
               icon: Icons.manage_accounts_outlined,
               title: 'Verify and manage students',
-              onTap: () => _openMentorPage(const RolePage(title: 'Manage students', page: 'students')),
+              onTap: () => _openMentorPage(const ManageMentorStudentsPage()),
             ),
             _drawerItem(
               icon: Icons.assignment_turned_in_outlined,
               title: 'Approved passes',
-              onTap: () => _openMentorPage(const RolePage(title: 'Approved passes', page: 'approved-passes')),
+              onTap: () => _openMentorPage(const MentorApprovedPassesPage()),
             ),
             _drawerItem(
               icon: Icons.edit_outlined,
               title: 'Edit profile',
-              onTap: () => _openMentorPage(const RolePage(title: 'Edit profile', page: 'profile')),
-            ),
-            _drawerItem(
-              icon: Icons.table_view_outlined,
-              title: 'Analytics and CSV export',
-              onTap: () => _openMentorPage(const RolePage(title: 'Analytics', page: 'analytics')),
+              onTap: () => _openMentorPage(const MentorEditProfilePage()),
             ),
             const SizedBox(height: 12),
             Padding(
@@ -1126,11 +1121,12 @@ class _MentorHomePageState extends State<MentorHomePage> {
     );
   }
 
-  void _openMentorPage(Widget page) {
+  Future<void> _openMentorPage(Widget page) async {
     // Close only the drawer. Do not pop the MentorHomePage route.
     _scaffoldKey.currentState?.closeDrawer();
 
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    if (mounted) await _loadAll();
   }
 
   Widget _sectionHeading(String title, String subtitle) {

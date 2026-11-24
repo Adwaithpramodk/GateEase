@@ -46,7 +46,7 @@ class StudentSerializer1(ModelSerializer):
             return "No Class"
 
 class MentorSerializer(ModelSerializer):
-    departmentname=serializers.CharField(source='department.name')
+    departmentname=serializers.CharField(source='department.name', read_only=True, default=None)
     class Meta:
         model=mentortable
         fields=['name','email','phone','departmentname','image']

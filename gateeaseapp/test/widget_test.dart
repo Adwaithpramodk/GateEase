@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:gateeaseapp/Mentor/mentor_management.dart';
 import 'package:gateeaseapp/login.dart';
 import 'package:gateeaseapp/privacy_policy_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -102,4 +104,60 @@ void main() {
     expect(deletion.hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'approved pass revocation requires a reason and refreshes the list',
+    (tester) async {
+      const listPath = '/api/mentor/approved-passes/';
+      const revokePath = '${listPath}42/revoke/';
+      String? submittedReason;
+      final fakeMentorApi = InterceptorsWrapper(
+        onRequest: (request, handler) {
+          if (request.method == 'POST' && request.path == revokePath) {
+            submittedReason = (request.data as Map)['reason'] as String;
+            handler.resolve(
+              Response<void>(requestOptions: request, statusCode: 204),
+            );
+            return;
+          }
+          expect(request.path, listPath);
+          handler.resolve(
+            Response<Map<String, dynamic>>(
+              requestOptions: request,
+              statusCode: 200,
+              data: {
+                'page': 1,
+                'pages': 1,
+                'passes': [
+                  if (submittedReason == null)
+                    {'id': 42, 'name': 'Sample student', 'time': '02:00 PM'},
+                ],
+              },
+            ),
+          );
+        },
+      );
+      dio.interceptors.insert(0, fakeMentorApi);
+      addTearDown(() => dio.interceptors.remove(fakeMentorApi));
+
+      await tester.pumpWidget(
+        const MaterialApp(home: MentorApprovedPassesPage()),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Sample student'), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, 'Revoke pass'));
+      await tester.pumpAndSettle();
+      final submit = find.widgetWithText(FilledButton, 'Revoke pass');
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+      expect(find.text('Enter a reason.'), findsOneWidget);
+      expect(submittedReason, isNull);
+
+      await tester.enterText(find.byType(TextFormField), 'Schedule changed');
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+      expect(submittedReason, 'Schedule changed');
+      expect(find.text('Sample student'), findsNothing);
+    },
+  );
 }

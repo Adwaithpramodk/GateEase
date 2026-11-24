@@ -614,13 +614,36 @@ class AdminAddStudent(AdminRequiredMixin, View):
             messages.error(request, 'Unable to add the student.')
         return redirect('admin_add_student')
 
+def mentor_students(login_id):
+    classes = class_assigntable.objects.filter(mentor_id__LOGINID_id=login_id)
+    return studenttable.objects.filter(classs_id__in=classes.values('class_id'))
+
+
 def managed_students(request):
     role = request.jwt_usertype or request.session.get('usertype')
     if role == 'admin':
         return studenttable.objects.all()
     login_id = request.jwt_user_id or request.session.get('user_id')
-    classes = class_assigntable.objects.filter(mentor_id__LOGINID_id=login_id)
-    return studenttable.objects.filter(classs_id__in=classes.values('class_id'))
+    return mentor_students(login_id)
+
+
+def student_edit_form(student, data, mentor=False):
+    data = data.copy()
+    if mentor:
+        data.update({'email': student.email, 'classs': student.classs_id})
+    return EditStudentForm(data, instance=student)
+
+
+def set_student_verification(students, login_id, decision, actor):
+    account = get_object_or_404(
+        Logintable.objects.filter(id__in=students.values('LOGINID_id')),
+        id=login_id, usertype__in=('pending', 'Rejected', 'Student'),
+    )
+    Logintable.objects.filter(pk=account.pk).exclude(usertype=decision).update(
+        usertype=decision, session_version=models.F('session_version') + 1,
+    )
+    event = 'student_verified' if decision == 'Student' else 'student_rejected'
+    security_log.info('%s actor=%s target=%s', event, actor, account.pk)
 
 
 class EditStudent(AdminOrMentorRequiredMixin, View):
@@ -633,11 +656,8 @@ class EditStudent(AdminOrMentorRequiredMixin, View):
 
     def post(self, request, id):
         student = get_object_or_404(managed_students(request), id=id)
-        data = request.POST.copy()
-        if (request.jwt_usertype or request.session.get('usertype')) == 'mentor':
-            data.update({'email': student.email, 'classs': student.classs_id})
-        form = EditStudentForm(data, instance=student)
         user_type = getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
+        form = student_edit_form(student, request.POST, mentor=user_type == 'mentor')
         back_url = 'verify_student' if user_type == 'admin' else 'verify_student_mentor'
         if form.is_valid():
             form.save()
@@ -647,15 +667,7 @@ class EditStudent(AdminOrMentorRequiredMixin, View):
 
 class AcceptStudent(AdminOrMentorRequiredMixin, View):
     def post(self,request, lid):
-        login_obj = get_object_or_404(
-            Logintable.objects.filter(id__in=managed_students(request).values('LOGINID_id')),
-            id=lid, usertype__in=('pending', 'Rejected', 'Student'),
-        )
-        if login_obj.usertype != 'Student':
-            Logintable.objects.filter(pk=login_obj.pk).update(
-                usertype='Student', session_version=models.F('session_version') + 1,
-            )
-        security_log.info('student_verified actor=%s target=%s', request.jwt_user_id, login_obj.pk)
+        set_student_verification(managed_students(request), lid, 'Student', request.jwt_user_id)
         messages.success(request, "Student Accepted successfully")
         destination = 'verify_student_mentor' if (
             getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
@@ -664,15 +676,7 @@ class AcceptStudent(AdminOrMentorRequiredMixin, View):
 
 class RejectStudent(AdminOrMentorRequiredMixin, View):
     def post(self,request, lid):
-        login_obj = get_object_or_404(
-            Logintable.objects.filter(id__in=managed_students(request).values('LOGINID_id')),
-            id=lid, usertype__in=('pending', 'Rejected', 'Student'),
-        )
-        if login_obj.usertype != 'Rejected':
-            Logintable.objects.filter(pk=login_obj.pk).update(
-                usertype='Rejected', session_version=models.F('session_version') + 1,
-            )
-        security_log.info('student_rejected actor=%s target=%s', request.jwt_user_id, login_obj.pk)
+        set_student_verification(managed_students(request), lid, 'Rejected', request.jwt_user_id)
         messages.warning(request, "Student Rejected")
         destination = 'verify_student_mentor' if (
             getattr(request, 'jwt_usertype', None) or request.session.get('usertype')
@@ -976,55 +980,49 @@ class MentorPendingPasses(MentorRequiredMixin, View):
         return redirect('MentorPendingPasses')
 
 
+
+def mentor_approved_passes(login_id):
+    cutoff = timezone.localtime() - datetime.timedelta(minutes=15)
+    return exitpasstable.objects.filter(
+        mentor_status='approved', security_status='pending',
+        student_id__in=mentor_students(login_id),
+    ).filter(
+        Q(created_at__date__gt=cutoff.date())
+        | Q(created_at__date=cutoff.date(), time__gt=cutoff.time())
+    )
+
+
+def revoke_mentor_pass(login_id, pass_id, reason):
+    if not isinstance(reason, str) or not reason.strip() or len(reason.strip()) > 500:
+        raise ValidationError('Enter a revocation reason of up to 500 characters.')
+    if not mentor_approved_passes(login_id).filter(pk=pass_id).update(
+        mentor_status='revoked', reject_reason=reason.strip(),
+    ):
+        raise ValidationError('This pass is no longer available for revocation.')
+    security_log.info('pass_revoked actor=%s pass=%s', login_id, pass_id)
+
+
 class MentorApprovedPasses(MentorRequiredMixin, View):
     def get(self, request):
-        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
-        try:
-            mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
-            assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
-            cutoff = timezone.localtime() - datetime.timedelta(minutes=15)
-            approved_passes = exitpasstable.objects.filter(
-                mentor_status='approved', security_status='pending',
-                student_id__classs__id__in=assigned_classes,
-            ).filter(
-                Q(created_at__date__gt=cutoff.date())
-                | Q(created_at__date=cutoff.date(), time__gt=cutoff.time())
-            ).order_by('-approved_at')
-        except mentortable.DoesNotExist:
-            approved_passes = []
-        return render(request, 'tables/form/mentor_approved_passes.html', {'passes': approved_passes, 'mentor': mentor_obj if 'mentor_obj' in locals() else None})
+        user_id = request.jwt_user_id or request.session.get('user_id')
+        mentor = mentortable.objects.filter(LOGINID_id=user_id).first()
+        passes = mentor_approved_passes(user_id).order_by('-approved_at')
+        return render(request, 'tables/form/mentor_approved_passes.html', {'passes': passes, 'mentor': mentor})
 
     def post(self, request):
-        user_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
-        pass_id = request.POST.get('pass_id')
-        action = request.POST.get('action')
-
-        try:
-            mentor_obj = mentortable.objects.get(LOGINID_id=user_id)
-            assigned_classes = class_assigntable.objects.filter(mentor_id=mentor_obj).values_list('class_id', flat=True)
-
-            exit_pass = exitpasstable.objects.get(
-                id=pass_id,
-                mentor_status='approved',
-                security_status='pending',
-                student_id__classs__id__in=assigned_classes
-            )
-
-            if action == 'revoke':
-                revoke_reason = request.POST.get('revoke_reason', 'Revoked by mentor')
-                updated = exitpasstable.objects.filter(
-                    pk=exit_pass.pk, mentor_status='approved', security_status='pending',
-                ).update(mentor_status='revoked', reject_reason=revoke_reason[:500])
-                if updated:
-                    security_log.info('pass_revoked actor=%s pass=%s', user_id, pass_id)
-                    messages.success(request, f"Pass for {exit_pass.student_id.name} has been revoked.")
-                else:
-                    messages.warning(request, 'Pass has already been processed.')
-
-        except (mentortable.DoesNotExist, exitpasstable.DoesNotExist):
-            messages.error(request, "Pass not found or unauthorized.")
-
+        user_id = request.jwt_user_id or request.session.get('user_id')
+        if request.POST.get('action') == 'revoke':
+            try:
+                pass_id = request.POST.get('pass_id', '')
+                if not (pass_id.isascii() and pass_id.isdigit() and len(pass_id) <= 18):
+                    raise ValidationError('Invalid pass.')
+                revoke_mentor_pass(user_id, int(pass_id), request.POST.get('revoke_reason'))
+            except ValidationError as exc:
+                messages.error(request, exc.messages[0])
+            else:
+                messages.success(request, 'Pass revoked successfully.')
         return redirect('MentorApprovedPasses')
+
 
 class MntrHome(MentorRequiredMixin, View):
     def get(self, request):
@@ -1047,6 +1045,26 @@ class MntrHome(MentorRequiredMixin, View):
             'next_pass_refresh_ms': next_approval_refresh(pending_passes),
         })
 
+def update_mentor_profile(mentor, name, phone, image):
+    fields = []
+    if name is not None:
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 100:
+            raise ValidationError('Enter a name of up to 100 characters.')
+        mentor.name = name.strip()
+        fields.append('name')
+    if phone not in (None, ''):
+        digits = str(phone)
+        if len(digits) != 10 or not digits.isascii() or not digits.isdigit():
+            raise ValidationError('Enter a valid 10-digit phone number.')
+        mentor.phone = int(digits)
+        fields.append('phone')
+    if image:
+        mentor.image = image
+        fields.append('image')
+    if fields:
+        mentor.save(update_fields=fields)
+
+
 class MentorProfileUpdate(MentorRequiredMixin, View):
     def get(self, request):
         l_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
@@ -1060,18 +1078,13 @@ class MentorProfileUpdate(MentorRequiredMixin, View):
         l_id = (getattr(request, 'jwt_user_id', None) or request.session.get('user_id'))
         mentor = mentortable.objects.get(LOGINID_id=l_id)
 
-        name = request.POST.get('name')
-        phone = request.POST.get('phone')
-        image = request.FILES.get('image')
-
-        if name:
-            mentor.name = name
-        if phone:
-            mentor.phone = phone
-        if image:
-            mentor.image = image
-
-        mentor.save()
+        try:
+            update_mentor_profile(
+                mentor, request.POST.get('name'), request.POST.get('phone'), request.FILES.get('image'),
+            )
+        except ValidationError as exc:
+            messages.error(request, exc.messages[0])
+            return redirect('mentor_profile_update')
         messages.success(request, "Profile Updated successfully")
         return redirect('MntrHome')
 
@@ -1744,6 +1757,127 @@ class JWTAuthMixin:
 
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
+
+
+def filtered_mentor_students(login_id, query, verification):
+    students = mentor_students(login_id)
+    if query:
+        students = students.filter(
+            Q(name__icontains=query) | Q(email__icontains=query)
+            | Q(admn_no__icontains=query) | Q(classs__class_name__icontains=query),
+        )
+    return filter_student_verification_status(students, verification).order_by('-id')
+
+
+class MobileMentorStudents(JWTAuthMixin, APIView):
+    required_role = 'mentor'
+
+    def get(self, request, student_id=None):
+        if student_id is not None:
+            return Response(status=405)
+        students = filtered_mentor_students(
+            request.auth['login_id'], request.query_params.get('q', '').strip()[:100],
+            request.query_params.get('status', ''),
+        ).select_related('classs', 'LOGINID')
+        page = Paginator(students, 10).get_page(request.query_params.get('page'))
+        return Response({
+            'page': page.number,
+            'pages': page.paginator.num_pages,
+            'students': [
+                {
+                    'id': student.pk, 'name': student.name, 'email': student.email,
+                    'phone': student.phone, 'admn_no': student.admn_no,
+                    'class': student.classs.class_name if student.classs else None,
+                    'photo': student.Photo.url if student.Photo else None,
+                    'status': student.LOGINID.usertype if student.LOGINID else None,
+                }
+                for student in page
+            ],
+        })
+
+    def patch(self, request, student_id=None):
+        if student_id is None:
+            return Response(status=405)
+        actor = request.auth['login_id']
+        students = mentor_students(actor)
+        student = get_object_or_404(students, pk=student_id)
+        action = request.data.get('action')
+        try:
+            if action in ('verify', 'reject'):
+                decision = 'Student' if action == 'verify' else 'Rejected'
+                set_student_verification(students, student.LOGINID_id, decision, actor)
+            elif action == 'photo':
+                image = request.FILES.get('image')
+                if not image:
+                    raise ValidationError('Select a student photo.')
+                student.Photo = image
+                student.save(update_fields=['Photo'])
+            elif action == 'edit':
+                form = student_edit_form(student, request.data, mentor=True)
+                if not form.is_valid():
+                    return Response({'error': next(iter(form.errors.values()))[0]}, status=400)
+                edited = form.save(commit=False)
+                edited.save(update_fields=['name', 'phone', 'admn_no'])
+            else:
+                raise ValidationError('Invalid student action.')
+        except ValidationError as exc:
+            return Response({'error': exc.messages[0]}, status=400)
+        except IntegrityError:
+            return Response({'error': 'The admission number is already in use.'}, status=409)
+        return Response(status=204)
+
+
+class MobileMentorProfile(JWTAuthMixin, APIView):
+    required_role = 'mentor'
+
+    def get(self, request):
+        mentor = get_object_or_404(mentortable, LOGINID_id=request.auth['login_id'])
+        return Response(MentorSerializer(mentor).data)
+
+    def patch(self, request):
+        mentor = get_object_or_404(mentortable, LOGINID_id=request.auth['login_id'])
+        try:
+            update_mentor_profile(
+                mentor, request.data.get('name'), request.data.get('phone'), request.FILES.get('image'),
+            )
+        except ValidationError as exc:
+            return Response({'error': exc.messages[0]}, status=400)
+        return Response(MentorSerializer(mentor).data)
+
+
+class MobileMentorApprovedPasses(JWTAuthMixin, APIView):
+    required_role = 'mentor'
+
+    def get(self, request, pass_id=None):
+        if pass_id is not None:
+            return Response(status=405)
+        passes = mentor_approved_passes(request.auth['login_id']).select_related(
+            'student_id', 'student_id__classs',
+        ).order_by('-approved_at', '-id')
+        page = Paginator(passes, 20).get_page(request.query_params.get('page'))
+        return Response({
+            'page': page.number,
+            'pages': page.paginator.num_pages,
+            'passes': [
+                {
+                    'id': item.pk, 'name': item.student_id.name,
+                    'class': item.student_id.classs.class_name if item.student_id.classs else None,
+                    'time': item.time.strftime('%I:%M %p') if item.time else None,
+                    'date': timezone.localtime(item.created_at).date().isoformat(),
+                    'reason': item.reason, 'is_group_pass': item.is_group_pass,
+                }
+                for item in page
+            ],
+        })
+
+    def post(self, request, pass_id=None):
+        if pass_id is None:
+            return Response(status=405)
+        try:
+            revoke_mentor_pass(request.auth['login_id'], pass_id, request.data.get('reason'))
+        except ValidationError as exc:
+            return Response({'error': exc.messages[0]}, status=400)
+        return Response(status=204)
 
 
 class MobileRolePage(JWTAuthMixin, APIView):
@@ -2834,7 +2968,6 @@ class MentorGroupPassCreate(MentorRequiredMixin, View):
             return redirect('LoginPage')
 
         assigned_classes_objs = class_assigntable.objects.filter(mentor_id=mentor_obj).select_related('class_id')
-        assigned_classes_ids = [obj.class_id.id for obj in assigned_classes_objs]
         class_names = ", ".join([obj.class_id.class_name for obj in assigned_classes_objs])
 
         students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids, LOGINID__usertype="Student").select_related('classs').order_by('classs__class_name', 'name')
@@ -2986,15 +3119,7 @@ class VerifyStudentMentor(MentorRequiredMixin, View):
         class_names = ", ".join([obj.class_id.class_name for obj in assigned_classes_objs])
 
         # Filter students strictly by the mentor's assigned classes
-        students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids).order_by('-id')
-        if q:
-            students_list = students_list.filter(
-                models.Q(name__icontains=q) |
-                models.Q(email__icontains=q) |
-                models.Q(admn_no__icontains=q) |
-                models.Q(classs__class_name__icontains=q)
-            )
-        students_list = filter_student_verification_status(students_list, status)
+        students_list = filtered_mentor_students(mentor_dept_id, q, status)
 
         paginator = Paginator(students_list, 10)
         page_number = request.GET.get('page')

@@ -91,6 +91,11 @@ urlpatterns = [
 ########################API#############################
 
     path('api/role-page/<slug:page>/', MobileRolePage.as_view()),
+    path('api/mentor/students/', MobileMentorStudents.as_view()),
+    path('api/mentor/students/<int:student_id>/', MobileMentorStudents.as_view()),
+    path('api/mentor/profile/', MobileMentorProfile.as_view()),
+    path('api/mentor/approved-passes/', MobileMentorApprovedPasses.as_view()),
+    path('api/mentor/approved-passes/<int:pass_id>/revoke/', MobileMentorApprovedPasses.as_view()),
     path('api/mentor/analytics.csv', MobileMentorCSV.as_view()),
     path('api/security/recent-scans/', SecurityRecentScansAPI.as_view()),
     path('UserReg',UserReg_api.as_view(),name='userreg'), 

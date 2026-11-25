@@ -215,6 +215,13 @@
         }
 
         .logout-link { color: #d14e61; }
+        button.logout-link {
+            width: 100%;
+            background: transparent;
+            border: 0;
+            font-family: inherit;
+            cursor: pointer;
+        }
         .logout-link:hover { background: #fff0f2; color: #b4233b; }
 
         .sidebar-overlay { display: none; }
@@ -876,14 +883,17 @@
                 </div>
             </div>
 
-             <a href="{% url 'logout' %}" class="nav-link" onclick="showLogoutModal(event);">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-                Logout
-            </a>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="nav-link logout-link">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout
+                </button>
+            </form>
         </aside>
 
         <div class="sidebar-overlay" id="sidebarOverlay"></div>

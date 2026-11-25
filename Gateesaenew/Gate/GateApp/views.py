@@ -2970,7 +2970,9 @@ class MentorGroupPassCreate(MentorRequiredMixin, View):
         assigned_classes_objs = class_assigntable.objects.filter(mentor_id=mentor_obj).select_related('class_id')
         class_names = ", ".join([obj.class_id.class_name for obj in assigned_classes_objs])
 
-        students_list = studenttable.objects.filter(classs_id__in=assigned_classes_ids, LOGINID__usertype="Student").select_related('classs').order_by('classs__class_name', 'name')
+        students_list = mentor_students(mentor_dept_id).filter(
+            LOGINID__usertype='Student',
+        ).select_related('classs').order_by('classs__class_name', 'name')
 
         grouped_students = {}
         for student in students_list:
